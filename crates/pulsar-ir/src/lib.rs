@@ -1,5 +1,6 @@
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::EdgeRef;
+use pulsar_core::SourceLocation;
 
 // Node identifiers
 // ================
@@ -55,6 +56,7 @@ pub struct SQLNode {
   pub table: Option<TableRef>,
   pub limit: bool,
   pub where_clause: bool,
+  pub location: SourceLocation,
 }
 
 impl SQLNode {
@@ -93,6 +95,7 @@ pub struct OrmArgs {
 pub struct OrmNode {
   pub method: OrmMethod,
   pub args: OrmArgs,
+  pub location: SourceLocation,
 }
 
 // Schema IR

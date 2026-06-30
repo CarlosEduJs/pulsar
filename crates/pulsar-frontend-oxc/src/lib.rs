@@ -7,6 +7,7 @@ use oxc::ast::ast::{
 };
 use oxc::parser::Parser;
 use oxc::span::SourceType;
+use pulsar_core::SourceLocation;
 use pulsar_ir::{
   ColumnRef, EdgeKind, IrGraph, OrmArgs, OrmMethod, OrmNode, SQLNode, SqlKind, TableRef,
 };
@@ -30,7 +31,11 @@ struct MethodCall<'a> {
 /// # Errors
 ///
 /// Returns [`ExtractError`] if parsing fails.
-pub fn extract(source_text: &str, source_type: SourceType) -> Result<IrGraph, ExtractError> {
+pub fn extract(
+  source_text: &str,
+  source_type: SourceType,
+  file_path: &str,
+) -> Result<IrGraph, ExtractError> {
   let allocator = Allocator::default();
   let ret = Parser::new(&allocator, source_text, source_type).parse();
 
@@ -41,21 +46,26 @@ pub fn extract(source_text: &str, source_type: SourceType) -> Result<IrGraph, Ex
   let mut graph = IrGraph::new();
 
   for stmt in &ret.program.body {
-    extract_from_statement(stmt, &mut graph);
+    extract_from_statement(stmt, source_text, file_path, &mut graph);
   }
 
   Ok(graph)
 }
 
-fn extract_from_statement<'a>(stmt: &'a Statement<'a>, graph: &mut IrGraph) {
+fn extract_from_statement<'a>(
+  stmt: &'a Statement<'a>,
+  source: &'a str,
+  file_path: &str,
+  graph: &mut IrGraph,
+) {
   match stmt {
     Statement::ExpressionStatement(expr_stmt) => {
-      try_extract_chain(&expr_stmt.expression, graph);
+      try_extract_chain(&expr_stmt.expression, source, file_path, graph);
     }
     Statement::VariableDeclaration(decl) => {
       for declarator in &decl.declarations {
         if let Some(init) = &declarator.init {
-          try_extract_chain(init, graph);
+          try_extract_chain(init, source, file_path, graph);
         }
       }
     }
@@ -63,8 +73,12 @@ fn extract_from_statement<'a>(stmt: &'a Statement<'a>, graph: &mut IrGraph) {
   }
 }
 
-fn try_extract_chain<'a>(expr: &'a Expression<'a>, graph: &mut IrGraph) {
-  // Unwrap await: `await db.select()`
+fn try_extract_chain<'a>(
+  expr: &'a Expression<'a>,
+  source: &'a str,
+  file_path: &str,
+  graph: &mut IrGraph,
+) {
   let inner = match expr {
     Expression::AwaitExpression(await_expr) => &await_expr.argument,
     other => other,
@@ -73,7 +87,8 @@ fn try_extract_chain<'a>(expr: &'a Expression<'a>, graph: &mut IrGraph) {
   if let Expression::CallExpression(call) = inner {
     if let Some(chain) = resolve_chain(call) {
       if is_drizzle_select_chain(&chain) {
-        process_drizzle_chain(&chain, graph);
+        let location = span_to_location(call.span, source, file_path);
+        process_drizzle_chain(&chain, location, graph);
       }
     }
   }
@@ -130,16 +145,16 @@ fn is_drizzle_select_chain(chain: &[MethodCall]) -> bool {
 }
 
 /// Converts a Drizzle method chain into ORM and SQL nodes, adding them to the graph.
-fn process_drizzle_chain(chain: &[MethodCall], graph: &mut IrGraph) {
-  let orm_node = build_orm_node(chain);
-  let sql_node = build_sql_node(chain);
+fn process_drizzle_chain(chain: &[MethodCall], location: SourceLocation, graph: &mut IrGraph) {
+  let orm_node = build_orm_node(chain, location.clone());
+  let sql_node = build_sql_node(chain, location);
 
   let orm_id = graph.add_orm(orm_node);
   let sql_id = graph.add_sql(sql_node);
   graph.add_edge(orm_id, sql_id, EdgeKind::Generates);
 }
 
-fn build_orm_node(chain: &[MethodCall]) -> OrmNode {
+fn build_orm_node(chain: &[MethodCall], location: SourceLocation) -> OrmNode {
   let columns = extract_select_columns(chain);
   let limit = extract_limit(chain);
   let where_clause = extract_where(chain);
@@ -147,17 +162,18 @@ fn build_orm_node(chain: &[MethodCall]) -> OrmNode {
   OrmNode {
     method: OrmMethod::Select,
     args: OrmArgs { columns, where_clause, limit, include: Vec::new() },
+    location,
   }
 }
 
-fn build_sql_node(chain: &[MethodCall]) -> SQLNode {
+fn build_sql_node(chain: &[MethodCall], location: SourceLocation) -> SQLNode {
   let columns =
     extract_select_columns(chain).into_iter().map(|c| ColumnRef { name: c, table: None }).collect();
   let table = extract_table(chain).map(|t| TableRef { name: t, alias: None });
   let limit = extract_limit(chain).is_some();
   let where_clause = extract_where(chain).is_some();
 
-  SQLNode { kind: SqlKind::Select, columns, table, limit, where_clause }
+  SQLNode { kind: SqlKind::Select, columns, table, limit, where_clause, location }
 }
 
 // Argument extraction helpers
@@ -263,6 +279,34 @@ fn extract_object_keys(obj: &ObjectExpression) -> Vec<String> {
     .collect()
 }
 
+fn span_to_location(span: oxc::span::Span, source: &str, file_path: &str) -> SourceLocation {
+  let (line, column) = byte_to_line_col(source, span.start);
+  SourceLocation {
+    file: file_path.to_string(),
+    line,
+    column,
+    span: Some((span.start as usize, span.end as usize)),
+  }
+}
+
+fn byte_to_line_col(source: &str, offset: u32) -> (usize, usize) {
+  let offset = offset as usize;
+  let mut line = 1;
+  let mut col = 1;
+  for (i, c) in source.char_indices() {
+    if i >= offset {
+      break;
+    }
+    if c == '\n' {
+      line += 1;
+      col = 1;
+    } else {
+      col += 1;
+    }
+  }
+  (line, col)
+}
+
 // Tests
 // =====
 
@@ -274,10 +318,12 @@ mod tests {
     SourceType::from_path("test.ts").unwrap()
   }
 
+  const TEST_FILE: &str = "test.ts";
+
   #[test]
   fn extract_select_star() {
     let source = "const users = await db.select().from(users);";
-    let graph = extract(source, ts_source(source)).unwrap();
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
     assert_eq!(graph.node_count(), 2, "should have ORM + SQL nodes");
     assert_eq!(graph.edge_count(), 1, "should have Generates edge");
   }
@@ -285,35 +331,35 @@ mod tests {
   #[test]
   fn extract_select_with_columns() {
     let source = "const users = await db.select({ id: users.id, name: users.name }).from(users);";
-    let graph = extract(source, ts_source(source)).unwrap();
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
     assert_eq!(graph.node_count(), 2);
   }
 
   #[test]
   fn extract_select_with_where() {
     let source = "const user = await db.select().from(users).where(eq(users.id, 1));";
-    let graph = extract(source, ts_source(source)).unwrap();
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
     assert_eq!(graph.node_count(), 2);
   }
 
   #[test]
   fn extract_select_with_limit() {
     let source = "const users = await db.select().from(users).limit(10);";
-    let graph = extract(source, ts_source(source)).unwrap();
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
     assert_eq!(graph.node_count(), 2);
   }
 
   #[test]
   fn extract_full_chain() {
     let source = "const result = await db.select({ id: users.id }).from(users).where(eq(users.id, 1)).limit(10);";
-    let graph = extract(source, ts_source(source)).unwrap();
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
     assert_eq!(graph.node_count(), 2);
   }
 
   #[test]
   fn extract_expression_statement() {
     let source = "db.select().from(users);";
-    let graph = extract(source, ts_source(source)).unwrap();
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
     assert_eq!(graph.node_count(), 2);
   }
 
@@ -323,7 +369,7 @@ mod tests {
             const a = await db.select().from(users);\
             const b = await db.select({ id: posts.id }).from(posts);\
         ";
-    let graph = extract(source, ts_source(source)).unwrap();
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
     assert_eq!(graph.node_count(), 4, "2 ORM + 2 SQL nodes");
     assert_eq!(graph.edge_count(), 2);
   }
@@ -331,21 +377,21 @@ mod tests {
   #[test]
   fn skip_non_drizzle_calls() {
     let source = "const x = foo.bar().baz();";
-    let graph = extract(source, ts_source(source)).unwrap();
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
     assert_eq!(graph.node_count(), 0);
   }
 
   #[test]
   fn skip_regular_function_calls() {
     let source = "const x = someFunction();";
-    let graph = extract(source, ts_source(source)).unwrap();
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
     assert_eq!(graph.node_count(), 0);
   }
 
   #[test]
   fn verify_select_star_detection() {
     let source = "await db.select().from(users);";
-    let graph = extract(source, ts_source(source)).unwrap();
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
     for id in graph.node_indices() {
       if let pulsar_ir::NodeKind::Sql(sql) = graph.node(id).unwrap() {
         assert!(sql.is_select_star());
@@ -358,7 +404,7 @@ mod tests {
   #[test]
   fn verify_explicit_columns_not_star() {
     let source = "await db.select({ id: users.id }).from(users);";
-    let graph = extract(source, ts_source(source)).unwrap();
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
     for id in graph.node_indices() {
       if let pulsar_ir::NodeKind::Sql(sql) = graph.node(id).unwrap() {
         assert!(!sql.is_select_star());

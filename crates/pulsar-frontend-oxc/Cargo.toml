@@ -10,6 +10,7 @@ keywords = ["pulsar", "oxc", "typescript", "parser"]
 categories = ["development-tools::static-analysis"]
 
 [dependencies]
+pulsar-core.workspace = true
 pulsar-ir.workspace = true
 oxc.workspace = true
 thiserror.workspace = true

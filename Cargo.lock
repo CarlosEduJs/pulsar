@@ -652,6 +652,7 @@ name = "pulsar-frontend-oxc"
 version = "0.1.0"
 dependencies = [
  "oxc",
+ "pulsar-core",
  "pulsar-ir",
  "thiserror 2.0.18",
  "tracing",
@@ -670,6 +671,7 @@ dependencies = [
 name = "pulsar-frontend-sql"
 version = "0.1.0"
 dependencies = [
+ "pulsar-core",
  "pulsar-ir",
  "sqlparser",
  "thiserror 2.0.18",
@@ -701,7 +703,6 @@ name = "pulsar-rules"
 version = "0.1.0"
 dependencies = [
  "pulsar-core",
- "pulsar-graph",
  "pulsar-ir",
  "thiserror 2.0.18",
  "tracing",

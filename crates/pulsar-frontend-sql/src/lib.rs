@@ -1,3 +1,4 @@
+use pulsar_core::SourceLocation;
 use pulsar_ir::{ColumnRef, SQLNode, SqlKind, TableRef};
 use sqlparser::ast::{SelectItem, SetExpr, Statement, TableFactor};
 use sqlparser::dialect::PostgreSqlDialect;
@@ -22,7 +23,7 @@ pub enum SqlParseError {
 ///
 /// Returns [`SqlParseError`] if the SQL is invalid or the statement kind
 /// is not yet supported.
-pub fn parse_sql(sql: &str) -> Result<SQLNode, SqlParseError> {
+pub fn parse_sql(sql: &str, location: SourceLocation) -> Result<SQLNode, SqlParseError> {
   let dialect = PostgreSqlDialect {};
   let statements =
     Parser::parse_sql(&dialect, sql).map_err(|e| SqlParseError::ParseError(e.to_string()))?;
@@ -70,7 +71,7 @@ pub fn parse_sql(sql: &str) -> Result<SQLNode, SqlParseError> {
       let limit = limit.is_some();
       let where_clause = select.selection.is_some();
 
-      Ok(SQLNode { kind, columns, table, limit, where_clause })
+      Ok(SQLNode { kind, columns, table, limit, where_clause, location })
     }
     other => Err(SqlParseError::UnsupportedStatement(other.to_string())),
   }
@@ -80,9 +81,13 @@ pub fn parse_sql(sql: &str) -> Result<SQLNode, SqlParseError> {
 mod tests {
   use super::*;
 
+  fn test_location() -> SourceLocation {
+    SourceLocation { file: "test.sql".to_string(), line: 1, column: 1, span: None }
+  }
+
   #[test]
   fn parse_select_star() {
-    let node = parse_sql("SELECT * FROM users").unwrap();
+    let node = parse_sql("SELECT * FROM users", test_location()).unwrap();
     assert!(node.is_select_star());
     assert_eq!(node.columns.len(), 1);
     assert_eq!(node.columns[0].name, "*");
@@ -92,7 +97,7 @@ mod tests {
 
   #[test]
   fn parse_select_explicit_columns() {
-    let node = parse_sql("SELECT id, name FROM users").unwrap();
+    let node = parse_sql("SELECT id, name FROM users", test_location()).unwrap();
     assert!(!node.is_select_star());
     assert_eq!(node.columns.len(), 2);
     assert_eq!(node.columns[0].name, "id");
@@ -101,37 +106,37 @@ mod tests {
 
   #[test]
   fn parse_select_with_limit() {
-    let node = parse_sql("SELECT id FROM users LIMIT 10").unwrap();
+    let node = parse_sql("SELECT id FROM users LIMIT 10", test_location()).unwrap();
     assert!(node.limit);
   }
 
   #[test]
   fn parse_select_without_limit() {
-    let node = parse_sql("SELECT id FROM users").unwrap();
+    let node = parse_sql("SELECT id FROM users", test_location()).unwrap();
     assert!(!node.limit);
   }
 
   #[test]
   fn parse_select_with_where() {
-    let node = parse_sql("SELECT id FROM users WHERE status = 'active'").unwrap();
+    let node = parse_sql("SELECT id FROM users WHERE status = 'active'", test_location()).unwrap();
     assert!(node.where_clause);
   }
 
   #[test]
   fn parse_select_without_where() {
-    let node = parse_sql("SELECT id FROM users").unwrap();
+    let node = parse_sql("SELECT id FROM users", test_location()).unwrap();
     assert!(!node.where_clause);
   }
 
   #[test]
   fn parse_invalid_sql() {
-    let result = parse_sql("SELECT");
+    let result = parse_sql("SELECT", test_location());
     assert!(result.is_err());
   }
 
   #[test]
   fn parse_unsupported_statement() {
-    let result = parse_sql("INSERT INTO users (id) VALUES (1)");
+    let result = parse_sql("INSERT INTO users (id) VALUES (1)", test_location());
     assert!(result.is_err());
     assert!(matches!(result.unwrap_err(), SqlParseError::UnsupportedStatement(_)));
   }
