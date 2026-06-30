@@ -1,5 +1,5 @@
 /// Severity level of a diagnostic.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub enum Severity {
   Error,
   Warning,
@@ -7,7 +7,7 @@ pub enum Severity {
 }
 
 /// Location in source code where a diagnostic was triggered.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct SourceLocation {
   pub file: String,
   pub line: usize,
@@ -16,7 +16,7 @@ pub struct SourceLocation {
 }
 
 /// A diagnostic emitted by a rule during analysis.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct Diagnostic {
   pub severity: Severity,
   pub message: String,
