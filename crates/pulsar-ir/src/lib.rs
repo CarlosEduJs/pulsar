@@ -58,10 +58,10 @@ pub struct SQLNode {
 }
 
 impl SQLNode {
-    /// Returns `true` if this query has an implicit column expansion (SELECT *).
+    /// Returns `true` if this query uses `SELECT *` (implicit or explicit wildcard).
     #[must_use]
-    pub const fn has_implicit_columns(&self) -> bool {
-        self.columns.is_empty()
+    pub fn is_select_star(&self) -> bool {
+        self.columns.is_empty() || self.columns.iter().any(|c| c.name == "*")
     }
 }
 
