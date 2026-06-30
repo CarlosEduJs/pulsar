@@ -1,0 +1,19 @@
+[package]
+name = "pulsar-frontend-sql"
+version = "0.1.0"
+edition = "2021"
+description = "SQL frontend: sqlparser-rs to PIR"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/pulsar-analyzer/pulsar"
+readme = "README.md"
+keywords = ["pulsar", "sql", "parser"]
+categories = ["development-tools::static-analysis"]
+
+[dependencies]
+pulsar-ir.workspace = true
+sqlparser.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

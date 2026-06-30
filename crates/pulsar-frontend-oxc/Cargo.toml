@@ -1,0 +1,19 @@
+[package]
+name = "pulsar-frontend-oxc"
+version = "0.1.0"
+edition = "2021"
+description = "Oxc frontend: TypeScript/JavaScript AST to PIR"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/pulsar-analyzer/pulsar"
+readme = "README.md"
+keywords = ["pulsar", "oxc", "typescript", "parser"]
+categories = ["development-tools::static-analysis"]
+
+[dependencies]
+pulsar-ir.workspace = true
+oxc.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,28 @@
+[package]
+name = "pulsar-cli"
+version = "0.1.0"
+edition = "2021"
+description = "Pulsar CLI - static analyzer with a linter interface"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/pulsar-analyzer/pulsar"
+readme = "README.md"
+keywords = ["pulsar", "cli", "static-analysis"]
+categories = ["development-tools::static-analysis"]
+
+[dependencies]
+pulsar-core.workspace = true
+pulsar-ir.workspace = true
+pulsar-frontend-oxc.workspace = true
+pulsar-frontend-sql.workspace = true
+pulsar-frontend-prisma.workspace = true
+pulsar-graph.workspace = true
+pulsar-rules.workspace = true
+pulsar-diag.workspace = true
+clap.workspace = true
+tracing.workspace = true
+anyhow.workspace = true
+toml.workspace = true
+ignore.workspace = true
+
+[lints]
+workspace = true

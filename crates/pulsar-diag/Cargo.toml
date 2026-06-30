@@ -1,0 +1,20 @@
+[package]
+name = "pulsar-diag"
+version = "0.1.0"
+edition = "2021"
+description = "Diagnostics API and formatting for Pulsar"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/pulsar-analyzer/pulsar"
+readme = "README.md"
+keywords = ["pulsar", "diagnostics", "formatting"]
+categories = ["development-tools::static-analysis"]
+
+[dependencies]
+pulsar-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+owo-colors.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

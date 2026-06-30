@@ -1,0 +1,19 @@
+[package]
+name = "pulsar-graph"
+version = "0.1.0"
+edition = "2021"
+description = "Graph construction and linking for PIR"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/pulsar-analyzer/pulsar"
+readme = "README.md"
+keywords = ["pulsar", "graph", "dependency-graph"]
+categories = ["development-tools::static-analysis"]
+
+[dependencies]
+pulsar-ir.workspace = true
+petgraph.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

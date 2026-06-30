@@ -1,0 +1,19 @@
+[package]
+name = "pulsar-ir"
+version = "0.1.0"
+edition = "2021"
+description = "Pulsar Intermediate Representation (PIR) types and graph structures"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/pulsar-analyzer/pulsar"
+readme = "README.md"
+keywords = ["pulsar", "static-analysis", "ir"]
+categories = ["development-tools::static-analysis"]
+
+[dependencies]
+pulsar-core.workspace = true
+serde.workspace = true
+petgraph.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true
