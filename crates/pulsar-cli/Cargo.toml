@@ -23,6 +23,7 @@ tracing.workspace = true
 anyhow.workspace = true
 toml.workspace = true
 ignore.workspace = true
+oxc.workspace = true
 
 [lints]
 workspace = true

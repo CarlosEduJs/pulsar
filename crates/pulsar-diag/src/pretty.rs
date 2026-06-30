@@ -54,7 +54,7 @@ impl DiagnosticFormatter for PrettyFormatter {
       let (errors, warnings, infos) = count_by_severity(diagnostics);
       let total = diagnostics.len();
       let problem_word = if total == 1 { "problem" } else { "problems" };
-      let _ = writeln!(
+      let _ = write!(
         out,
         "{} {} {} ({} {}",
         "✖".red(),
@@ -63,9 +63,9 @@ impl DiagnosticFormatter for PrettyFormatter {
         errors,
         if errors == 1 { "error" } else { "errors" },
       );
-      let _ = write!(out, ", {} {}", warnings, if warnings == 1 { "warning" } else { "warnings" },);
-      let _ = write!(out, ", {} {}", infos, if infos == 1 { "info" } else { "infos" },);
-      let _ = out.write_str(")");
+      let _ = write!(out, ", {} {}", warnings, if warnings == 1 { "warning" } else { "warnings" });
+      let _ = write!(out, ", {} {}", infos, if infos == 1 { "info" } else { "infos" });
+      let _ = writeln!(out, ")");
     }
 
     out
@@ -73,7 +73,7 @@ impl DiagnosticFormatter for PrettyFormatter {
 }
 
 fn format_location(diag: &Diagnostic) -> String {
-  format!("{}:{}:{}", diag.location.file.bold(), diag.location.line, diag.location.column,)
+  format!("{}:{}:{}", diag.location.file.bold(), diag.location.line, diag.location.column)
 }
 
 fn format_severity(severity: Severity) -> String {

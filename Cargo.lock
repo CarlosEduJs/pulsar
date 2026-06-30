@@ -616,6 +616,7 @@ dependencies = [
  "anyhow",
  "clap",
  "ignore",
+ "oxc",
  "pulsar-core",
  "pulsar-diag",
  "pulsar-frontend-oxc",
