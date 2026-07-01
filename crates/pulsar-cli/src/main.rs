@@ -97,10 +97,6 @@ fn run_check(args: CheckArgs) -> Result<()> {
     }
   }
 
-  if file_diagnostics.is_empty() {
-    return Ok(());
-  }
-
   let formatter: Box<dyn DiagnosticFormatter> = match format.as_str() {
     "json" => Box::new(JsonFormatter),
     _ => Box::new(PrettyFormatter),
@@ -119,6 +115,9 @@ fn run_check(args: CheckArgs) -> Result<()> {
       println!("{}", formatter.format(&all, ""));
     }
     _ => {
+      if file_diagnostics.is_empty() {
+        return Ok(());
+      }
       for (_file_path, source, diags) in &file_diagnostics {
         print!("{}", formatter.format(diags, source));
       }

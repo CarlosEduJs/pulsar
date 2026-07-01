@@ -49,40 +49,42 @@ jobs:
 
       - name: Smoke test (all fixtures)
         run: |
-          echo "=== basic.ts (expects 1 error) ==="
-          cargo run --release --locked -p pulsar-cli -- check test/fixtures/basic.ts > /tmp/smoke.txt 2>&1 || true
-          cat /tmp/smoke.txt
-          grep -q "error" /tmp/smoke.txt || { echo "FAIL: basic.ts"; exit 1; }
+          # helpers: 0=expected_diags, 1=fixture_path
+          expect_diags() {
+            local fixture="$1"
+            local count="$2"
+            echo "=== $fixture (expects $count diagnostic(s)) ==="
+            cargo run --release --locked -p pulsar-cli -- check "$fixture" > /tmp/smoke.txt 2>&1 || true
+            cat /tmp/smoke.txt
+            # verify rule id is present (distinguishes pulsar diag from generic errors)
+            grep -q "no-select-star" /tmp/smoke.txt || { echo "FAIL: $fixture missing rule id"; exit 1; }
+            # verify the expected count in summary
+            grep -q "$count error" /tmp/smoke.txt || { echo "FAIL: $fixture expected $count error(s)"; exit 1; }
+          }
+          expect_clean() {
+            local fixture="$1"
+            echo "=== $fixture (expects 0 diagnostics) ==="
+            cargo run --release --locked -p pulsar-cli -- check "$fixture" > /tmp/smoke.txt 2>/dev/null
+            cat /tmp/smoke.txt
+            [ ! -s /tmp/smoke.txt ] || { echo "FAIL: $fixture should have no stdout"; exit 1; }
+          }
+          expect_parse_error() {
+            local fixture="$1"
+            echo "=== $fixture (expects parse error on stderr) ==="
+            cargo run --release --locked -p pulsar-cli -- check "$fixture" > /tmp/smoke.txt 2>/tmp/smoke_stderr.txt
+            cat /tmp/smoke.txt
+            [ ! -s /tmp/smoke.txt ] || { echo "FAIL: $fixture should have no stdout"; exit 1; }
+            cat /tmp/smoke_stderr.txt >&2
+            grep -q "Error parsing" /tmp/smoke_stderr.txt || { echo "FAIL: $fixture expected parse error on stderr"; exit 1; }
+          }
 
-          echo "=== with-where.ts (expects 1 error) ==="
-          cargo run --release --locked -p pulsar-cli -- check test/fixtures/with-where.ts > /tmp/smoke.txt 2>&1 || true
-          cat /tmp/smoke.txt
-          grep -q "error" /tmp/smoke.txt || { echo "FAIL: with-where.ts"; exit 1; }
-
-          echo "=== with-limit.ts (expects 1 error) ==="
-          cargo run --release --locked -p pulsar-cli -- check test/fixtures/with-limit.ts > /tmp/smoke.txt 2>&1 || true
-          cat /tmp/smoke.txt
-          grep -q "error" /tmp/smoke.txt || { echo "FAIL: with-limit.ts"; exit 1; }
-
-          echo "=== mixed-star-explicit.ts (expects 2 errors) ==="
-          cargo run --release --locked -p pulsar-cli -- check test/fixtures/mixed-star-explicit.ts > /tmp/smoke.txt 2>&1 || true
-          cat /tmp/smoke.txt
-          grep -q "error" /tmp/smoke.txt || { echo "FAIL: mixed-star-explicit.ts"; exit 1; }
-
-          echo "=== clean.ts (expects exit 0, no output) ==="
-          cargo run --release --locked -p pulsar-cli -- check test/fixtures/clean.ts > /tmp/smoke.txt 2>/dev/null
-          cat /tmp/smoke.txt
-          [ ! -s /tmp/smoke.txt ] || { echo "FAIL: clean.ts should have no stdout"; exit 1; }
-
-          echo "=== no-issues.ts (expects exit 0, no output) ==="
-          cargo run --release --locked -p pulsar-cli -- check test/fixtures/no-issues.ts > /tmp/smoke.txt 2>/dev/null
-          cat /tmp/smoke.txt
-          [ ! -s /tmp/smoke.txt ] || { echo "FAIL: no-issues.ts should have no stdout"; exit 1; }
-
-          echo "=== invalid-syntax.ts (expects exit 0, parse error on stderr) ==="
-          cargo run --release --locked -p pulsar-cli -- check test/fixtures/invalid-syntax.ts > /tmp/smoke.txt 2>/dev/null
-          cat /tmp/smoke.txt
-          [ ! -s /tmp/smoke.txt ] || { echo "FAIL: invalid-syntax.ts should have no stdout"; exit 1; }
+          expect_diags test/fixtures/basic.ts 1
+          expect_diags test/fixtures/with-where.ts 1
+          expect_diags test/fixtures/with-limit.ts 1
+          expect_diags test/fixtures/mixed-star-explicit.ts 2
+          expect_clean test/fixtures/clean.ts
+          expect_clean test/fixtures/no-issues.ts
+          expect_parse_error test/fixtures/invalid-syntax.ts
 
       - name: Smoke test (json — expects non-empty)
         run: |
