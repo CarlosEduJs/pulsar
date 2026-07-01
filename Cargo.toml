@@ -41,6 +41,11 @@ owo-colors = "4"
 clap = { version = "4", features = ["derive"] }
 ignore = "0.4"
 
+[workspace.metadata.dist]
+cargo-dist-version = "0.28.2"
+targets = ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin", "aarch64-apple-darwin", "x86_64-pc-windows-msvc"]
+ci = ["github"]
+
 [workspace.lints.clippy]
 all = "deny"
 pedantic = "deny"
