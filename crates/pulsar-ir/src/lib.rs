@@ -198,3 +198,184 @@ impl Default for IrGraph {
     Self::new()
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  fn make_sql(columns: Vec<ColumnRef>) -> SQLNode {
+    SQLNode {
+      kind: SqlKind::Select,
+      columns,
+      table: Some(TableRef { name: "users".to_string(), alias: None }),
+      limit: false,
+      where_clause: false,
+      location: SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None },
+    }
+  }
+
+  fn location(f: &str, l: usize, c: usize) -> SourceLocation {
+    SourceLocation { file: f.to_string(), line: l, column: c, span: None }
+  }
+
+  // SQLNode::is_select_star
+  // =======================
+
+  #[test]
+  fn is_select_star_implicit() {
+    let sql = make_sql(vec![]);
+    assert!(sql.is_select_star());
+  }
+
+  #[test]
+  fn is_select_star_explicit_wildcard() {
+    let sql = make_sql(vec![ColumnRef { name: "*".to_string(), table: None }]);
+    assert!(sql.is_select_star());
+  }
+
+  #[test]
+  fn is_select_star_mixed_with_wildcard() {
+    let sql = make_sql(vec![
+      ColumnRef { name: "id".to_string(), table: None },
+      ColumnRef { name: "*".to_string(), table: None },
+    ]);
+    assert!(sql.is_select_star());
+  }
+
+  #[test]
+  fn is_select_star_explicit_columns() {
+    let sql = make_sql(vec![
+      ColumnRef { name: "id".to_string(), table: None },
+      ColumnRef { name: "name".to_string(), table: None },
+    ]);
+    assert!(!sql.is_select_star());
+  }
+
+  #[test]
+  fn is_select_star_qualified_wildcard() {
+    let sql = make_sql(vec![ColumnRef { name: "*".to_string(), table: Some("users".to_string()) }]);
+    assert!(sql.is_select_star());
+  }
+
+  // IrGraph
+  // =======
+
+  #[test]
+  fn graph_new_is_empty() {
+    let g = IrGraph::new();
+    assert_eq!(g.node_count(), 0);
+    assert_eq!(g.edge_count(), 0);
+    assert_eq!(g.node_indices().count(), 0);
+    assert_eq!(g.edge_references().count(), 0);
+  }
+
+  #[test]
+  fn graph_add_sql_and_retrieve() {
+    let mut g = IrGraph::new();
+    let sql = make_sql(vec![]);
+    let id = g.add_sql(sql.clone());
+    assert_eq!(g.node_count(), 1);
+    match g.node(id) {
+      Some(NodeKind::Sql(n)) => assert_eq!(*n, sql),
+      _ => panic!("expected Sql node"),
+    }
+  }
+
+  #[test]
+  fn graph_add_orm_and_retrieve() {
+    let mut g = IrGraph::new();
+    let orm = OrmNode {
+      method: OrmMethod::Select,
+      args: OrmArgs {
+        columns: vec!["id".to_string()],
+        where_clause: None,
+        limit: None,
+        include: Vec::new(),
+      },
+      location: location("test.ts", 1, 1),
+    };
+    let id = g.add_orm(orm.clone());
+    assert_eq!(g.node_count(), 1);
+    match g.node(id) {
+      Some(NodeKind::Orm(n)) => assert_eq!(*n, orm),
+      _ => panic!("expected Orm node"),
+    }
+  }
+
+  #[test]
+  fn graph_add_schema_and_retrieve() {
+    let mut g = IrGraph::new();
+    let schema = SchemaNode {
+      table_name: "users".to_string(),
+      columns: vec![SchemaColumn {
+        name: "id".to_string(),
+        col_type: "integer".to_string(),
+        is_nullable: false,
+        is_indexed: true,
+      }],
+    };
+    let id = g.add_schema(schema.clone());
+    assert_eq!(g.node_count(), 1);
+    match g.node(id) {
+      Some(NodeKind::Schema(n)) => assert_eq!(*n, schema),
+      _ => panic!("expected Schema node"),
+    }
+  }
+
+  #[test]
+  fn graph_add_edge_and_query() {
+    let mut g = IrGraph::new();
+    let sql = g.add_sql(make_sql(vec![]));
+    let orm = g.add_orm(OrmNode {
+      method: OrmMethod::Select,
+      args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: Vec::new() },
+      location: location("test.ts", 1, 1),
+    });
+    g.add_edge(orm, sql, EdgeKind::Generates);
+    assert_eq!(g.node_count(), 2);
+    assert_eq!(g.edge_count(), 1);
+    let refs: Vec<_> = g.edge_references().collect();
+    assert_eq!(refs.len(), 1);
+    assert_eq!(refs[0], (orm, sql, &EdgeKind::Generates));
+  }
+
+  #[test]
+  fn graph_node_indices_iteration() {
+    let mut g = IrGraph::new();
+    let s1 = g.add_sql(make_sql(vec![]));
+    let s2 = g.add_sql(make_sql(vec![ColumnRef { name: "id".to_string(), table: None }]));
+    let ids: Vec<_> = g.node_indices().collect();
+    assert_eq!(ids.len(), 2);
+    assert!(ids.contains(&s1));
+    assert!(ids.contains(&s2));
+  }
+
+  #[test]
+  fn graph_node_returns_none_for_invalid_id() {
+    let g = IrGraph::new();
+    assert!(g.node(NodeIndex::new(999)).is_none());
+  }
+
+  #[test]
+  fn graph_default_is_empty() {
+    let g = IrGraph::default();
+    assert_eq!(g.node_count(), 0);
+  }
+
+  // EdgeKind and SqlKind debug/equality
+  #[test]
+  fn edge_kind_variants() {
+    assert_eq!(EdgeKind::Generates, EdgeKind::Generates);
+    assert_eq!(EdgeKind::Accesses, EdgeKind::Accesses);
+    assert_eq!(EdgeKind::MapsTo, EdgeKind::MapsTo);
+    assert_ne!(EdgeKind::Generates, EdgeKind::Accesses);
+  }
+
+  #[test]
+  fn sql_kind_variants() {
+    assert_eq!(SqlKind::Select, SqlKind::Select);
+    assert_eq!(SqlKind::Insert, SqlKind::Insert);
+    assert_eq!(SqlKind::Update, SqlKind::Update);
+    assert_eq!(SqlKind::Delete, SqlKind::Delete);
+  }
+}
