@@ -47,19 +47,51 @@ jobs:
       - name: Build (release)
         run: cargo build --release --locked
 
-      - name: Smoke test (fixtures)
+      - name: Smoke test (all fixtures)
         run: |
-          cargo run --release --locked -p pulsar-cli -- check test/fixtures/ > /tmp/smoke.txt 2>&1 || true
+          echo "=== basic.ts (expects 1 error) ==="
+          cargo run --release --locked -p pulsar-cli -- check test/fixtures/basic.ts > /tmp/smoke.txt 2>&1 || true
           cat /tmp/smoke.txt
-          grep -q "error" /tmp/smoke.txt || { echo "FAIL: expected 'error' in output"; exit 1; }
+          grep -q "error" /tmp/smoke.txt || { echo "FAIL: basic.ts"; exit 1; }
 
-      - name: Smoke test (json)
+          echo "=== with-where.ts (expects 1 error) ==="
+          cargo run --release --locked -p pulsar-cli -- check test/fixtures/with-where.ts > /tmp/smoke.txt 2>&1 || true
+          cat /tmp/smoke.txt
+          grep -q "error" /tmp/smoke.txt || { echo "FAIL: with-where.ts"; exit 1; }
+
+          echo "=== with-limit.ts (expects 1 error) ==="
+          cargo run --release --locked -p pulsar-cli -- check test/fixtures/with-limit.ts > /tmp/smoke.txt 2>&1 || true
+          cat /tmp/smoke.txt
+          grep -q "error" /tmp/smoke.txt || { echo "FAIL: with-limit.ts"; exit 1; }
+
+          echo "=== mixed-star-explicit.ts (expects 2 errors) ==="
+          cargo run --release --locked -p pulsar-cli -- check test/fixtures/mixed-star-explicit.ts > /tmp/smoke.txt 2>&1 || true
+          cat /tmp/smoke.txt
+          grep -q "error" /tmp/smoke.txt || { echo "FAIL: mixed-star-explicit.ts"; exit 1; }
+
+          echo "=== clean.ts (expects exit 0, no output) ==="
+          cargo run --release --locked -p pulsar-cli -- check test/fixtures/clean.ts > /tmp/smoke.txt 2>/dev/null
+          cat /tmp/smoke.txt
+          [ ! -s /tmp/smoke.txt ] || { echo "FAIL: clean.ts should have no stdout"; exit 1; }
+
+          echo "=== no-issues.ts (expects exit 0, no output) ==="
+          cargo run --release --locked -p pulsar-cli -- check test/fixtures/no-issues.ts > /tmp/smoke.txt 2>/dev/null
+          cat /tmp/smoke.txt
+          [ ! -s /tmp/smoke.txt ] || { echo "FAIL: no-issues.ts should have no stdout"; exit 1; }
+
+          echo "=== invalid-syntax.ts (expects exit 0, parse error on stderr) ==="
+          cargo run --release --locked -p pulsar-cli -- check test/fixtures/invalid-syntax.ts > /tmp/smoke.txt 2>/dev/null
+          cat /tmp/smoke.txt
+          [ ! -s /tmp/smoke.txt ] || { echo "FAIL: invalid-syntax.ts should have no stdout"; exit 1; }
+
+      - name: Smoke test (json — expects non-empty)
         run: |
-          cargo run --release --locked -p pulsar-cli -- check test/fixtures/ --format json > /tmp/smoke.json 2>/dev/null || true
+          cargo run --release --locked -p pulsar-cli -- check test/fixtures/basic.ts --format json > /tmp/smoke.json 2>/dev/null || true
           cat /tmp/smoke.json
           jq -e 'length > 0' /tmp/smoke.json || { echo "FAIL: expected non-empty JSON array"; exit 1; }
 
-      - name: Smoke test (no issues on clean file)
+      - name: Smoke test (json — clean file expects empty array)
         run: |
-          echo "const x = 1;" > /tmp/clean.ts
-          cargo run --release --locked -p pulsar-cli -- check /tmp/clean.ts
+          cargo run --release --locked -p pulsar-cli -- check test/fixtures/no-issues.ts --format json > /tmp/smoke.json 2>/dev/null
+          cat /tmp/smoke.json
+          jq -e 'length == 0' /tmp/smoke.json || { echo "FAIL: expected empty JSON array"; exit 1; }

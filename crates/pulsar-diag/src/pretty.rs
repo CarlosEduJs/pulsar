@@ -190,4 +190,104 @@ mod tests {
     assert!(plain.contains("1 problem"), "grammar in output:\n{plain}");
     assert!(plain.contains("1 error"), "error in output:\n{plain}");
   }
+
+  #[test]
+  fn pretty_info_severity() {
+    let source = "a\n";
+    let diag = make_diag(1, 1, None, Severity::Info);
+    let formatter = PrettyFormatter;
+    let output = formatter.format(&[diag], source);
+    let plain = strip_ansi(&output);
+    assert!(plain.contains("info"), "severity in output:\n{plain}");
+    assert!(plain.contains("1 info"), "count in output:\n{plain}");
+  }
+
+  #[test]
+  fn pretty_warning_severity() {
+    let source = "a\n";
+    let diag = make_diag(1, 1, None, Severity::Warning);
+    let formatter = PrettyFormatter;
+    let output = formatter.format(&[diag], source);
+    let plain = strip_ansi(&output);
+    assert!(plain.contains("warning"), "severity in output:\n{plain}");
+    assert!(plain.contains("1 warning"), "count in output:\n{plain}");
+  }
+
+  #[test]
+  fn pretty_span_at_column_zero() {
+    // Column 0 means no underline is drawn (col > 0 check)
+    let source = "line one\n";
+    let diag = make_diag(1, 0, Some((0, 4)), Severity::Error);
+    let formatter = PrettyFormatter;
+    let output = formatter.format(&[diag], source);
+    let plain = strip_ansi(&output);
+    assert!(plain.contains("error"), "severity in output:\n{plain}");
+    // underline should NOT be present since col == 0
+    assert!(!plain.contains("^^^^"), "no underline at col 0:\n{plain}");
+  }
+
+  #[test]
+  fn pretty_line_out_of_range() {
+    // Line 100 in a 2-line file — no source context shown
+    let source = "a\nb\n";
+    let diag = make_diag(100, 1, None, Severity::Error);
+    let formatter = PrettyFormatter;
+    let output = formatter.format(&[diag], source);
+    let plain = strip_ansi(&output);
+    assert!(plain.contains("error"), "severity in output:\n{plain}");
+    assert!(!plain.contains("a\n"), "no source line for out-of-range");
+  }
+
+  #[test]
+  fn pretty_line_zero_returns_none() {
+    // line == 0 should be skipped — get_line returns None
+    let source = "a\nb\n";
+    let diag = make_diag(0, 1, None, Severity::Error);
+    let formatter = PrettyFormatter;
+    let output = formatter.format(&[diag], source);
+    let plain = strip_ansi(&output);
+    assert!(plain.contains("error"), "severity in output:\n{plain}");
+    // Should not crash — just no source context
+  }
+
+  #[test]
+  fn pretty_without_span() {
+    let source = "const x = 1;\n";
+    let diag = make_diag(1, 5, None, Severity::Error);
+    let formatter = PrettyFormatter;
+    let output = formatter.format(&[diag], source);
+    let plain = strip_ansi(&output);
+    assert!(plain.contains("error"), "severity in output:\n{plain}");
+    assert!(plain.contains("const x = 1;"), "source line in output:\n{plain}");
+    // No underline since span is None
+    assert!(!plain.contains("^^^^"), "no underline without span:\n{plain}");
+  }
+
+  #[test]
+  fn pretty_all_severities_in_summary() {
+    let source = "a\nb\nc\n";
+    let diags = vec![
+      make_diag(1, 1, None, Severity::Error),
+      make_diag(2, 1, None, Severity::Warning),
+      make_diag(3, 1, None, Severity::Info),
+    ];
+    let formatter = PrettyFormatter;
+    let output = formatter.format(&diags, source);
+    let plain = strip_ansi(&output);
+    assert!(plain.contains("3 problems"), "count in output:\n{plain}");
+    assert!(plain.contains("1 error"), "error in output:\n{plain}");
+    assert!(plain.contains("1 warning"), "warning in output:\n{plain}");
+    assert!(plain.contains("1 info"), "info in output:\n{plain}");
+  }
+
+  #[test]
+  fn pretty_empty_source_text_with_diagnostics() {
+    let diag = make_diag(1, 1, None, Severity::Error);
+    let formatter = PrettyFormatter;
+    // Source text is empty but line is 1 — get_line returns None
+    let output = formatter.format(&[diag], "");
+    let plain = strip_ansi(&output);
+    assert!(plain.contains("error"), "severity in output:\n{plain}");
+    // No source context since source is empty
+  }
 }

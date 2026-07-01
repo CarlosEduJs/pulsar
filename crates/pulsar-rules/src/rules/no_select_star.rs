@@ -88,4 +88,98 @@ mod tests {
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 0);
   }
+
+  #[test]
+  fn detects_explicit_wildcard_column() {
+    let mut graph = IrGraph::new();
+    let location = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
+    let sql = SQLNode {
+      kind: SqlKind::Select,
+      columns: vec![pulsar_ir::ColumnRef { name: "*".to_string(), table: None }],
+      table: Some(TableRef { name: "users".to_string(), alias: None }),
+      limit: false,
+      where_clause: false,
+      location: location.clone(),
+    };
+    let orm = OrmNode {
+      method: OrmMethod::Select,
+      args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
+      location,
+    };
+    let sql_id = graph.add_sql(sql);
+    let orm_id = graph.add_orm(orm);
+    graph.add_edge(orm_id, sql_id, pulsar_ir::EdgeKind::Generates);
+
+    let rule = NoSelectStar;
+    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let diags = rule.run(&ctx);
+    assert_eq!(diags.len(), 1);
+    assert_eq!(diags[0].rule_id, "no-select-star");
+  }
+
+  #[test]
+  fn detects_qualified_wildcard() {
+    let mut graph = IrGraph::new();
+    let location = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
+    let sql = SQLNode {
+      kind: SqlKind::Select,
+      columns: vec![pulsar_ir::ColumnRef { name: "*".to_string(), table: Some("users".to_string()) }],
+      table: Some(TableRef { name: "users".to_string(), alias: None }),
+      limit: false,
+      where_clause: false,
+      location: location.clone(),
+    };
+    let orm = OrmNode {
+      method: OrmMethod::Select,
+      args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
+      location,
+    };
+    let sql_id = graph.add_sql(sql);
+    let orm_id = graph.add_orm(orm);
+    graph.add_edge(orm_id, sql_id, pulsar_ir::EdgeKind::Generates);
+
+    let rule = NoSelectStar;
+    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let diags = rule.run(&ctx);
+    assert_eq!(diags.len(), 1);
+  }
+
+  #[test]
+  fn mixed_columns_with_wildcard_flagged() {
+    let mut graph = IrGraph::new();
+    let location = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
+    let sql = SQLNode {
+      kind: SqlKind::Select,
+      columns: vec![
+        pulsar_ir::ColumnRef { name: "id".to_string(), table: None },
+        pulsar_ir::ColumnRef { name: "*".to_string(), table: None },
+      ],
+      table: Some(TableRef { name: "users".to_string(), alias: None }),
+      limit: false,
+      where_clause: false,
+      location: location.clone(),
+    };
+    let orm = OrmNode {
+      method: OrmMethod::Select,
+      args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
+      location,
+    };
+    let sql_id = graph.add_sql(sql);
+    let orm_id = graph.add_orm(orm);
+    graph.add_edge(orm_id, sql_id, pulsar_ir::EdgeKind::Generates);
+
+    let rule = NoSelectStar;
+    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let diags = rule.run(&ctx);
+    assert_eq!(diags.len(), 1);
+  }
+
+  #[test]
+  fn empty_graph_returns_no_diagnostics() {
+    let graph = IrGraph::new();
+    let rule = NoSelectStar;
+    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let diags = rule.run(&ctx);
+    assert!(diags.is_empty());
+  }
 }

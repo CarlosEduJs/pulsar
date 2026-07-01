@@ -140,4 +140,62 @@ mod tests {
     assert!(result.is_err());
     assert!(matches!(result.unwrap_err(), SqlParseError::UnsupportedStatement(_)));
   }
+
+  #[test]
+  fn parse_qualified_wildcard() {
+    let node = parse_sql("SELECT users.* FROM users", test_location()).unwrap();
+    assert!(node.is_select_star());
+    assert_eq!(node.columns.len(), 1);
+    assert_eq!(node.columns[0].name, "*");
+    assert_eq!(node.columns[0].table, Some("users".to_string()));
+  }
+
+  #[test]
+  fn parse_select_with_alias() {
+    let node = parse_sql("SELECT id AS user_id FROM users", test_location()).unwrap();
+    assert!(!node.is_select_star());
+    assert_eq!(node.columns.len(), 1);
+    // sqlparser normalizes ExprWithAlias to use the expression name
+    assert_eq!(node.columns[0].name, "id");
+  }
+
+  #[test]
+  fn parse_select_with_distinct() {
+    let node = parse_sql("SELECT DISTINCT id FROM users", test_location()).unwrap();
+    assert!(!node.is_select_star());
+    assert_eq!(node.columns.len(), 1);
+    assert_eq!(node.columns[0].name, "id");
+  }
+
+  #[test]
+  fn parse_select_with_table_alias() {
+    let node = parse_sql("SELECT id FROM users AS u", test_location()).unwrap();
+    assert_eq!(node.table.as_ref().unwrap().name, "users");
+    assert_eq!(node.table.as_ref().unwrap().alias, Some("u".to_string()));
+  }
+
+  #[test]
+  fn parse_empty_sql() {
+    let result = parse_sql("", test_location());
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), SqlParseError::ParseError(_)));
+  }
+
+  #[test]
+  fn parse_select_with_where_and_limit() {
+    let node =
+      parse_sql("SELECT id FROM users WHERE active = true LIMIT 10", test_location()).unwrap();
+    assert!(node.where_clause);
+    assert!(node.limit);
+  }
+
+  #[test]
+  fn parse_select_without_table() {
+    // SELECT without FROM is valid in PostgreSQL (e.g., SELECT 1)
+    let node = parse_sql("SELECT 1", test_location()).unwrap();
+    assert!(!node.is_select_star());
+    assert_eq!(node.columns.len(), 1);
+    assert_eq!(node.columns[0].name, "1");
+    assert!(node.table.is_none());
+  }
 }

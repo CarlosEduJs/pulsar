@@ -413,4 +413,106 @@ mod tests {
     }
     panic!("expected SQL node");
   }
+
+  #[test]
+  fn extract_empty_source() {
+    let graph = extract("", ts_source(""), TEST_FILE).unwrap();
+    assert_eq!(graph.node_count(), 0);
+  }
+
+  #[test]
+  fn extract_invalid_typescript() {
+    let result = extract("const x = ;", ts_source("const x = ;"), TEST_FILE);
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), ExtractError::ParseError(_)));
+  }
+
+  #[test]
+  fn extract_from_member_expression() {
+    let source = "await db.select().from(schema.users);";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    // Currently member expressions are not resolved as table names
+    // so the chain is still extracted but table is None
+    assert_eq!(graph.node_count(), 2);
+    for id in graph.node_indices() {
+      if let pulsar_ir::NodeKind::Sql(sql) = graph.node(id).unwrap() {
+        assert!(sql.table.is_none(), "member expr table is not yet resolved");
+      }
+    }
+  }
+
+  #[test]
+  fn extract_from_string_literal() {
+    let source = "await db.select().from(\"users\");";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    assert_eq!(graph.node_count(), 2);
+    for id in graph.node_indices() {
+      if let pulsar_ir::NodeKind::Sql(sql) = graph.node(id).unwrap() {
+        assert_eq!(sql.table.as_ref().unwrap().name, "users");
+      }
+    }
+  }
+
+  #[test]
+  fn extract_where_without_arguments() {
+    let source = "await db.select().from(users).where();";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    assert_eq!(graph.node_count(), 2);
+    for id in graph.node_indices() {
+      if let pulsar_ir::NodeKind::Sql(sql) = graph.node(id).unwrap() {
+        assert!(sql.where_clause, "where() with no args still counts as where");
+      }
+    }
+  }
+
+  #[test]
+  fn extract_limit_with_float() {
+    let source = "await db.select().from(users).limit(5.5);";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    assert_eq!(graph.node_count(), 2);
+    for id in graph.node_indices() {
+      if let pulsar_ir::NodeKind::Orm(orm) = graph.node(id).unwrap() {
+        assert_eq!(orm.args.limit, Some(5));
+      }
+    }
+  }
+
+  #[test]
+  fn extract_non_await_chain() {
+    let source = "const x = db.select().from(users);";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    assert_eq!(graph.node_count(), 2);
+  }
+
+  #[test]
+  fn extract_only_regular_code() {
+    let source = "const x = 1 + 2;\nconsole.log(x);\n";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    assert_eq!(graph.node_count(), 0);
+  }
+
+  #[test]
+  fn extract_select_with_boolean_and_null() {
+    let source = "await db.select({ active: true, deleted: null }).from(users);";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    assert_eq!(graph.node_count(), 2);
+    for id in graph.node_indices() {
+      if let pulsar_ir::NodeKind::Orm(orm) = graph.node(id).unwrap() {
+        // Both keys are extracted regardless of their values
+        assert_eq!(orm.args.columns, vec!["active", "deleted"]);
+      }
+    }
+  }
+
+  #[test]
+  fn extract_multiple_different_chains() {
+    let source = "\
+            await db.select().from(users);\
+            await db.select({ id: posts.id }).from(posts).where(eq(posts.id, 1));\
+            await db.select().from(comments).limit(5);\
+        ";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    assert_eq!(graph.node_count(), 6, "3 ORM + 3 SQL nodes");
+    assert_eq!(graph.edge_count(), 3);
+  }
 }
