@@ -49,15 +49,15 @@ jobs:
 
       - name: Smoke test (fixtures)
         run: |
-          output=$(cargo run --release --locked -p pulsar-cli -- check test/fixtures/ 2>&1) || true
-          echo "$output"
-          echo "$output" | grep -q "error" || { echo "FAIL: expected 'error' in output"; exit 1; }
+          cargo run --release --locked -p pulsar-cli -- check test/fixtures/ > /tmp/smoke.txt 2>&1 || true
+          cat /tmp/smoke.txt
+          grep -q "error" /tmp/smoke.txt || { echo "FAIL: expected 'error' in output"; exit 1; }
 
       - name: Smoke test (json)
         run: |
-          output=$(cargo run --release --locked -p pulsar-cli -- check test/fixtures/ --format json 2>&1) || true
-          echo "$output"
-          echo "$output" | jq -e 'length > 0' || { echo "FAIL: expected non-empty JSON array"; exit 1; }
+          cargo run --release --locked -p pulsar-cli -- check test/fixtures/ --format json > /tmp/smoke.json 2>/dev/null || true
+          cat /tmp/smoke.json
+          jq -e 'length > 0' /tmp/smoke.json || { echo "FAIL: expected non-empty JSON array"; exit 1; }
 
       - name: Smoke test (no issues on clean file)
         run: |
