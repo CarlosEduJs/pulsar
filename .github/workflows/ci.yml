@@ -46,3 +46,20 @@ jobs:
 
       - name: Build (release)
         run: cargo build --release --locked
+
+      - name: Smoke test (fixtures)
+        run: |
+          output=$(cargo run --release --locked -p pulsar-cli -- check test/fixtures/ 2>&1) || true
+          echo "$output"
+          echo "$output" | grep -q "error" || { echo "FAIL: expected 'error' in output"; exit 1; }
+
+      - name: Smoke test (json)
+        run: |
+          output=$(cargo run --release --locked -p pulsar-cli -- check test/fixtures/ --format json 2>&1) || true
+          echo "$output"
+          echo "$output" | jq -e 'length > 0' || { echo "FAIL: expected non-empty JSON array"; exit 1; }
+
+      - name: Smoke test (no issues on clean file)
+        run: |
+          echo "const x = 1;" > /tmp/clean.ts
+          cargo run --release --locked -p pulsar-cli -- check /tmp/clean.ts
