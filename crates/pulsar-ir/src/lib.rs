@@ -286,7 +286,12 @@ mod tests {
     let mut g = IrGraph::new();
     let orm = OrmNode {
       method: OrmMethod::Select,
-      args: OrmArgs { columns: vec!["id".to_string()], where_clause: None, limit: None, include: Vec::new() },
+      args: OrmArgs {
+        columns: vec!["id".to_string()],
+        where_clause: None,
+        limit: None,
+        include: Vec::new(),
+      },
       location: location("test.ts", 1, 1),
     };
     let id = g.add_orm(orm.clone());
@@ -302,7 +307,12 @@ mod tests {
     let mut g = IrGraph::new();
     let schema = SchemaNode {
       table_name: "users".to_string(),
-      columns: vec![SchemaColumn { name: "id".to_string(), col_type: "integer".to_string(), is_nullable: false, is_indexed: true }],
+      columns: vec![SchemaColumn {
+        name: "id".to_string(),
+        col_type: "integer".to_string(),
+        is_nullable: false,
+        is_indexed: true,
+      }],
     };
     let id = g.add_schema(schema.clone());
     assert_eq!(g.node_count(), 1);

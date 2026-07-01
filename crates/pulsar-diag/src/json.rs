@@ -64,12 +64,7 @@ mod tests {
       Diagnostic {
         severity: Severity::Warning,
         message: "warning msg".to_string(),
-        location: SourceLocation {
-          file: "b.ts".to_string(),
-          line: 2,
-          column: 10,
-          span: None,
-        },
+        location: SourceLocation { file: "b.ts".to_string(), line: 2, column: 10, span: None },
         rule_id: "rule-two".to_string(),
       },
     ];
@@ -89,12 +84,7 @@ mod tests {
     let diag = Diagnostic {
       severity: Severity::Info,
       message: "info msg".to_string(),
-      location: SourceLocation {
-        file: "test.ts".to_string(),
-        line: 3,
-        column: 8,
-        span: None,
-      },
+      location: SourceLocation { file: "test.ts".to_string(), line: 3, column: 8, span: None },
       rule_id: "info-rule".to_string(),
     };
     let formatter = JsonFormatter;

@@ -123,7 +123,10 @@ mod tests {
     let location = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
     let sql = SQLNode {
       kind: SqlKind::Select,
-      columns: vec![pulsar_ir::ColumnRef { name: "*".to_string(), table: Some("users".to_string()) }],
+      columns: vec![pulsar_ir::ColumnRef {
+        name: "*".to_string(),
+        table: Some("users".to_string()),
+      }],
       table: Some(TableRef { name: "users".to_string(), alias: None }),
       limit: false,
       where_clause: false,
