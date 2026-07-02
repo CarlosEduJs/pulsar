@@ -99,10 +99,22 @@ fn extract_from_statement_with_ctx<'a>(
       }
     }
     Statement::ForStatement(_) | Statement::WhileStatement(_) | Statement::DoWhileStatement(_) => {
-      handle_loop_body(find_loop_body(stmt), source, file_path, graph, ctx.with_loop(LoopKind::Counter));
+      handle_loop_body(
+        find_loop_body(stmt),
+        source,
+        file_path,
+        graph,
+        ctx.with_loop(LoopKind::Counter),
+      );
     }
     Statement::ForInStatement(_) | Statement::ForOfStatement(_) => {
-      handle_loop_body(find_loop_body(stmt), source, file_path, graph, ctx.with_loop(LoopKind::Iteration));
+      handle_loop_body(
+        find_loop_body(stmt),
+        source,
+        file_path,
+        graph,
+        ctx.with_loop(LoopKind::Iteration),
+      );
     }
     Statement::IfStatement(if_stmt) => {
       extract_from_statement_with_ctx(&if_stmt.consequent, source, file_path, graph, ctx);
@@ -225,9 +237,7 @@ fn try_extract_raw_sql<'a>(
     Expression::CallExpression(call) => {
       if let Expression::StaticMemberExpression(member) = &call.callee {
         if let Expression::Identifier(obj) = &member.object {
-          if obj.name.as_str() == "db"
-            && RAW_DB_METHODS.contains(&member.property.name.as_str())
-          {
+          if obj.name.as_str() == "db" && RAW_DB_METHODS.contains(&member.property.name.as_str()) {
             let location = span_to_location(call.span, source, file_path);
             graph.add_raw_sql(RawSqlNode {
               kind: RawSqlKind::DbRawMethod,

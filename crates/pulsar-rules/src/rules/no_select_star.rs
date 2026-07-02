@@ -43,9 +43,7 @@ impl Rule for NoSelectStar {
 mod tests {
   use super::*;
   use pulsar_core::SourceLocation;
-  use pulsar_ir::{
-    IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode, SQLNode, SqlKind, TableRef,
-  };
+  use pulsar_ir::{IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode, SQLNode, SqlKind, TableRef};
 
   fn make_graph(with_columns: bool) -> IrGraph {
     let mut graph = IrGraph::new();
@@ -128,7 +126,8 @@ mod tests {
     graph.add_edge(orm_id, sql_id, pulsar_ir::EdgeKind::Generates);
 
     let rule = NoSelectStar;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
     assert_eq!(diags[0].rule_id, "no-select-star");
@@ -162,7 +161,8 @@ mod tests {
     graph.add_edge(orm_id, sql_id, pulsar_ir::EdgeKind::Generates);
 
     let rule = NoSelectStar;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
   }
@@ -195,7 +195,8 @@ mod tests {
     graph.add_edge(orm_id, sql_id, pulsar_ir::EdgeKind::Generates);
 
     let rule = NoSelectStar;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
   }

@@ -100,7 +100,16 @@ mod tests {
     let mut graph = IrGraph::new();
     let loc = SourceLocation { file: "test.ts".to_string(), line: 2, column: 5, span: None };
 
-    process_drizzle_chain(vec![], Some("users".to_string()), None, None, LoopKind::None, false, loc, &mut graph);
+    process_drizzle_chain(
+      vec![],
+      Some("users".to_string()),
+      None,
+      None,
+      LoopKind::None,
+      false,
+      loc,
+      &mut graph,
+    );
 
     assert_eq!(graph.node_count(), 2);
     for id in graph.node_indices() {
