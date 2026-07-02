@@ -61,8 +61,7 @@ fn run_check(args: CheckArgs) -> Result<()> {
   let format = args.format;
   let config_path = args.config.as_ref().map(|s| Path::new(s));
 
-  let config = config::PulsarConfig::load(config_path)
-    .with_context(|| "failed to load config")?;
+  let config = config::PulsarConfig::load(config_path).with_context(|| "failed to load config")?;
   let engine = registry::resolve_rules(&config.settings.rules);
 
   let mut walker_builder = WalkBuilder::new(&path);
