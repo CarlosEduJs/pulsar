@@ -51,7 +51,7 @@ ci = "github"
 # The installers to generate for each app
 installers = []
 # Allow custom modifications to dist-managed CI files
-allow-dirty = ["release.yml"]
+allow-dirty = ["ci"]
 
 [workspace.lints.clippy]
 all = "deny"
