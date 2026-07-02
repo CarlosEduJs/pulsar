@@ -67,6 +67,7 @@ mod tests {
     let orm = OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
+      in_loop: false,
       location,
     };
 
@@ -111,6 +112,7 @@ mod tests {
     let orm = OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
+      in_loop: false,
       location,
     };
     let sql_id = graph.add_sql(sql);
@@ -142,6 +144,7 @@ mod tests {
     let orm = OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
+      in_loop: false,
       location,
     };
     let sql_id = graph.add_sql(sql);
@@ -172,6 +175,7 @@ mod tests {
     let orm = OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
+      in_loop: false,
       location,
     };
     let sql_id = graph.add_sql(sql);

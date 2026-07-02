@@ -57,6 +57,7 @@ mod tests {
     let orm = OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: vec![] },
+      in_loop: false,
       location: loc,
     };
     let s = graph.add_sql(sql);
@@ -84,6 +85,7 @@ mod tests {
         limit: None,
         include: vec![],
       },
+      in_loop: false,
       location: loc,
     };
     let s = graph.add_sql(sql);

@@ -160,7 +160,7 @@ fn run_init() -> Result<()> {
 ignore = [\"node_modules\", \"dist\", \"build\"]
 
 # Enabled rules (empty = all built-in rules)
-rules = [\"no-select-star\"]
+rules = [\"no-select-star\", \"no-missing-limit\", \"no-unbounded-find\", \"no-always-true-where\", \"no-query-in-loop\"]
 ";
   std::fs::write("pulsar.toml", config).context("failed to write pulsar.toml")?;
   eprintln!("Created pulsar.toml");
