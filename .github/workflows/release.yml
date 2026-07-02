@@ -278,19 +278,35 @@ jobs:
 
           gh release create "${{ needs.plan.outputs.tag }}" --target "$RELEASE_COMMIT" $PRERELEASE_FLAG --title "$ANNOUNCEMENT_TITLE" --notes-file "$RUNNER_TEMP/notes.txt" artifacts/*
 
-  announce:
+  # Generate changelog with git-cliff and prepend it to the release body.
+  # This lives inside release.yml (instead of a separate workflow) because
+  # release events triggered by GITHUB_TOKEN cannot start other workflows.
+  changelog:
     needs:
       - plan
       - host
-    # use "always() && ..." to allow us to wait for all publish jobs while
-    # still allowing individual publish jobs to skip themselves (for prereleases).
-    # "host" however must run to completion, no skipping allowed!
-    if: ${{ always() && needs.host.result == 'success' }}
+    if: ${{ always() && needs.host.result == 'success' && needs.plan.outputs.publishing == 'true' }}
     runs-on: "ubuntu-22.04"
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v6
         with:
+          fetch-depth: 0
           persist-credentials: false
-          submodules: recursive
+      - uses: orhun/git-cliff-action@f50e11560dce63f7c33227798f90b924471a88b5 # v4
+        with:
+          config: cliff.toml
+          args: --latest --output CHANGELOG.md
+      - name: Update release body
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ needs.plan.outputs.tag }}"
+          gh release view "$TAG" --json body --jq '.body' > /tmp/current_body.txt
+          {
+            cat CHANGELOG.md
+            echo ""
+            echo "---"
+            echo ""
+            cat /tmp/current_body.txt
+          } > /tmp/combined.md
+          gh release edit "$TAG" --notes-file /tmp/combined.md
