@@ -650,6 +650,7 @@ version = "0.1.0"
 dependencies = [
  "oxc",
  "pulsar-core",
+ "pulsar-graph",
  "pulsar-ir",
  "thiserror 2.0.18",
  "tracing",
@@ -680,6 +681,7 @@ name = "pulsar-graph"
 version = "0.1.0"
 dependencies = [
  "petgraph",
+ "pulsar-core",
  "pulsar-ir",
  "thiserror 2.0.18",
  "tracing",

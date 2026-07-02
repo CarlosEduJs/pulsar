@@ -82,6 +82,9 @@ explain rule:
 init:
   cargo run -p pulsar-cli -- init
 
+# Generate pulsar.toml in current directory (alias)
+config: init
+
 # Dist
 
 # Run cargo dist plan

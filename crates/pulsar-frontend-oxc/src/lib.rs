@@ -8,9 +8,7 @@ use oxc::ast::ast::{
 use oxc::parser::Parser;
 use oxc::span::SourceType;
 use pulsar_core::SourceLocation;
-use pulsar_ir::{
-  ColumnRef, EdgeKind, IrGraph, OrmArgs, OrmMethod, OrmNode, SQLNode, SqlKind, TableRef,
-};
+use pulsar_ir::IrGraph;
 
 /// Errors that can occur during Oxc extraction.
 #[derive(Debug, thiserror::Error)]
@@ -199,42 +197,27 @@ fn is_drizzle_select_chain(chain: &[MethodCall]) -> bool {
   chain.first().is_some_and(|m| m.name == "select")
 }
 
-/// Converts a Drizzle method chain into ORM and SQL nodes, adding them to the graph.
+/// Extracts data from a Drizzle chain and delegates graph construction to [`pulsar_graph`].
 fn process_drizzle_chain(
   chain: &[MethodCall],
   location: SourceLocation,
   graph: &mut IrGraph,
   in_loop: bool,
 ) {
-  let orm_node = build_orm_node(chain, location.clone(), in_loop);
-  let sql_node = build_sql_node(chain, location);
-
-  let orm_id = graph.add_orm(orm_node);
-  let sql_id = graph.add_sql(sql_node);
-  graph.add_edge(orm_id, sql_id, EdgeKind::Generates);
-}
-
-fn build_orm_node(chain: &[MethodCall], location: SourceLocation, in_loop: bool) -> OrmNode {
   let columns = extract_select_columns(chain);
+  let table_name = extract_table(chain);
   let limit = extract_limit(chain);
   let where_clause = extract_where(chain);
 
-  OrmNode {
-    method: OrmMethod::Select,
-    args: OrmArgs { columns, where_clause, limit, include: Vec::new() },
+  pulsar_graph::process_drizzle_chain(
+    columns,
+    table_name,
+    limit,
+    where_clause,
     in_loop,
     location,
-  }
-}
-
-fn build_sql_node(chain: &[MethodCall], location: SourceLocation) -> SQLNode {
-  let columns =
-    extract_select_columns(chain).into_iter().map(|c| ColumnRef { name: c, table: None }).collect();
-  let table = extract_table(chain).map(|t| TableRef { name: t, alias: None });
-  let limit = extract_limit(chain).is_some();
-  let where_clause = extract_where(chain).is_some();
-
-  SQLNode { kind: SqlKind::Select, columns, table, limit, where_clause, location }
+    graph,
+  );
 }
 
 // Argument extraction helpers
