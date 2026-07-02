@@ -620,13 +620,9 @@ dependencies = [
  "pulsar-core",
  "pulsar-diag",
  "pulsar-frontend-oxc",
- "pulsar-frontend-prisma",
- "pulsar-frontend-sql",
- "pulsar-graph",
- "pulsar-ir",
  "pulsar-rules",
+ "serde",
  "toml",
- "tracing",
 ]
 
 [[package]]

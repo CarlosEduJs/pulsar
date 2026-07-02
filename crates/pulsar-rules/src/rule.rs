@@ -16,6 +16,11 @@ pub trait Rule {
   /// Unique identifier for this rule (e.g. `"no-select-star"`).
   fn id(&self) -> &'static str;
 
+  /// Human-readable documentation for the rule.
+  fn docs(&self) -> &'static str {
+    ""
+  }
+
   /// Run the rule against the given context and return any diagnostics found.
   fn run(&self, ctx: &RuleContext) -> Vec<Diagnostic>;
 }

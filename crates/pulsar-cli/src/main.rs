@@ -1,5 +1,6 @@
 #![allow(clippy::multiple_crate_versions)]
 
+use std::path::Path;
 use std::process;
 
 use anyhow::{Context, Result};
@@ -9,8 +10,10 @@ use oxc::span::SourceType;
 use pulsar_core::Severity;
 use pulsar_diag::{DiagnosticFormatter, JsonFormatter, PrettyFormatter};
 use pulsar_frontend_oxc::extract;
-use pulsar_rules::rules::NoSelectStar;
-use pulsar_rules::{RuleContext, RuleEngine};
+use pulsar_rules::RuleContext;
+
+mod config;
+mod registry;
 
 #[derive(Parser)]
 #[command(name = "pulsar", about = "Static analyzer for TypeScript + ORM + SQL", version)]
@@ -36,6 +39,9 @@ struct CheckArgs {
   /// Output format: pretty or json
   #[arg(short, long, default_value = "pretty")]
   format: String,
+  /// Path to pulsar.toml config file
+  #[arg(long)]
+  config: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -53,11 +59,27 @@ fn main() -> Result<()> {
 fn run_check(args: CheckArgs) -> Result<()> {
   let path = args.path.unwrap_or_else(|| ".".to_string());
   let format = args.format;
+  let config_path = args.config.as_ref().map(|s| Path::new(s));
 
-  let walker = WalkBuilder::new(&path).standard_filters(true).build();
+  let config = config::PulsarConfig::load(config_path).with_context(|| "failed to load config")?;
+  let engine = registry::resolve_rules(&config.settings.rules);
 
-  let engine = build_rule_engine();
-  // (file_path, source_text, diagnostics)
+  let mut walker_builder = WalkBuilder::new(&path);
+  walker_builder.standard_filters(true);
+
+  if !config.settings.ignore.is_empty() {
+    let ignore_list = config.settings.ignore.clone();
+    walker_builder.filter_entry(move |entry| {
+      let file_name = match entry.file_name().to_str() {
+        Some(n) => n,
+        None => return true,
+      };
+      !ignore_list.iter().any(|pat| file_name == pat)
+    });
+  }
+
+  let walker = walker_builder.build();
+
   let mut file_diagnostics: Vec<(String, String, Vec<pulsar_core::Diagnostic>)> = Vec::new();
 
   for result in walker {
@@ -131,19 +153,13 @@ fn run_check(args: CheckArgs) -> Result<()> {
   Ok(())
 }
 
-fn build_rule_engine() -> RuleEngine {
-  let mut engine = RuleEngine::new();
-  engine.register(Box::new(NoSelectStar));
-  engine
-}
-
 fn run_init() -> Result<()> {
   let config = "\
 [settings]
 # Directories/files to ignore (in addition to .gitignore)
 ignore = [\"node_modules\", \"dist\", \"build\"]
 
-# Enabled rules
+# Enabled rules (empty = all built-in rules)
 rules = [\"no-select-star\"]
 ";
   std::fs::write("pulsar.toml", config).context("failed to write pulsar.toml")?;
@@ -152,18 +168,15 @@ rules = [\"no-select-star\"]
 }
 
 fn run_explain(rule: &str) {
-  if rule == "no-select-star" {
-    println!(
-      "\
-no-select-star
-
-Flags SELECT * queries — both implicit (empty column list) and explicit wildcards.
-
-Using SELECT * makes queries fragile and often fetches more data than needed. \
-      Always specify the columns required."
-    );
-  } else {
-    eprintln!("Unknown rule: {rule}");
-    process::exit(1);
+  let builtins = registry::builtin_rules();
+  match builtins.get(rule) {
+    Some(ctor) => {
+      let r = ctor();
+      println!("{}\n\n{}", r.id(), r.docs());
+    }
+    None => {
+      eprintln!("Unknown rule: {rule}");
+      process::exit(1);
+    }
   }
 }
