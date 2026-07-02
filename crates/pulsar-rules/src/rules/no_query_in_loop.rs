@@ -27,15 +27,22 @@ impl Rule for NoQueryInLoop {
     let mut diags = Vec::new();
     for id in ctx.graph.node_indices() {
       if let NodeKind::Orm(orm) = ctx.graph.node(id).expect("node should exist") {
-        if orm.loop_kind != LoopKind::None {
-          diags.push(Diagnostic {
-            severity: Severity::Error,
-            message: "Database query inside a loop — extract it outside to avoid N+1 queries."
-              .to_string(),
-            location: orm.location.clone(),
-            rule_id: self.id().to_string(),
-          });
+        if orm.loop_kind == LoopKind::None {
+          continue;
         }
+        // When no-n-plus-one is active, skip iteration loops (it handles them).
+        if orm.loop_kind == LoopKind::Iteration
+          && ctx.active_rules.contains(&"no-n-plus-one".to_string())
+        {
+          continue;
+        }
+        diags.push(Diagnostic {
+          severity: Severity::Error,
+          message: "Database query inside a loop — extract it outside to avoid N+1 queries."
+            .to_string(),
+          location: orm.location.clone(),
+          rule_id: self.id().to_string(),
+        });
       }
     }
     diags
@@ -109,5 +116,34 @@ mod tests {
       RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert!(diags.is_empty());
+  }
+
+  #[test]
+  fn skips_iteration_when_n_plus_one_active() {
+    let graph = make_graph(LoopKind::Iteration);
+    let rule = NoQueryInLoop;
+    let ctx = RuleContext {
+      graph: &graph,
+      source_text: "",
+      file_path: "test.ts",
+      active_rules: &["no-n-plus-one".to_string()],
+    };
+    let diags = rule.run(&ctx);
+    assert!(diags.is_empty(), "should skip iteration loops when no-n-plus-one is active");
+  }
+
+  #[test]
+  fn still_flags_counter_when_n_plus_one_active() {
+    let graph = make_graph(LoopKind::Counter);
+    let rule = NoQueryInLoop;
+    let ctx = RuleContext {
+      graph: &graph,
+      source_text: "",
+      file_path: "test.ts",
+      active_rules: &["no-n-plus-one".to_string()],
+    };
+    let diags = rule.run(&ctx);
+    assert_eq!(diags.len(), 1, "should still flag counter loops when no-n-plus-one is active");
+    assert_eq!(diags[0].rule_id, "no-query-in-loop");
   }
 }
