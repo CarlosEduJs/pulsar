@@ -47,7 +47,7 @@ impl Rule for NoAlwaysTrueWhere {
 mod tests {
   use super::*;
   use pulsar_core::SourceLocation;
-  use pulsar_ir::{IrGraph, OrmArgs, OrmMethod, OrmNode};
+  use pulsar_ir::{IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode};
 
   fn make_graph(where_clause: Option<&str>) -> IrGraph {
     let mut graph = IrGraph::new();
@@ -61,7 +61,8 @@ mod tests {
         limit: None,
         include: Vec::new(),
       },
-      in_loop: false,
+      loop_kind: LoopKind::None,
+      in_callback: false,
       location,
     };
 

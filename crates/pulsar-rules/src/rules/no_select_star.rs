@@ -43,7 +43,9 @@ impl Rule for NoSelectStar {
 mod tests {
   use super::*;
   use pulsar_core::SourceLocation;
-  use pulsar_ir::{IrGraph, OrmArgs, OrmMethod, OrmNode, SQLNode, SqlKind, TableRef};
+  use pulsar_ir::{
+    IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode, SQLNode, SqlKind, TableRef,
+  };
 
   fn make_graph(with_columns: bool) -> IrGraph {
     let mut graph = IrGraph::new();
@@ -61,13 +63,15 @@ mod tests {
       table: Some(TableRef { name: "users".to_string(), alias: None }),
       limit: false,
       where_clause: false,
+      in_callback: false,
       location: location.clone(),
     };
 
     let orm = OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
-      in_loop: false,
+      loop_kind: LoopKind::None,
+      in_callback: false,
       location,
     };
 
@@ -109,12 +113,14 @@ mod tests {
       table: Some(TableRef { name: "users".to_string(), alias: None }),
       limit: false,
       where_clause: false,
+      in_callback: false,
       location: location.clone(),
     };
     let orm = OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
-      in_loop: false,
+      loop_kind: LoopKind::None,
+      in_callback: false,
       location,
     };
     let sql_id = graph.add_sql(sql);
@@ -122,8 +128,7 @@ mod tests {
     graph.add_edge(orm_id, sql_id, pulsar_ir::EdgeKind::Generates);
 
     let rule = NoSelectStar;
-    let ctx =
-      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
     assert_eq!(diags[0].rule_id, "no-select-star");
@@ -142,12 +147,14 @@ mod tests {
       table: Some(TableRef { name: "users".to_string(), alias: None }),
       limit: false,
       where_clause: false,
+      in_callback: false,
       location: location.clone(),
     };
     let orm = OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
-      in_loop: false,
+      loop_kind: LoopKind::None,
+      in_callback: false,
       location,
     };
     let sql_id = graph.add_sql(sql);
@@ -155,8 +162,7 @@ mod tests {
     graph.add_edge(orm_id, sql_id, pulsar_ir::EdgeKind::Generates);
 
     let rule = NoSelectStar;
-    let ctx =
-      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
   }
@@ -174,12 +180,14 @@ mod tests {
       table: Some(TableRef { name: "users".to_string(), alias: None }),
       limit: false,
       where_clause: false,
+      in_callback: false,
       location: location.clone(),
     };
     let orm = OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
-      in_loop: false,
+      loop_kind: LoopKind::None,
+      in_callback: false,
       location,
     };
     let sql_id = graph.add_sql(sql);
@@ -187,8 +195,7 @@ mod tests {
     graph.add_edge(orm_id, sql_id, pulsar_ir::EdgeKind::Generates);
 
     let rule = NoSelectStar;
-    let ctx =
-      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
   }

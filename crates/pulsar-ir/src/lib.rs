@@ -8,6 +8,17 @@ use pulsar_core::SourceLocation;
 /// Unique identifier for a node in the IR graph.
 pub type NodeId = NodeIndex;
 
+/// Contextual kind of loop an ORM node appears in.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LoopKind {
+  /// Not inside any loop.
+  None,
+  /// Inside a counter-based loop (for, while, do-while).
+  Counter,
+  /// Inside an iteration loop (for-of, for-in).
+  Iteration,
+}
+
 // Edge kinds
 // ==========
 
@@ -56,6 +67,7 @@ pub struct SQLNode {
   pub table: Option<TableRef>,
   pub limit: bool,
   pub where_clause: bool,
+  pub in_callback: bool,
   pub location: SourceLocation,
 }
 
@@ -95,7 +107,8 @@ pub struct OrmArgs {
 pub struct OrmNode {
   pub method: OrmMethod,
   pub args: OrmArgs,
-  pub in_loop: bool,
+  pub loop_kind: LoopKind,
+  pub in_callback: bool,
   pub location: SourceLocation,
 }
 
@@ -211,6 +224,7 @@ mod tests {
       table: Some(TableRef { name: "users".to_string(), alias: None }),
       limit: false,
       where_clause: false,
+      in_callback: false,
       location: SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None },
     }
   }
@@ -293,7 +307,8 @@ mod tests {
         limit: None,
         include: Vec::new(),
       },
-      in_loop: false,
+      loop_kind: LoopKind::None,
+      in_callback: false,
       location: location("test.ts", 1, 1),
     };
     let id = g.add_orm(orm.clone());
@@ -331,7 +346,8 @@ mod tests {
     let orm = g.add_orm(OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: Vec::new() },
-      in_loop: false,
+      loop_kind: LoopKind::None,
+      in_callback: false,
       location: location("test.ts", 1, 1),
     });
     g.add_edge(orm, sql, EdgeKind::Generates);

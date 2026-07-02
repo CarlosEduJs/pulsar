@@ -71,7 +71,7 @@ pub fn parse_sql(sql: &str, location: SourceLocation) -> Result<SQLNode, SqlPars
       let limit = limit.is_some();
       let where_clause = select.selection.is_some();
 
-      Ok(SQLNode { kind, columns, table, limit, where_clause, location })
+      Ok(SQLNode { kind, columns, table, limit, where_clause, in_callback: false, location })
     }
     other => Err(SqlParseError::UnsupportedStatement(other.to_string())),
   }
