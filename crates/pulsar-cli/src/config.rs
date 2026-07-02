@@ -10,7 +10,7 @@ pub struct PulsarConfig {
 
 #[derive(Debug, Deserialize)]
 pub struct Settings {
-  /// Directories/files to ignore (in addition to .gitignore).
+  /// File or directory *names* to skip by exact match (in addition to .gitignore).
   #[serde(default)]
   pub ignore: Vec<String>,
   /// Enabled rules. Empty means all built-in rules.
@@ -33,8 +33,8 @@ impl Default for Settings {
 impl PulsarConfig {
   /// Loads config from `--config <path>`, or auto-detects `./pulsar.toml`.
   ///
-  /// Returns `Ok(None)` if no file exists and no explicit path was given
-  /// (caller falls back to defaults).
+  /// Returns `Ok(Default::default())` if no file exists and no explicit path
+  /// was given (caller falls back to all built-in rules).
   pub fn load(explicit: Option<&Path>) -> Result<Self, ConfigError> {
     let path = match explicit {
       Some(p) => {
@@ -76,4 +76,12 @@ impl std::fmt::Display for ConfigError {
   }
 }
 
-impl std::error::Error for ConfigError {}
+impl std::error::Error for ConfigError {
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    match self {
+      Self::Io(_, e) => Some(e),
+      Self::Parse(_, e) => Some(e),
+      Self::NotFound(_) => None,
+    }
+  }
+}

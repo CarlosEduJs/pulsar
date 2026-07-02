@@ -1,15 +1,19 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use pulsar_rules::rules::NoSelectStar;
 use pulsar_rules::{Rule, RuleEngine};
 
 type RuleConstructor = fn() -> Box<dyn Rule>;
 
+fn no_select_star() -> Box<dyn Rule> {
+  Box::new(NoSelectStar)
+}
+
 /// Returns all built-in rules keyed by their `id()`.
 #[must_use]
-pub fn builtin_rules() -> HashMap<&'static str, RuleConstructor> {
-  let mut map: HashMap<&'static str, RuleConstructor> = HashMap::new();
-  map.insert("no-select-star", || Box::new(NoSelectStar));
+pub fn builtin_rules() -> BTreeMap<&'static str, RuleConstructor> {
+  let mut map: BTreeMap<&'static str, RuleConstructor> = BTreeMap::new();
+  map.insert("no-select-star", no_select_star);
   map
 }
 
