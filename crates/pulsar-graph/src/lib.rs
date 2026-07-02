@@ -65,7 +65,6 @@ pub fn process_drizzle_chain(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use pulsar_ir::IrGraph;
 
   #[test]
   fn process_select_chain_adds_two_nodes_and_edge() {
