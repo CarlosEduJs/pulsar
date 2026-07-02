@@ -81,7 +81,8 @@ mod tests {
   fn detects_select_star() {
     let graph = make_graph(false);
     let rule = NoSelectStar;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
     assert_eq!(diags[0].rule_id, "no-select-star");
@@ -92,7 +93,8 @@ mod tests {
   fn allows_explicit_columns() {
     let graph = make_graph(true);
     let rule = NoSelectStar;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 0);
   }
@@ -120,7 +122,8 @@ mod tests {
     graph.add_edge(orm_id, sql_id, pulsar_ir::EdgeKind::Generates);
 
     let rule = NoSelectStar;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
     assert_eq!(diags[0].rule_id, "no-select-star");
@@ -152,7 +155,8 @@ mod tests {
     graph.add_edge(orm_id, sql_id, pulsar_ir::EdgeKind::Generates);
 
     let rule = NoSelectStar;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
   }
@@ -183,7 +187,8 @@ mod tests {
     graph.add_edge(orm_id, sql_id, pulsar_ir::EdgeKind::Generates);
 
     let rule = NoSelectStar;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
   }
@@ -192,7 +197,8 @@ mod tests {
   fn empty_graph_returns_no_diagnostics() {
     let graph = IrGraph::new();
     let rule = NoSelectStar;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert!(diags.is_empty());
   }

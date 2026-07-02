@@ -2,13 +2,13 @@ use std::path::Path;
 
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct PulsarConfig {
   #[serde(default)]
   pub settings: Settings,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct Settings {
   /// File or directory *names* to skip by exact match (in addition to .gitignore).
   #[serde(default)]
@@ -18,38 +18,23 @@ pub struct Settings {
   pub rules: Vec<String>,
 }
 
-impl Default for PulsarConfig {
-  fn default() -> Self {
-    Self { settings: Settings::default() }
-  }
-}
-
-impl Default for Settings {
-  fn default() -> Self {
-    Self { ignore: vec![], rules: vec![] }
-  }
-}
-
 impl PulsarConfig {
   /// Loads config from `--config <path>`, or auto-detects `./pulsar.toml`.
   ///
   /// Returns `Ok(Default::default())` if no file exists and no explicit path
   /// was given (caller falls back to all built-in rules).
   pub fn load(explicit: Option<&Path>) -> Result<Self, ConfigError> {
-    let path = match explicit {
-      Some(p) => {
-        if !p.exists() {
-          return Err(ConfigError::NotFound(p.to_string_lossy().to_string()));
-        }
-        p.to_owned()
+    let path = if let Some(p) = explicit {
+      if !p.exists() {
+        return Err(ConfigError::NotFound(p.to_string_lossy().to_string()));
       }
-      None => {
-        let auto = Path::new("pulsar.toml");
-        if !auto.exists() {
-          return Ok(Self::default());
-        }
-        auto.to_owned()
+      p.to_owned()
+    } else {
+      let auto = Path::new("pulsar.toml");
+      if !auto.exists() {
+        return Ok(Self::default());
       }
+      auto.to_owned()
     };
 
     let contents = std::fs::read_to_string(&path)

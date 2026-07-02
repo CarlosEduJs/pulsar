@@ -9,6 +9,8 @@ pub struct RuleContext<'a> {
   pub source_text: &'a str,
   /// The file path of the source being analyzed.
   pub file_path: &'a str,
+  /// Rule IDs active in the current run (used for cross-rule coordination).
+  pub active_rules: &'a [String],
 }
 
 /// A lint rule that inspects the IR graph and produces diagnostics.

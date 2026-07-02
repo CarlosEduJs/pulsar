@@ -1,4 +1,5 @@
 use pulsar_core::Diagnostic;
+use pulsar_ir::IrGraph;
 
 use crate::rule::{Rule, RuleContext};
 
@@ -21,10 +22,12 @@ impl RuleEngine {
 
   /// Runs all registered rules and returns all collected diagnostics.
   #[must_use]
-  pub fn run(&self, ctx: &RuleContext) -> Vec<Diagnostic> {
+  pub fn run(&self, graph: &IrGraph, source_text: &str, file_path: &str) -> Vec<Diagnostic> {
+    let active_rules: Vec<String> = self.rules.iter().map(|r| r.id().to_string()).collect();
+    let ctx = RuleContext { graph, source_text, file_path, active_rules: &active_rules };
     let mut all = Vec::new();
     for rule in &self.rules {
-      all.extend(rule.run(ctx));
+      all.extend(rule.run(&ctx));
     }
     all
   }
@@ -98,8 +101,7 @@ mod tests {
   fn engine_with_no_rules() {
     let engine = RuleEngine::new();
     let graph = graph_with_select_star();
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
-    let diags = engine.run(&ctx);
+    let diags = engine.run(&graph, "", "test.ts");
     assert!(diags.is_empty());
   }
 
@@ -107,8 +109,7 @@ mod tests {
   fn engine_with_no_rules_default() {
     let engine = RuleEngine::default();
     let graph = graph_with_select_star();
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
-    let diags = engine.run(&ctx);
+    let diags = engine.run(&graph, "", "test.ts");
     assert!(diags.is_empty());
   }
 
@@ -117,8 +118,7 @@ mod tests {
     let mut engine = RuleEngine::new();
     engine.register(Box::new(NoSelectStar));
     let graph = graph_with_select_star();
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
-    let diags = engine.run(&ctx);
+    let diags = engine.run(&graph, "", "test.ts");
     assert_eq!(diags.len(), 1);
     assert_eq!(diags[0].rule_id, "no-select-star");
   }
@@ -128,8 +128,7 @@ mod tests {
     let mut engine = RuleEngine::new();
     engine.register(Box::new(NoSelectStar));
     let graph = graph_with_explicit_columns();
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
-    let diags = engine.run(&ctx);
+    let diags = engine.run(&graph, "", "test.ts");
     assert!(diags.is_empty());
   }
 
@@ -138,8 +137,7 @@ mod tests {
     let mut engine = RuleEngine::new();
     engine.register(Box::new(NoSelectStar));
     let graph = IrGraph::new();
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
-    let diags = engine.run(&ctx);
+    let diags = engine.run(&graph, "", "test.ts");
     assert!(diags.is_empty());
   }
 }

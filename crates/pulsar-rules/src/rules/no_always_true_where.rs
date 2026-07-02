@@ -57,7 +57,7 @@ mod tests {
       method: OrmMethod::Select,
       args: OrmArgs {
         columns: vec!["id".to_string()],
-        where_clause: where_clause.map(|s| s.to_string()),
+        where_clause: where_clause.map(ToString::to_string),
         limit: None,
         include: Vec::new(),
       },
@@ -73,7 +73,8 @@ mod tests {
   fn flags_true_where() {
     let graph = make_graph(Some("true"));
     let rule = NoAlwaysTrueWhere;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
     assert_eq!(diags[0].rule_id, "no-always-true-where");
@@ -84,7 +85,8 @@ mod tests {
   fn allows_real_condition() {
     let graph = make_graph(Some("eq(users.id, 1)"));
     let rule = NoAlwaysTrueWhere;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 0);
   }
@@ -93,7 +95,8 @@ mod tests {
   fn allows_no_where() {
     let graph = make_graph(None);
     let rule = NoAlwaysTrueWhere;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 0);
   }
@@ -102,7 +105,8 @@ mod tests {
   fn empty_graph_no_diagnostics() {
     let graph = IrGraph::new();
     let rule = NoAlwaysTrueWhere;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert!(diags.is_empty());
   }

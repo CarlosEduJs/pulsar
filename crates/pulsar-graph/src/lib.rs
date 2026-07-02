@@ -5,7 +5,7 @@ use pulsar_ir::{
 
 /// Constructs an [`OrmNode`] from extracted method-chain data.
 #[must_use]
-pub fn build_orm_node(
+pub const fn build_orm_node(
   columns: Vec<String>,
   where_clause: Option<String>,
   limit: Option<u64>,
@@ -42,6 +42,7 @@ pub fn build_sql_node(
 }
 
 /// Converts a Drizzle `select` chain into ORM + SQL nodes and links them in the graph.
+#[allow(clippy::too_many_arguments)]
 pub fn process_drizzle_chain(
   columns: Vec<String>,
   table_name: Option<String>,

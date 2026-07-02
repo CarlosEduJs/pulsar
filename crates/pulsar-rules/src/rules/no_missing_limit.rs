@@ -80,7 +80,8 @@ mod tests {
   fn flags_missing_limit() {
     let graph = make_graph(false);
     let rule = NoMissingLimit;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
     assert_eq!(diags[0].rule_id, "no-missing-limit");
@@ -91,7 +92,8 @@ mod tests {
   fn allows_limit_present() {
     let graph = make_graph(true);
     let rule = NoMissingLimit;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 0);
   }
@@ -100,7 +102,8 @@ mod tests {
   fn empty_graph_no_diagnostics() {
     let graph = IrGraph::new();
     let rule = NoMissingLimit;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert!(diags.is_empty());
   }

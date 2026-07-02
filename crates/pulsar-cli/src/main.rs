@@ -10,8 +10,6 @@ use oxc::span::SourceType;
 use pulsar_core::Severity;
 use pulsar_diag::{DiagnosticFormatter, JsonFormatter, PrettyFormatter};
 use pulsar_frontend_oxc::extract;
-use pulsar_rules::RuleContext;
-
 mod config;
 mod registry;
 
@@ -59,7 +57,7 @@ fn main() -> Result<()> {
 fn run_check(args: CheckArgs) -> Result<()> {
   let path = args.path.unwrap_or_else(|| ".".to_string());
   let format = args.format;
-  let config_path = args.config.as_ref().map(|s| Path::new(s));
+  let config_path = args.config.as_ref().map(Path::new);
 
   let config = config::PulsarConfig::load(config_path).with_context(|| "failed to load config")?;
   let engine = registry::resolve_rules(&config.settings.rules);
@@ -68,12 +66,9 @@ fn run_check(args: CheckArgs) -> Result<()> {
   walker_builder.standard_filters(true);
 
   if !config.settings.ignore.is_empty() {
-    let ignore_list = config.settings.ignore.clone();
+    let ignore_list = config.settings.ignore;
     walker_builder.filter_entry(move |entry| {
-      let file_name = match entry.file_name().to_str() {
-        Some(n) => n,
-        None => return true,
-      };
+      let Some(file_name) = entry.file_name().to_str() else { return true };
       !ignore_list.iter().any(|pat| file_name == pat)
     });
   }
@@ -111,9 +106,7 @@ fn run_check(args: CheckArgs) -> Result<()> {
       }
     };
 
-    let ctx = RuleContext { graph: &graph, source_text: &source, file_path: &file_path_str };
-
-    let diagnostics = engine.run(&ctx);
+    let diagnostics = engine.run(&graph, &source, &file_path_str);
     if !diagnostics.is_empty() {
       file_diagnostics.push((file_path_str, source, diagnostics));
     }
@@ -130,19 +123,16 @@ fn run_check(args: CheckArgs) -> Result<()> {
     .filter(|d| d.severity == Severity::Error)
     .count();
 
-  match format.as_str() {
-    "json" => {
-      let all: Vec<pulsar_core::Diagnostic> =
-        file_diagnostics.iter().flat_map(|(_, _, diags)| diags.iter()).cloned().collect();
-      println!("{}", formatter.format(&all, ""));
+  if format.as_str() == "json" {
+    let all: Vec<pulsar_core::Diagnostic> =
+      file_diagnostics.iter().flat_map(|(_, _, diags)| diags.iter()).cloned().collect();
+    println!("{}", formatter.format(&all, ""));
+  } else {
+    if file_diagnostics.is_empty() {
+      return Ok(());
     }
-    _ => {
-      if file_diagnostics.is_empty() {
-        return Ok(());
-      }
-      for (_file_path, source, diags) in &file_diagnostics {
-        print!("{}", formatter.format(diags, source));
-      }
+    for (_file_path, source, diags) in &file_diagnostics {
+      print!("{}", formatter.format(diags, source));
     }
   }
 
@@ -169,14 +159,11 @@ rules = [\"no-select-star\", \"no-missing-limit\", \"no-unbounded-find\", \"no-a
 
 fn run_explain(rule: &str) {
   let builtins = registry::builtin_rules();
-  match builtins.get(rule) {
-    Some(ctor) => {
-      let r = ctor();
-      println!("{}\n\n{}", r.id(), r.docs());
-    }
-    None => {
-      eprintln!("Unknown rule: {rule}");
-      process::exit(1);
-    }
+  if let Some(ctor) = builtins.get(rule) {
+    let r = ctor();
+    println!("{}\n\n{}", r.id(), r.docs());
+  } else {
+    eprintln!("Unknown rule: {rule}");
+    process::exit(1);
   }
 }
