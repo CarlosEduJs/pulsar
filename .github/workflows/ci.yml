@@ -49,15 +49,19 @@ jobs:
 
       - name: Smoke test (all fixtures)
         run: |
-          # helpers
+          # helpers: 1=fixture_path, 2=expected_rule_id (optional)
           expect_diags() {
             local fixture="$1"
+            local expected_rule="${2:-}"
             echo "=== $fixture (expects diagnostics) ==="
             cargo run --release --locked -p pulsar-cli -- check "$fixture" > /tmp/smoke.txt 2>&1 || true
             cat /tmp/smoke.txt
-            # verify output is non-empty and contains a diagnostic rule id
             [ -s /tmp/smoke.txt ] || { echo "FAIL: $fixture should have diagnostic output"; exit 1; }
-            grep -qE "no-select-star|no-missing-limit|no-unbounded-find|no-always-true-where|no-query-in-loop" /tmp/smoke.txt || { echo "FAIL: $fixture missing rule id"; exit 1; }
+            if [ -n "$expected_rule" ]; then
+              grep -q "$expected_rule" /tmp/smoke.txt || { echo "FAIL: $fixture missing rule id $expected_rule"; exit 1; }
+            else
+              grep -qE "no-select-star|no-missing-limit|no-unbounded-find|no-always-true-where|no-query-in-loop" /tmp/smoke.txt || { echo "FAIL: $fixture missing rule id"; exit 1; }
+            fi
           }
           expect_clean() {
             local fixture="$1"
@@ -76,20 +80,20 @@ jobs:
             grep -q "Error parsing" /tmp/smoke_stderr.txt || { echo "FAIL: $fixture expected parse error on stderr"; exit 1; }
           }
 
-          expect_diags test/fixtures/basic.ts
-          expect_diags test/fixtures/with-where.ts
-          expect_diags test/fixtures/with-limit.ts
-          expect_diags test/fixtures/mixed-star-explicit.ts
+          expect_diags test/fixtures/basic.ts "no-select-star"
+          expect_diags test/fixtures/with-where.ts "no-select-star"
+          expect_diags test/fixtures/with-limit.ts "no-select-star"
+          expect_diags test/fixtures/mixed-star-explicit.ts "no-select-star"
           expect_clean test/fixtures/clean.ts
           expect_clean test/fixtures/no-issues.ts
           expect_parse_error test/fixtures/invalid-syntax.ts
-          expect_diags test/fixtures/no-missing-limit/query-without-limit.ts
+          expect_diags test/fixtures/no-missing-limit/query-without-limit.ts "no-missing-limit"
           expect_clean test/fixtures/no-missing-limit/query-with-limit.ts
-          expect_diags test/fixtures/no-unbounded-find/unbounded-query.ts
+          expect_diags test/fixtures/no-unbounded-find/unbounded-query.ts "no-unbounded-find"
           expect_clean test/fixtures/no-unbounded-find/bounded-query.ts
-          expect_diags test/fixtures/no-always-true-where/where-true.ts
+          expect_diags test/fixtures/no-always-true-where/where-true.ts "no-always-true-where"
           expect_clean test/fixtures/no-always-true-where/where-real-condition.ts
-          expect_diags test/fixtures/no-query-in-loop/query-in-for-loop.ts
+          expect_diags test/fixtures/no-query-in-loop/query-in-for-loop.ts "no-query-in-loop"
           expect_clean test/fixtures/no-query-in-loop/query-outside-loop.ts
 
       - name: Smoke test (json — expects non-empty)

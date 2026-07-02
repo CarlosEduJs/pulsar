@@ -1,5 +1,5 @@
 use pulsar_core::{Diagnostic, Severity};
-use pulsar_ir::NodeKind;
+use pulsar_ir::{NodeKind, OrmMethod};
 
 use crate::rule::{Rule, RuleContext};
 
@@ -26,6 +26,9 @@ impl Rule for NoUnboundedFind {
     let mut diags = Vec::new();
     for id in ctx.graph.node_indices() {
       if let NodeKind::Orm(orm) = ctx.graph.node(id).expect("node should exist") {
+        if !matches!(orm.method, OrmMethod::Select | OrmMethod::FindMany | OrmMethod::FindFirst) {
+          continue;
+        }
         let has_where = orm.args.where_clause.is_some();
         let has_limit = orm.args.limit.is_some();
         if !has_where && !has_limit {
@@ -104,6 +107,40 @@ mod tests {
     let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 0);
+  }
+
+  #[test]
+  fn allows_insert_without_where_or_limit() {
+    let mut graph = IrGraph::new();
+    let location = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
+    let orm = OrmNode {
+      method: OrmMethod::Insert,
+      args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: Vec::new() },
+      in_loop: false,
+      location,
+    };
+    graph.add_orm(orm);
+    let rule = NoUnboundedFind;
+    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let diags = rule.run(&ctx);
+    assert_eq!(diags.len(), 0, "Insert should not be flagged as unbounded");
+  }
+
+  #[test]
+  fn allows_update_without_where_or_limit() {
+    let mut graph = IrGraph::new();
+    let location = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
+    let orm = OrmNode {
+      method: OrmMethod::Update,
+      args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: Vec::new() },
+      in_loop: false,
+      location,
+    };
+    graph.add_orm(orm);
+    let rule = NoUnboundedFind;
+    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts" };
+    let diags = rule.run(&ctx);
+    assert_eq!(diags.len(), 0, "Update should not be flagged as unbounded");
   }
 
   #[test]

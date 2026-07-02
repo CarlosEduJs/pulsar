@@ -94,6 +94,17 @@ fn extract_from_statement_with_loop<'a>(
     Statement::DoWhileStatement(do_while_stmt) => {
       handle_loop_body(&do_while_stmt.body, source, file_path, graph);
     }
+    Statement::IfStatement(if_stmt) => {
+      extract_from_statement_with_loop(&if_stmt.consequent, source, file_path, graph, in_loop);
+      if let Some(alt) = &if_stmt.alternate {
+        extract_from_statement_with_loop(alt, source, file_path, graph, in_loop);
+      }
+    }
+    Statement::BlockStatement(block) => {
+      for s in &block.body {
+        extract_from_statement_with_loop(s, source, file_path, graph, in_loop);
+      }
+    }
     _ => {}
   }
 }
