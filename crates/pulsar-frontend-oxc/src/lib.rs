@@ -58,18 +58,72 @@ fn extract_from_statement<'a>(
   file_path: &str,
   graph: &mut IrGraph,
 ) {
+  extract_from_statement_with_loop(stmt, source, file_path, graph, false);
+}
+
+fn extract_from_statement_with_loop<'a>(
+  stmt: &'a Statement<'a>,
+  source: &'a str,
+  file_path: &str,
+  graph: &mut IrGraph,
+  in_loop: bool,
+) {
   match stmt {
     Statement::ExpressionStatement(expr_stmt) => {
-      try_extract_chain(&expr_stmt.expression, source, file_path, graph);
+      try_extract_chain(&expr_stmt.expression, source, file_path, graph, in_loop);
     }
     Statement::VariableDeclaration(decl) => {
       for declarator in &decl.declarations {
         if let Some(init) = &declarator.init {
-          try_extract_chain(init, source, file_path, graph);
+          try_extract_chain(init, source, file_path, graph, in_loop);
         }
       }
     }
+    Statement::ForStatement(for_stmt) => {
+      handle_loop_body(&for_stmt.body, source, file_path, graph);
+    }
+    Statement::ForInStatement(for_in_stmt) => {
+      handle_loop_body(&for_in_stmt.body, source, file_path, graph);
+    }
+    Statement::ForOfStatement(for_of_stmt) => {
+      handle_loop_body(&for_of_stmt.body, source, file_path, graph);
+    }
+    Statement::WhileStatement(while_stmt) => {
+      handle_loop_body(&while_stmt.body, source, file_path, graph);
+    }
+    Statement::DoWhileStatement(do_while_stmt) => {
+      handle_loop_body(&do_while_stmt.body, source, file_path, graph);
+    }
+    Statement::IfStatement(if_stmt) => {
+      extract_from_statement_with_loop(&if_stmt.consequent, source, file_path, graph, in_loop);
+      if let Some(alt) = &if_stmt.alternate {
+        extract_from_statement_with_loop(alt, source, file_path, graph, in_loop);
+      }
+    }
+    Statement::BlockStatement(block) => {
+      for s in &block.body {
+        extract_from_statement_with_loop(s, source, file_path, graph, in_loop);
+      }
+    }
     _ => {}
+  }
+}
+
+fn handle_loop_body<'a>(
+  stmt: &'a Statement<'a>,
+  source: &'a str,
+  file_path: &str,
+  graph: &mut IrGraph,
+) {
+  match stmt {
+    Statement::BlockStatement(block) => {
+      for s in &block.body {
+        extract_from_statement_with_loop(s, source, file_path, graph, true);
+      }
+    }
+    other => {
+      extract_from_statement_with_loop(other, source, file_path, graph, true);
+    }
   }
 }
 
@@ -78,6 +132,7 @@ fn try_extract_chain<'a>(
   source: &'a str,
   file_path: &str,
   graph: &mut IrGraph,
+  in_loop: bool,
 ) {
   let inner = match expr {
     Expression::AwaitExpression(await_expr) => &await_expr.argument,
@@ -88,7 +143,7 @@ fn try_extract_chain<'a>(
     if let Some(chain) = resolve_chain(call) {
       if is_drizzle_select_chain(&chain) {
         let location = span_to_location(call.span, source, file_path);
-        process_drizzle_chain(&chain, location, graph);
+        process_drizzle_chain(&chain, location, graph, in_loop);
       }
     }
   }
@@ -145,8 +200,13 @@ fn is_drizzle_select_chain(chain: &[MethodCall]) -> bool {
 }
 
 /// Converts a Drizzle method chain into ORM and SQL nodes, adding them to the graph.
-fn process_drizzle_chain(chain: &[MethodCall], location: SourceLocation, graph: &mut IrGraph) {
-  let orm_node = build_orm_node(chain, location.clone());
+fn process_drizzle_chain(
+  chain: &[MethodCall],
+  location: SourceLocation,
+  graph: &mut IrGraph,
+  in_loop: bool,
+) {
+  let orm_node = build_orm_node(chain, location.clone(), in_loop);
   let sql_node = build_sql_node(chain, location);
 
   let orm_id = graph.add_orm(orm_node);
@@ -154,7 +214,7 @@ fn process_drizzle_chain(chain: &[MethodCall], location: SourceLocation, graph: 
   graph.add_edge(orm_id, sql_id, EdgeKind::Generates);
 }
 
-fn build_orm_node(chain: &[MethodCall], location: SourceLocation) -> OrmNode {
+fn build_orm_node(chain: &[MethodCall], location: SourceLocation, in_loop: bool) -> OrmNode {
   let columns = extract_select_columns(chain);
   let limit = extract_limit(chain);
   let where_clause = extract_where(chain);
@@ -162,6 +222,7 @@ fn build_orm_node(chain: &[MethodCall], location: SourceLocation) -> OrmNode {
   OrmNode {
     method: OrmMethod::Select,
     args: OrmArgs { columns, where_clause, limit, include: Vec::new() },
+    in_loop,
     location,
   }
 }
@@ -514,5 +575,65 @@ mod tests {
     let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
     assert_eq!(graph.node_count(), 6, "3 ORM + 3 SQL nodes");
     assert_eq!(graph.edge_count(), 3);
+  }
+
+  #[test]
+  fn extract_in_for_loop_sets_in_loop_flag() {
+    let source = "\
+for (let i = 0; i < 10; i++) {\
+  await db.select().from(users);\
+}\
+";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    assert_eq!(graph.node_count(), 2);
+    for id in graph.node_indices() {
+      if let pulsar_ir::NodeKind::Orm(orm) = graph.node(id).unwrap() {
+        assert!(orm.in_loop, "ORM node inside for loop should have in_loop=true");
+      }
+    }
+  }
+
+  #[test]
+  fn extract_in_while_loop_sets_in_loop_flag() {
+    let source = "\
+while (true) {\
+  await db.select().from(users);\
+}\
+";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    assert_eq!(graph.node_count(), 2);
+    for id in graph.node_indices() {
+      if let pulsar_ir::NodeKind::Orm(orm) = graph.node(id).unwrap() {
+        assert!(orm.in_loop, "ORM node inside while loop should have in_loop=true");
+      }
+    }
+  }
+
+  #[test]
+  fn extract_in_for_of_loop_sets_in_loop_flag() {
+    let source = "\
+for (const user of users) {\
+  await db.select().from(posts);\
+}\
+";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    assert_eq!(graph.node_count(), 2);
+    for id in graph.node_indices() {
+      if let pulsar_ir::NodeKind::Orm(orm) = graph.node(id).unwrap() {
+        assert!(orm.in_loop, "ORM node inside for-of loop should have in_loop=true");
+      }
+    }
+  }
+
+  #[test]
+  fn extract_standalone_query_has_in_loop_false() {
+    let source = "await db.select().from(users);";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    assert_eq!(graph.node_count(), 2);
+    for id in graph.node_indices() {
+      if let pulsar_ir::NodeKind::Orm(orm) = graph.node(id).unwrap() {
+        assert!(!orm.in_loop, "standalone query should have in_loop=false");
+      }
+    }
   }
 }

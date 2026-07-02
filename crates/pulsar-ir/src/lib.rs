@@ -95,6 +95,7 @@ pub struct OrmArgs {
 pub struct OrmNode {
   pub method: OrmMethod,
   pub args: OrmArgs,
+  pub in_loop: bool,
   pub location: SourceLocation,
 }
 
@@ -292,6 +293,7 @@ mod tests {
         limit: None,
         include: Vec::new(),
       },
+      in_loop: false,
       location: location("test.ts", 1, 1),
     };
     let id = g.add_orm(orm.clone());
@@ -329,6 +331,7 @@ mod tests {
     let orm = g.add_orm(OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: Vec::new() },
+      in_loop: false,
       location: location("test.ts", 1, 1),
     });
     g.add_edge(orm, sql, EdgeKind::Generates);
