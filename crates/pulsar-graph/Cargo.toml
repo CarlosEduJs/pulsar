@@ -12,9 +12,6 @@ categories = ["development-tools::static-analysis"]
 [dependencies]
 pulsar-core.workspace = true
 pulsar-ir.workspace = true
-petgraph.workspace = true
-thiserror.workspace = true
-tracing.workspace = true
 
 [lints]
 workspace = true

@@ -14,7 +14,6 @@ pulsar-core.workspace = true
 pulsar-ir.workspace = true
 sqlparser.workspace = true
 thiserror.workspace = true
-tracing.workspace = true
 
 [lints]
 workspace = true
