@@ -112,6 +112,26 @@ pub struct OrmNode {
   pub location: SourceLocation,
 }
 
+// Raw SQL IR
+// ==========
+
+/// Kind of raw SQL usage.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RawSqlKind {
+  /// sql tagged template literal.
+  TaggedTemplate,
+  /// Method on db object that executes raw SQL (e.g. db.execute, db.all).
+  DbRawMethod,
+}
+
+/// A raw SQL expression detected in source code.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RawSqlNode {
+  pub kind: RawSqlKind,
+  pub has_interpolation: bool,
+  pub location: SourceLocation,
+}
+
 // Schema IR
 // =========
 
@@ -134,12 +154,13 @@ pub struct SchemaNode {
 // Unified node type
 // =================
 
-/// A node in the IR graph, representing one of the three IR kinds.
+/// A node in the IR graph, representing one of the IR kinds.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NodeKind {
   Sql(SQLNode),
   Orm(OrmNode),
   Schema(SchemaNode),
+  RawSql(RawSqlNode),
 }
 
 // IR Graph
@@ -171,6 +192,11 @@ impl IrGraph {
   /// Adds a schema node and returns its identifier.
   pub fn add_schema(&mut self, node: SchemaNode) -> NodeId {
     self.graph.add_node(NodeKind::Schema(node))
+  }
+
+  /// Adds a raw SQL node and returns its identifier.
+  pub fn add_raw_sql(&mut self, node: RawSqlNode) -> NodeId {
+    self.graph.add_node(NodeKind::RawSql(node))
   }
 
   /// Adds a directed edge between two nodes.
@@ -382,6 +408,29 @@ mod tests {
   }
 
   // EdgeKind and SqlKind debug/equality
+  #[test]
+  fn graph_add_raw_sql_and_retrieve() {
+    let mut g = IrGraph::new();
+    let raw = RawSqlNode {
+      kind: RawSqlKind::TaggedTemplate,
+      has_interpolation: true,
+      location: location("test.ts", 1, 1),
+    };
+    let id = g.add_raw_sql(raw.clone());
+    assert_eq!(g.node_count(), 1);
+    match g.node(id) {
+      Some(NodeKind::RawSql(n)) => assert_eq!(*n, raw),
+      _ => panic!("expected RawSql node"),
+    }
+  }
+
+  #[test]
+  fn raw_sql_kind_variants() {
+    assert_eq!(RawSqlKind::TaggedTemplate, RawSqlKind::TaggedTemplate);
+    assert_eq!(RawSqlKind::DbRawMethod, RawSqlKind::DbRawMethod);
+    assert_ne!(RawSqlKind::TaggedTemplate, RawSqlKind::DbRawMethod);
+  }
+
   #[test]
   fn edge_kind_variants() {
     assert_eq!(EdgeKind::Generates, EdgeKind::Generates);

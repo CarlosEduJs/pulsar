@@ -8,7 +8,7 @@ use oxc::ast::ast::{
 use oxc::parser::Parser;
 use oxc::span::SourceType;
 use pulsar_core::SourceLocation;
-use pulsar_ir::{IrGraph, LoopKind};
+use pulsar_ir::{IrGraph, LoopKind, RawSqlKind, RawSqlNode};
 
 /// Errors that can occur during Oxc extraction.
 #[derive(Debug, thiserror::Error)]
@@ -196,7 +196,53 @@ fn try_extract_from_callback<'a>(
   }
 }
 
-/// Entry point for extracting Drizzle chains and callbacks from an expression.
+/// Methods on `db` that execute raw SQL.
+const RAW_DB_METHODS: &[&str] = &["execute", "all", "get", "run"];
+
+/// Detects raw SQL usage and adds [`RawSqlNode`]s to the graph.
+fn try_extract_raw_sql<'a>(
+  expr: &'a Expression<'a>,
+  source: &'a str,
+  file_path: &str,
+  graph: &mut IrGraph,
+) {
+  let inner = strip_await(expr);
+
+  match inner {
+    Expression::TaggedTemplateExpression(tagged) => {
+      if let Expression::Identifier(ident) = &tagged.tag {
+        if ident.name.as_str() == "sql" {
+          let has_interpolation = !tagged.quasi.expressions.is_empty();
+          let location = span_to_location(tagged.span, source, file_path);
+          graph.add_raw_sql(RawSqlNode {
+            kind: RawSqlKind::TaggedTemplate,
+            has_interpolation,
+            location,
+          });
+        }
+      }
+    }
+    Expression::CallExpression(call) => {
+      if let Expression::StaticMemberExpression(member) = &call.callee {
+        if let Expression::Identifier(obj) = &member.object {
+          if obj.name.as_str() == "db"
+            && RAW_DB_METHODS.contains(&member.property.name.as_str())
+          {
+            let location = span_to_location(call.span, source, file_path);
+            graph.add_raw_sql(RawSqlNode {
+              kind: RawSqlKind::DbRawMethod,
+              has_interpolation: false,
+              location,
+            });
+          }
+        }
+      }
+    }
+    _ => {}
+  }
+}
+
+/// Entry point for extracting raw SQL, Drizzle chains, and callbacks from an expression.
 fn try_extract_from_expr<'a>(
   expr: &'a Expression<'a>,
   source: &'a str,
@@ -205,6 +251,7 @@ fn try_extract_from_expr<'a>(
   ctx: ExtractContext,
 ) {
   try_extract_from_callback(expr, source, file_path, graph, ctx);
+  try_extract_raw_sql(expr, source, file_path, graph);
   try_extract_chain(expr, source, file_path, graph, ctx);
 }
 
