@@ -72,7 +72,8 @@ mod tests {
   fn flags_query_in_loop() {
     let graph = make_graph(true);
     let rule = NoQueryInLoop;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
     assert_eq!(diags[0].rule_id, "no-query-in-loop");
@@ -83,7 +84,8 @@ mod tests {
   fn allows_query_outside_loop() {
     let graph = make_graph(false);
     let rule = NoQueryInLoop;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 0);
   }
@@ -92,7 +94,8 @@ mod tests {
   fn empty_graph_no_diagnostics() {
     let graph = IrGraph::new();
     let rule = NoQueryInLoop;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert!(diags.is_empty());
   }

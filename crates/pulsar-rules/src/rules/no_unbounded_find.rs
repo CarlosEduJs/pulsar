@@ -75,7 +75,8 @@ mod tests {
   fn flags_no_where_no_limit() {
     let graph = make_graph(false, false);
     let rule = NoUnboundedFind;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
     assert_eq!(diags[0].rule_id, "no-unbounded-find");
@@ -86,7 +87,8 @@ mod tests {
   fn allows_where_only() {
     let graph = make_graph(true, false);
     let rule = NoUnboundedFind;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 0);
   }
@@ -95,7 +97,8 @@ mod tests {
   fn allows_limit_only() {
     let graph = make_graph(false, true);
     let rule = NoUnboundedFind;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 0);
   }
@@ -104,7 +107,8 @@ mod tests {
   fn allows_where_and_limit() {
     let graph = make_graph(true, true);
     let rule = NoUnboundedFind;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 0);
   }
@@ -121,7 +125,8 @@ mod tests {
     };
     graph.add_orm(orm);
     let rule = NoUnboundedFind;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 0, "Insert should not be flagged as unbounded");
   }
@@ -138,7 +143,8 @@ mod tests {
     };
     graph.add_orm(orm);
     let rule = NoUnboundedFind;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 0, "Update should not be flagged as unbounded");
   }
@@ -147,7 +153,8 @@ mod tests {
   fn empty_graph_no_diagnostics() {
     let graph = IrGraph::new();
     let rule = NoUnboundedFind;
-    let ctx = RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert!(diags.is_empty());
   }
