@@ -15,7 +15,6 @@ pulsar-graph.workspace = true
 pulsar-ir.workspace = true
 oxc.workspace = true
 thiserror.workspace = true
-tracing.workspace = true
 
 [lints]
 workspace = true
