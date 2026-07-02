@@ -238,10 +238,18 @@ fn try_extract_raw_sql<'a>(
       if let Expression::StaticMemberExpression(member) = &call.callee {
         if let Expression::Identifier(obj) = &member.object {
           if obj.name.as_str() == "db" && RAW_DB_METHODS.contains(&member.property.name.as_str()) {
+            let has_interpolation = call
+              .arguments
+              .iter()
+              .any(|arg| {
+                arg_as_expr(arg).is_some_and(|e| {
+                  matches!(e, Expression::TaggedTemplateExpression(t) if !t.quasi.expressions.is_empty())
+                })
+              });
             let location = span_to_location(call.span, source, file_path);
             graph.add_raw_sql(RawSqlNode {
               kind: RawSqlKind::DbRawMethod,
-              has_interpolation: false,
+              has_interpolation,
               location,
             });
           }
