@@ -20,19 +20,19 @@ rules that flag problematic patterns — all in a single pipeline.
 
 ## Status
 
-**v0.1 — Proof of concept.** The pipeline is wired end-to-end with one rule. Breaking
-changes are expected as the API stabilizes.
+**v0.2 — Query safety rules.** The pipeline now includes 5 rules covering common SQL and
+ORM pitfalls. Breaking changes are expected as the API stabilizes.
 
 | Area               | Status |
 |--------------------|--------|
 | TypeScript parsing | ✅ Oxc frontend |
 | SQL IR             | ✅ sqlparser-rs frontend |
-| Drizzle ORM        | ✅ Method chain resolution |
-| Rule engine        | ✅ `no-select-star` rule |
-| CLI (pretty/JSON)  | ✅ `pulsar check` |
+| Drizzle ORM        | ✅ Method chain resolution + loop detection |
+| Rule engine        | ✅ 5 built-in rules |
+| CLI (pretty/JSON)  | ✅ `pulsar-cli check`/`init`/`explain` |
+| Config system      | ✅ `pulsar.toml` auto-detect + `--config` |
 | Prisma schema      | 🚧 Placeholder |
 | LSP                | 🚧 Planned |
-| More rules         | 🚧 In progress |
 
 ## Quick Start
 
@@ -54,17 +54,22 @@ cargo run -p pulsar-cli -- init
 
 # Learn about a rule
 cargo run -p pulsar-cli -- explain no-select-star
+
+# Use a custom config file
+cargo run -p pulsar-cli -- check . --config my-pulsar.toml
 ```
 
 ### Example Output
 
 ```
-  src/users.ts:5:10  error  no-select-star  Avoid implicit SELECT *.
+  src/users.ts:5:10  error    no-select-star     Avoid implicit SELECT *.
+  src/users.ts:5:10  warning  no-missing-limit    Query is missing a LIMIT clause.
+  src/users.ts:5:10  warning  no-unbounded-find   Query is unbounded — add a .where() or .limit().
 
     const users = await db.select().from(users)
                        ^^^^^^^^^^^^^^^^^^^^^^^^
 
-✖ 1 problem (1 error, 0 warnings, 0 infos)
+✖ 3 problems (1 error, 2 warnings, 0 infos)
 ```
 
 ### Exit Codes
@@ -81,6 +86,10 @@ cargo run -p pulsar-cli -- explain no-select-star
 | Rule | Description | Severity |
 |------|-------------|----------|
 | `no-select-star` | Flags `SELECT *` queries (implicit or explicit). Always specify columns. | Error |
+| `no-missing-limit` | Flags queries without a `LIMIT` clause that could return unbounded results. | Warning |
+| `no-unbounded-find` | Flags ORM queries lacking both a `.where()` filter and a `.limit()` bound. | Warning |
+| `no-always-true-where` | Flags `.where(true)` clauses that have no filtering effect. | Error |
+| `no-query-in-loop` | Flags database queries executed inside loops (N+1 prevention). | Error |
 
 ## Architecture
 
@@ -126,12 +135,11 @@ Pulsar looks for `pulsar.toml` in the project root (generated via `pulsar init`)
 ```toml
 [settings]
 ignore = ["node_modules", "dist", "build"]
-rules = ["no-select-star"]
+rules = ["no-select-star", "no-missing-limit", "no-unbounded-find", "no-always-true-where", "no-query-in-loop"]
 ```
 
 ## Roadmap
 
-- **v0.2**: More rules (query performance, N+1 detection, missing indexes)
 - **v0.3**: Schema-aware analysis (postgres introspection, Prisma frontend)
 - **v0.4**: LSP integration, SARIF output, GitHub Action
 
