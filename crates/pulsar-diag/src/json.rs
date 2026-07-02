@@ -110,7 +110,7 @@ mod tests {
     let formatter = JsonFormatter;
     let output = formatter.format(&[diag], "");
     assert!(output.contains("\"span\": ["));
-    assert!(output.contains("5"));
+    assert!(output.contains('5'));
     assert!(output.contains("15"));
   }
 }
