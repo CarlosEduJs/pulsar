@@ -14,6 +14,13 @@ impl Rule for NoSelectStar {
     "no-select-star"
   }
 
+  fn docs(&self) -> &'static str {
+    "Flags SELECT * queries — both implicit (empty column list) and explicit wildcards.\n\
+    \n\
+    Using SELECT * makes queries fragile and often fetches more data than needed. \
+    Always specify the columns required."
+  }
+
   fn run(&self, ctx: &RuleContext) -> Vec<Diagnostic> {
     let mut diags = Vec::new();
     for id in ctx.graph.node_indices() {

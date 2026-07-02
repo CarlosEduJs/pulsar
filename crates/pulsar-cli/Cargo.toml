@@ -11,16 +11,12 @@ categories = ["development-tools::static-analysis"]
 
 [dependencies]
 pulsar-core.workspace = true
-pulsar-ir.workspace = true
 pulsar-frontend-oxc.workspace = true
-pulsar-frontend-sql.workspace = true
-pulsar-frontend-prisma.workspace = true
-pulsar-graph.workspace = true
 pulsar-rules.workspace = true
 pulsar-diag.workspace = true
 clap.workspace = true
-tracing.workspace = true
 anyhow.workspace = true
+serde.workspace = true
 toml.workspace = true
 ignore.workspace = true
 oxc.workspace = true
