@@ -60,7 +60,7 @@ jobs:
             if [ -n "$expected_rule" ]; then
               grep -q "$expected_rule" /tmp/smoke.txt || { echo "FAIL: $fixture missing rule id $expected_rule"; exit 1; }
             else
-              grep -qE "no-select-star|no-missing-limit|no-unbounded-find|no-always-true-where|no-query-in-loop" /tmp/smoke.txt || { echo "FAIL: $fixture missing rule id"; exit 1; }
+              grep -qE "no-select-star|no-missing-limit|no-unbounded-find|no-always-true-where|no-query-in-loop|no-query-in-callback|no-n-plus-one|no-raw-sql-dangerous" /tmp/smoke.txt || { echo "FAIL: $fixture missing rule id"; exit 1; }
             fi
           }
           expect_clean() {
@@ -95,6 +95,12 @@ jobs:
           expect_clean test/fixtures/no-always-true-where/where-real-condition.ts
           expect_diags test/fixtures/no-query-in-loop/query-in-for-loop.ts "no-query-in-loop"
           expect_clean test/fixtures/no-query-in-loop/query-outside-loop.ts
+          expect_diags test/fixtures/no-n-plus-one/query-in-for-of.ts "no-n-plus-one"
+          expect_clean test/fixtures/no-n-plus-one/clean.ts
+          expect_diags test/fixtures/no-query-in-callback/query-in-then.ts "no-query-in-callback"
+          expect_clean test/fixtures/no-query-in-callback/clean.ts
+          expect_diags test/fixtures/no-raw-sql-dangerous/sql-template.ts "no-raw-sql-dangerous"
+          expect_clean test/fixtures/no-raw-sql-dangerous/clean.ts
 
       - name: Smoke test (json — expects non-empty)
         run: |
