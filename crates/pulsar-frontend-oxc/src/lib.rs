@@ -8,7 +8,7 @@ use oxc::ast::ast::{
 use oxc::parser::Parser;
 use oxc::span::SourceType;
 use pulsar_core::SourceLocation;
-use pulsar_ir::IrGraph;
+use pulsar_ir::{IrGraph, LoopKind, RawSqlKind, RawSqlNode};
 
 /// Errors that can occur during Oxc extraction.
 #[derive(Debug, thiserror::Error)]
@@ -22,6 +22,27 @@ pub enum ExtractError {
 struct MethodCall<'a> {
   name: &'a str,
   args: &'a [Argument<'a>],
+}
+
+/// Traversal context propagated through AST extraction.
+#[derive(Clone, Copy)]
+struct ExtractContext {
+  loop_kind: LoopKind,
+  in_callback: bool,
+}
+
+impl ExtractContext {
+  const fn new() -> Self {
+    Self { loop_kind: LoopKind::None, in_callback: false }
+  }
+
+  const fn with_loop(self, kind: LoopKind) -> Self {
+    Self { loop_kind: kind, ..self }
+  }
+
+  const fn with_callback(self, val: bool) -> Self {
+    Self { in_callback: val, ..self }
+  }
 }
 
 /// Extracts Drizzle ORM queries from TypeScript source code and populates an [`IrGraph`].
@@ -56,54 +77,69 @@ fn extract_from_statement<'a>(
   file_path: &str,
   graph: &mut IrGraph,
 ) {
-  extract_from_statement_with_loop(stmt, source, file_path, graph, false);
+  extract_from_statement_with_ctx(stmt, source, file_path, graph, ExtractContext::new());
 }
 
-fn extract_from_statement_with_loop<'a>(
+fn extract_from_statement_with_ctx<'a>(
   stmt: &'a Statement<'a>,
   source: &'a str,
   file_path: &str,
   graph: &mut IrGraph,
-  in_loop: bool,
+  ctx: ExtractContext,
 ) {
   match stmt {
     Statement::ExpressionStatement(expr_stmt) => {
-      try_extract_chain(&expr_stmt.expression, source, file_path, graph, in_loop);
+      try_extract_from_expr(&expr_stmt.expression, source, file_path, graph, ctx);
     }
     Statement::VariableDeclaration(decl) => {
       for declarator in &decl.declarations {
         if let Some(init) = &declarator.init {
-          try_extract_chain(init, source, file_path, graph, in_loop);
+          try_extract_from_expr(init, source, file_path, graph, ctx);
         }
       }
     }
-    Statement::ForStatement(for_stmt) => {
-      handle_loop_body(&for_stmt.body, source, file_path, graph);
+    Statement::ForStatement(_) | Statement::WhileStatement(_) | Statement::DoWhileStatement(_) => {
+      handle_loop_body(
+        find_loop_body(stmt),
+        source,
+        file_path,
+        graph,
+        ctx.with_loop(LoopKind::Counter),
+      );
     }
-    Statement::ForInStatement(for_in_stmt) => {
-      handle_loop_body(&for_in_stmt.body, source, file_path, graph);
-    }
-    Statement::ForOfStatement(for_of_stmt) => {
-      handle_loop_body(&for_of_stmt.body, source, file_path, graph);
-    }
-    Statement::WhileStatement(while_stmt) => {
-      handle_loop_body(&while_stmt.body, source, file_path, graph);
-    }
-    Statement::DoWhileStatement(do_while_stmt) => {
-      handle_loop_body(&do_while_stmt.body, source, file_path, graph);
+    Statement::ForInStatement(_) | Statement::ForOfStatement(_) => {
+      handle_loop_body(
+        find_loop_body(stmt),
+        source,
+        file_path,
+        graph,
+        ctx.with_loop(LoopKind::Iteration),
+      );
     }
     Statement::IfStatement(if_stmt) => {
-      extract_from_statement_with_loop(&if_stmt.consequent, source, file_path, graph, in_loop);
+      extract_from_statement_with_ctx(&if_stmt.consequent, source, file_path, graph, ctx);
       if let Some(alt) = &if_stmt.alternate {
-        extract_from_statement_with_loop(alt, source, file_path, graph, in_loop);
+        extract_from_statement_with_ctx(alt, source, file_path, graph, ctx);
       }
     }
     Statement::BlockStatement(block) => {
       for s in &block.body {
-        extract_from_statement_with_loop(s, source, file_path, graph, in_loop);
+        extract_from_statement_with_ctx(s, source, file_path, graph, ctx);
       }
     }
     _ => {}
+  }
+}
+
+/// Returns the body of a loop statement.
+fn find_loop_body<'a>(stmt: &'a Statement<'a>) -> &'a Statement<'a> {
+  match stmt {
+    Statement::ForStatement(s) => &s.body,
+    Statement::ForInStatement(s) => &s.body,
+    Statement::ForOfStatement(s) => &s.body,
+    Statement::WhileStatement(s) => &s.body,
+    Statement::DoWhileStatement(s) => &s.body,
+    _ => unreachable!("not a loop statement"),
   }
 }
 
@@ -112,16 +148,127 @@ fn handle_loop_body<'a>(
   source: &'a str,
   file_path: &str,
   graph: &mut IrGraph,
+  ctx: ExtractContext,
 ) {
   match stmt {
     Statement::BlockStatement(block) => {
       for s in &block.body {
-        extract_from_statement_with_loop(s, source, file_path, graph, true);
+        extract_from_statement_with_ctx(s, source, file_path, graph, ctx);
       }
     }
     other => {
-      extract_from_statement_with_loop(other, source, file_path, graph, true);
+      extract_from_statement_with_ctx(other, source, file_path, graph, ctx);
     }
+  }
+}
+
+/// Callback-taking methods that trigger `in_callback` context.
+const CALLBACK_METHODS: &[&str] =
+  &["then", "catch", "finally", "map", "filter", "forEach", "reduce", "flatMap"];
+
+/// Standalone functions whose first argument is a callback.
+const CALLBACK_FUNCTIONS: &[&str] = &["setTimeout", "setInterval"];
+
+/// If `expr` is a call to a known callback-taking function/method, traverse its callback body.
+fn try_extract_from_callback<'a>(
+  expr: &'a Expression<'a>,
+  source: &'a str,
+  file_path: &str,
+  graph: &mut IrGraph,
+  ctx: ExtractContext,
+) {
+  let Expression::CallExpression(call_expr) = strip_await(expr) else { return };
+
+  let callback_arg = match &call_expr.callee {
+    Expression::Identifier(ident) if CALLBACK_FUNCTIONS.contains(&ident.name.as_str()) => {
+      call_expr.arguments.first().and_then(arg_as_expr)
+    }
+    Expression::StaticMemberExpression(member)
+      if CALLBACK_METHODS.contains(&member.property.name.as_str()) =>
+    {
+      call_expr.arguments.first().and_then(arg_as_expr)
+    }
+    _ => None,
+  };
+
+  let Some(callback_expr) = callback_arg else { return };
+
+  let stmts = match callback_expr {
+    Expression::ArrowFunctionExpression(arrow) => &arrow.body.statements,
+    Expression::FunctionExpression(func) => match &func.body {
+      Some(body) => &body.statements,
+      None => return,
+    },
+    _ => return,
+  };
+
+  let cb_ctx = ctx.with_callback(true);
+  for stmt in stmts {
+    extract_from_statement_with_ctx(stmt, source, file_path, graph, cb_ctx);
+  }
+}
+
+/// Methods on `db` that execute raw SQL.
+const RAW_DB_METHODS: &[&str] = &["execute", "all", "get", "run"];
+
+/// Detects raw SQL usage and adds [`RawSqlNode`]s to the graph.
+fn try_extract_raw_sql<'a>(
+  expr: &'a Expression<'a>,
+  source: &'a str,
+  file_path: &str,
+  graph: &mut IrGraph,
+) {
+  let inner = strip_await(expr);
+
+  match inner {
+    Expression::TaggedTemplateExpression(tagged) => {
+      if let Expression::Identifier(ident) = &tagged.tag {
+        if ident.name.as_str() == "sql" {
+          let has_interpolation = !tagged.quasi.expressions.is_empty();
+          let location = span_to_location(tagged.span, source, file_path);
+          graph.add_raw_sql(RawSqlNode {
+            kind: RawSqlKind::TaggedTemplate,
+            has_interpolation,
+            location,
+          });
+        }
+      }
+    }
+    Expression::CallExpression(call) => {
+      if let Expression::StaticMemberExpression(member) = &call.callee {
+        if let Expression::Identifier(obj) = &member.object {
+          if obj.name.as_str() == "db" && RAW_DB_METHODS.contains(&member.property.name.as_str()) {
+            let location = span_to_location(call.span, source, file_path);
+            graph.add_raw_sql(RawSqlNode {
+              kind: RawSqlKind::DbRawMethod,
+              has_interpolation: false,
+              location,
+            });
+          }
+        }
+      }
+    }
+    _ => {}
+  }
+}
+
+/// Entry point for extracting raw SQL, Drizzle chains, and callbacks from an expression.
+fn try_extract_from_expr<'a>(
+  expr: &'a Expression<'a>,
+  source: &'a str,
+  file_path: &str,
+  graph: &mut IrGraph,
+  ctx: ExtractContext,
+) {
+  try_extract_from_callback(expr, source, file_path, graph, ctx);
+  try_extract_raw_sql(expr, source, file_path, graph);
+  try_extract_chain(expr, source, file_path, graph, ctx);
+}
+
+fn strip_await<'a>(expr: &'a Expression<'a>) -> &'a Expression<'a> {
+  match expr {
+    Expression::AwaitExpression(await_expr) => &await_expr.argument,
+    other => other,
   }
 }
 
@@ -130,18 +277,15 @@ fn try_extract_chain<'a>(
   source: &'a str,
   file_path: &str,
   graph: &mut IrGraph,
-  in_loop: bool,
+  ctx: ExtractContext,
 ) {
-  let inner = match expr {
-    Expression::AwaitExpression(await_expr) => &await_expr.argument,
-    other => other,
-  };
+  let inner = strip_await(expr);
 
   if let Expression::CallExpression(call) = inner {
     if let Some(chain) = resolve_chain(call) {
       if is_drizzle_select_chain(&chain) {
         let location = span_to_location(call.span, source, file_path);
-        process_drizzle_chain(&chain, location, graph, in_loop);
+        process_drizzle_chain(&chain, location, graph, ctx);
       }
     }
   }
@@ -202,7 +346,7 @@ fn process_drizzle_chain(
   chain: &[MethodCall],
   location: SourceLocation,
   graph: &mut IrGraph,
-  in_loop: bool,
+  ctx: ExtractContext,
 ) {
   let columns = extract_select_columns(chain);
   let table_name = extract_table(chain);
@@ -214,7 +358,8 @@ fn process_drizzle_chain(
     table_name,
     limit,
     where_clause,
-    in_loop,
+    ctx.loop_kind,
+    ctx.in_callback,
     location,
     graph,
   );
@@ -571,13 +716,13 @@ for (let i = 0; i < 10; i++) {\
     assert_eq!(graph.node_count(), 2);
     for id in graph.node_indices() {
       if let pulsar_ir::NodeKind::Orm(orm) = graph.node(id).unwrap() {
-        assert!(orm.in_loop, "ORM node inside for loop should have in_loop=true");
+        assert_eq!(orm.loop_kind, LoopKind::Counter, "for loop should set Counter");
       }
     }
   }
 
   #[test]
-  fn extract_in_while_loop_sets_in_loop_flag() {
+  fn extract_in_while_loop_sets_loop_kind_counter() {
     let source = "\
 while (true) {\
   await db.select().from(users);\
@@ -587,13 +732,13 @@ while (true) {\
     assert_eq!(graph.node_count(), 2);
     for id in graph.node_indices() {
       if let pulsar_ir::NodeKind::Orm(orm) = graph.node(id).unwrap() {
-        assert!(orm.in_loop, "ORM node inside while loop should have in_loop=true");
+        assert_eq!(orm.loop_kind, LoopKind::Counter, "while loop should set Counter");
       }
     }
   }
 
   #[test]
-  fn extract_in_for_of_loop_sets_in_loop_flag() {
+  fn extract_in_for_of_loop_sets_loop_kind_iteration() {
     let source = "\
 for (const user of users) {\
   await db.select().from(posts);\
@@ -603,19 +748,19 @@ for (const user of users) {\
     assert_eq!(graph.node_count(), 2);
     for id in graph.node_indices() {
       if let pulsar_ir::NodeKind::Orm(orm) = graph.node(id).unwrap() {
-        assert!(orm.in_loop, "ORM node inside for-of loop should have in_loop=true");
+        assert_eq!(orm.loop_kind, LoopKind::Iteration, "for-of loop should set Iteration");
       }
     }
   }
 
   #[test]
-  fn extract_standalone_query_has_in_loop_false() {
+  fn extract_standalone_query_has_loop_kind_none() {
     let source = "await db.select().from(users);";
     let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
     assert_eq!(graph.node_count(), 2);
     for id in graph.node_indices() {
       if let pulsar_ir::NodeKind::Orm(orm) = graph.node(id).unwrap() {
-        assert!(!orm.in_loop, "standalone query should have in_loop=false");
+        assert_eq!(orm.loop_kind, LoopKind::None, "standalone query should have loop_kind=None");
       }
     }
   }

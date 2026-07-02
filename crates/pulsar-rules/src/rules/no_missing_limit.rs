@@ -43,7 +43,9 @@ impl Rule for NoMissingLimit {
 mod tests {
   use super::*;
   use pulsar_core::SourceLocation;
-  use pulsar_ir::{ColumnRef, IrGraph, OrmArgs, OrmMethod, OrmNode, SQLNode, SqlKind, TableRef};
+  use pulsar_ir::{
+    ColumnRef, IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode, SQLNode, SqlKind, TableRef,
+  };
 
   fn make_graph(has_limit: bool) -> IrGraph {
     let mut graph = IrGraph::new();
@@ -55,6 +57,7 @@ mod tests {
       table: Some(TableRef { name: "users".to_string(), alias: None }),
       limit: has_limit,
       where_clause: false,
+      in_callback: false,
       location: location.clone(),
     };
 
@@ -66,7 +69,8 @@ mod tests {
         limit: if has_limit { Some(10) } else { None },
         include: Vec::new(),
       },
-      in_loop: false,
+      loop_kind: LoopKind::None,
+      in_callback: false,
       location,
     };
 

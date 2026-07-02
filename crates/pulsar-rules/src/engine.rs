@@ -44,7 +44,9 @@ mod tests {
   use super::*;
   use crate::rules::NoSelectStar;
   use pulsar_core::SourceLocation;
-  use pulsar_ir::{ColumnRef, IrGraph, OrmArgs, OrmMethod, OrmNode, SQLNode, SqlKind, TableRef};
+  use pulsar_ir::{
+    ColumnRef, IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode, SQLNode, SqlKind, TableRef,
+  };
 
   fn graph_with_select_star() -> IrGraph {
     let mut graph = IrGraph::new();
@@ -55,12 +57,14 @@ mod tests {
       table: Some(TableRef { name: "users".to_string(), alias: None }),
       limit: false,
       where_clause: false,
+      in_callback: false,
       location: loc.clone(),
     };
     let orm = OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: vec![] },
-      in_loop: false,
+      loop_kind: LoopKind::None,
+      in_callback: false,
       location: loc,
     };
     let s = graph.add_sql(sql);
@@ -78,6 +82,7 @@ mod tests {
       table: Some(TableRef { name: "users".to_string(), alias: None }),
       limit: false,
       where_clause: false,
+      in_callback: false,
       location: loc.clone(),
     };
     let orm = OrmNode {
@@ -88,7 +93,8 @@ mod tests {
         limit: None,
         include: vec![],
       },
-      in_loop: false,
+      loop_kind: LoopKind::None,
+      in_callback: false,
       location: loc,
     };
     let s = graph.add_sql(sql);

@@ -1,5 +1,5 @@
 use pulsar_core::{Diagnostic, Severity};
-use pulsar_ir::NodeKind;
+use pulsar_ir::{LoopKind, NodeKind};
 
 use crate::rule::{Rule, RuleContext};
 
@@ -27,7 +27,7 @@ impl Rule for NoQueryInLoop {
     let mut diags = Vec::new();
     for id in ctx.graph.node_indices() {
       if let NodeKind::Orm(orm) = ctx.graph.node(id).expect("node should exist") {
-        if orm.in_loop {
+        if orm.loop_kind != LoopKind::None {
           diags.push(Diagnostic {
             severity: Severity::Error,
             message: "Database query inside a loop — extract it outside to avoid N+1 queries."
@@ -46,9 +46,9 @@ impl Rule for NoQueryInLoop {
 mod tests {
   use super::*;
   use pulsar_core::SourceLocation;
-  use pulsar_ir::{IrGraph, OrmArgs, OrmMethod, OrmNode};
+  use pulsar_ir::{IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode};
 
-  fn make_graph(in_loop: bool) -> IrGraph {
+  fn make_graph(loop_kind: LoopKind) -> IrGraph {
     let mut graph = IrGraph::new();
     let location = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
 
@@ -60,7 +60,8 @@ mod tests {
         limit: Some(1),
         include: Vec::new(),
       },
-      in_loop,
+      loop_kind,
+      in_callback: false,
       location,
     };
 
@@ -70,7 +71,7 @@ mod tests {
 
   #[test]
   fn flags_query_in_loop() {
-    let graph = make_graph(true);
+    let graph = make_graph(LoopKind::Counter);
     let rule = NoQueryInLoop;
     let ctx =
       RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
@@ -81,8 +82,18 @@ mod tests {
   }
 
   #[test]
+  fn flags_query_in_iteration_loop() {
+    let graph = make_graph(LoopKind::Iteration);
+    let rule = NoQueryInLoop;
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let diags = rule.run(&ctx);
+    assert_eq!(diags.len(), 1);
+  }
+
+  #[test]
   fn allows_query_outside_loop() {
-    let graph = make_graph(false);
+    let graph = make_graph(LoopKind::None);
     let rule = NoQueryInLoop;
     let ctx =
       RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };

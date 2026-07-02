@@ -49,7 +49,7 @@ impl Rule for NoUnboundedFind {
 mod tests {
   use super::*;
   use pulsar_core::SourceLocation;
-  use pulsar_ir::{IrGraph, OrmArgs, OrmMethod, OrmNode};
+  use pulsar_ir::{IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode};
 
   fn make_graph(has_where: bool, has_limit: bool) -> IrGraph {
     let mut graph = IrGraph::new();
@@ -63,7 +63,8 @@ mod tests {
         limit: if has_limit { Some(10) } else { None },
         include: Vec::new(),
       },
-      in_loop: false,
+      loop_kind: LoopKind::None,
+      in_callback: false,
       location,
     };
 
@@ -120,7 +121,8 @@ mod tests {
     let orm = OrmNode {
       method: OrmMethod::Insert,
       args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: Vec::new() },
-      in_loop: false,
+      loop_kind: LoopKind::None,
+      in_callback: false,
       location,
     };
     graph.add_orm(orm);
@@ -138,7 +140,8 @@ mod tests {
     let orm = OrmNode {
       method: OrmMethod::Update,
       args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: Vec::new() },
-      in_loop: false,
+      loop_kind: LoopKind::None,
+      in_callback: false,
       location,
     };
     graph.add_orm(orm);
