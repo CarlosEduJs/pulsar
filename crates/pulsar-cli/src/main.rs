@@ -10,6 +10,8 @@ use oxc::span::SourceType;
 use pulsar_core::Severity;
 use pulsar_diag::{DiagnosticFormatter, JsonFormatter, PrettyFormatter};
 use pulsar_frontend_oxc::extract;
+use pulsar_frontend_prisma::PrismaSchemaProvider;
+use pulsar_ir::SchemaProvider;
 mod config;
 mod registry;
 
@@ -62,6 +64,26 @@ fn run_check(args: CheckArgs) -> Result<()> {
   let config = config::PulsarConfig::load(config_path).with_context(|| "failed to load config")?;
   let engine = registry::resolve_rules(&config.settings.rules);
 
+  // Load schema if configured
+  let schema_tables = if let Some(schema_path) = &config.database.schema {
+    match PrismaSchemaProvider::from_file(schema_path) {
+      Ok(provider) => match provider.load() {
+        Ok(tables) => {
+          eprintln!("Loaded schema from {} ({} tables)", schema_path, tables.len());
+          Some(tables)
+        }
+        Err(e) => {
+          return Err(anyhow::anyhow!("Failed to parse schema {schema_path}: {e}"));
+        }
+      },
+      Err(e) => {
+        return Err(anyhow::anyhow!("Failed to read schema {schema_path}: {e}"));
+      }
+    }
+  } else {
+    None
+  };
+
   let mut walker_builder = WalkBuilder::new(&path);
   walker_builder.standard_filters(true);
 
@@ -76,6 +98,7 @@ fn run_check(args: CheckArgs) -> Result<()> {
   let walker = walker_builder.build();
 
   let mut file_diagnostics: Vec<(String, String, Vec<pulsar_core::Diagnostic>)> = Vec::new();
+  let mut parse_failures: usize = 0;
 
   for result in walker {
     let entry = result?;
@@ -98,13 +121,19 @@ fn run_check(args: CheckArgs) -> Result<()> {
 
     let file_path_str = entry_path.to_string_lossy().to_string();
 
-    let graph = match extract(&source, source_type, &file_path_str) {
+    let mut graph = match extract(&source, source_type, &file_path_str) {
       Ok(graph) => graph,
       Err(e) => {
         eprintln!("Error parsing {}: {e}", entry_path.display());
+        parse_failures += 1;
         continue;
       }
     };
+
+    // Load schema into this file's graph if available
+    if let Some(ref tables) = schema_tables {
+      graph.load_schema(tables.clone());
+    }
 
     let diagnostics = engine.run(&graph, &source, &file_path_str);
     if !diagnostics.is_empty() {
@@ -136,7 +165,7 @@ fn run_check(args: CheckArgs) -> Result<()> {
     }
   }
 
-  if errors > 0 {
+  if errors > 0 || parse_failures > 0 {
     process::exit(1);
   }
 
@@ -150,7 +179,11 @@ fn run_init() -> Result<()> {
 ignore = [\"node_modules\", \"dist\", \"build\"]
 
 # Enabled rules (empty = all built-in rules)
-rules = [\"no-select-star\", \"no-missing-limit\", \"no-unbounded-find\", \"no-always-true-where\", \"no-query-in-loop\", \"no-query-in-callback\", \"no-n-plus-one\", \"no-raw-sql-dangerous\", \"no-missing-await\"]
+rules = [\"no-select-star\", \"no-missing-limit\", \"no-unbounded-find\", \"no-always-true-where\", \"no-query-in-loop\", \"no-query-in-callback\", \"no-n-plus-one\", \"no-raw-sql-dangerous\", \"no-missing-await\", \"no-unindexed-filter\", \"no-unknown-column\", \"no-missing-foreign-key\"]
+
+[database]
+# Path to Prisma schema file (enables schema-aware rules)
+# schema = \"./prisma/schema.prisma\"
 ";
   std::fs::write("pulsar.toml", config).context("failed to write pulsar.toml")?;
   eprintln!("Created pulsar.toml");

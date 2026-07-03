@@ -29,13 +29,13 @@ and cross-layer patterns. Breaking changes are expected as the API stabilizes.
 | SQL IR                  | ✅ sqlparser-rs frontend |
 | Drizzle ORM             | ✅ Method chain resolution + loop/callback tracking |
 | Raw SQL detection       | ✅ `sql\`…\`` tagged templates + `db.execute/all/get/run` |
-| Rule engine             | ✅ 9 built-in rules |
+| Rule engine             | ✅ 12 built-in rules |
 | CLI (pretty/JSON)       | ✅ `pulsar-cli check`/`init`/`explain` |
-| Config system           | ✅ `pulsar.toml` auto-detect + `--config` |
+| Config system           | ✅ `pulsar.toml` auto-detect + `--config` + `[database]` |
 | Loop kind              | ✅ Counter vs Iteration distinction |
 | Callback tracking       | ✅ `.then()`, `.map()`, `setTimeout`, etc. |
-| Prisma schema           | 🚧 Placeholder |
-| LSP                     | 🚧 Planned |
+| Schema-aware rules      | ✅ Prisma frontend + 3 cross-layer rules |
+| Prisma schema           | ✅ Parser for `.prisma` files |
 
 ## Quick Start
 
@@ -97,6 +97,9 @@ cargo run -p pulsar-cli -- check . --config my-pulsar.toml
 | `no-n-plus-one` | Flags queries inside iteration loops (for-of, for-in). | Warning |
 | `no-raw-sql-dangerous` | Flags raw SQL usage; Error if interpolated, Warning otherwise. | Error/Warning |
 | `no-missing-await` | Flags ORM queries that lack the `await` keyword. | Error |
+| `no-unindexed-filter` | Flags WHERE clauses on columns without a database index. | Warning |
+| `no-unknown-column` | Flags references to columns that don't exist in the schema. | Error |
+| `no-missing-foreign-key` | Flags included relations without a foreign key constraint. | Warning |
 
 ## Architecture
 

@@ -6,6 +6,9 @@ use serde::Deserialize;
 pub struct PulsarConfig {
   #[serde(default)]
   pub settings: Settings,
+  /// Database / schema configuration.
+  #[serde(default)]
+  pub database: DatabaseConfig,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -16,6 +19,14 @@ pub struct Settings {
   /// Enabled rules. Empty means all built-in rules.
   #[serde(default)]
   pub rules: Vec<String>,
+}
+
+/// Database / schema configuration.
+#[derive(Debug, Default, Deserialize)]
+pub struct DatabaseConfig {
+  /// Path to a Prisma schema file (e.g. `"./schema.prisma"`).
+  #[serde(default)]
+  pub schema: Option<String>,
 }
 
 impl PulsarConfig {

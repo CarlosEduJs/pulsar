@@ -1,0 +1,16 @@
+model users {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+
+  @@index([email])
+}
+
+model posts {
+  id       Int   @id @default(autoincrement())
+  title    String
+  authorId Int
+  author   users @relation(fields: [authorId], references: [id])
+
+  @@index([authorId])
+}

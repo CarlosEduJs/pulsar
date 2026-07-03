@@ -49,19 +49,28 @@ jobs:
 
       - name: Smoke test (all fixtures)
         run: |
-          # helpers: 1=fixture_path, 2=expected_rule_id (optional)
+          # helpers: 1=fixture_path, 2=expected_rule_id (optional), remaining args forwarded to `pulsar check`
           expect_diags() {
             local fixture="$1"
             local expected_rule="${2:-}"
+            shift 2
             echo "=== $fixture (expects diagnostics) ==="
-            cargo run --release --locked -p pulsar-cli -- check "$fixture" > /tmp/smoke.txt 2>&1 || true
+            cargo run --release --locked -p pulsar-cli -- check "$fixture" "$@" > /tmp/smoke.txt 2>&1 || true
             cat /tmp/smoke.txt
             [ -s /tmp/smoke.txt ] || { echo "FAIL: $fixture should have diagnostic output"; exit 1; }
             if [ -n "$expected_rule" ]; then
               grep -q "$expected_rule" /tmp/smoke.txt || { echo "FAIL: $fixture missing rule id $expected_rule"; exit 1; }
             else
-              grep -qE "no-select-star|no-missing-limit|no-unbounded-find|no-always-true-where|no-query-in-loop|no-query-in-callback|no-n-plus-one|no-raw-sql-dangerous" /tmp/smoke.txt || { echo "FAIL: $fixture missing rule id"; exit 1; }
+              grep -qE "no-select-star|no-missing-limit|no-unbounded-find|no-always-true-where|no-query-in-loop|no-query-in-callback|no-n-plus-one|no-raw-sql-dangerous|no-missing-await|no-unindexed-filter|no-unknown-column|no-missing-foreign-key" /tmp/smoke.txt || { echo "FAIL: $fixture missing rule id"; exit 1; }
             fi
+          }
+          expect_clean() {
+            local fixture="$1"
+            shift
+            echo "=== $fixture (expects 0 diagnostics) ==="
+            cargo run --release --locked -p pulsar-cli -- check "$fixture" "$@" > /tmp/smoke.txt 2>/dev/null
+            cat /tmp/smoke.txt
+            [ ! -s /tmp/smoke.txt ] || { echo "FAIL: $fixture should have no stdout"; exit 1; }
           }
           expect_clean() {
             local fixture="$1"
@@ -103,6 +112,14 @@ jobs:
           expect_clean test/fixtures/no-raw-sql-dangerous/clean.ts
           expect_diags test/fixtures/no-missing-await/missing-await.ts "no-missing-await"
           expect_clean test/fixtures/no-missing-await/clean.ts
+
+          # Schema-aware tests (use --config to load prisma schema)
+          expect_diags test/fixtures/no-unindexed-filter/filter-on-name.ts "no-unindexed-filter" --config test/fixtures/schema/pulsar.toml
+          expect_clean test/fixtures/no-unindexed-filter/filter-on-indexed.ts --config test/fixtures/schema/pulsar.toml
+          expect_clean test/fixtures/no-unindexed-filter/clean.ts --config test/fixtures/schema/pulsar.toml
+          expect_diags test/fixtures/no-unknown-column/select-wrong.ts "no-unknown-column" --config test/fixtures/schema/pulsar.toml
+          expect_clean test/fixtures/no-unknown-column/clean.ts --config test/fixtures/schema/pulsar.toml
+          expect_clean test/fixtures/no-missing-foreign-key/clean.ts --config test/fixtures/schema/pulsar.toml
 
       - name: Smoke test (json — expects non-empty)
         run: |

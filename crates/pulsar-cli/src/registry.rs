@@ -1,8 +1,9 @@
 use std::collections::BTreeMap;
 
 use pulsar_rules::rules::{
-  NoAlwaysTrueWhere, NoMissingAwait, NoMissingLimit, NoNPlusOne, NoQueryInCallback, NoQueryInLoop,
-  NoRawSqlDangerous, NoSelectStar, NoUnboundedFind,
+  NoAlwaysTrueWhere, NoMissingAwait, NoMissingForeignKey, NoMissingLimit, NoNPlusOne,
+  NoQueryInCallback, NoQueryInLoop, NoRawSqlDangerous, NoSelectStar, NoUnboundedFind,
+  NoUnindexedFilter, NoUnknownColumn,
 };
 use pulsar_rules::{Rule, RuleEngine};
 
@@ -44,6 +45,18 @@ fn no_missing_await() -> Box<dyn Rule> {
   Box::new(NoMissingAwait)
 }
 
+fn no_unindexed_filter() -> Box<dyn Rule> {
+  Box::new(NoUnindexedFilter)
+}
+
+fn no_unknown_column() -> Box<dyn Rule> {
+  Box::new(NoUnknownColumn)
+}
+
+fn no_missing_foreign_key() -> Box<dyn Rule> {
+  Box::new(NoMissingForeignKey)
+}
+
 /// Returns all built-in rules keyed by their `id()`.
 #[must_use]
 pub fn builtin_rules() -> BTreeMap<&'static str, RuleConstructor> {
@@ -57,6 +70,9 @@ pub fn builtin_rules() -> BTreeMap<&'static str, RuleConstructor> {
   map.insert("no-n-plus-one", no_n_plus_one);
   map.insert("no-raw-sql-dangerous", no_raw_sql_dangerous);
   map.insert("no-missing-await", no_missing_await);
+  map.insert("no-unindexed-filter", no_unindexed_filter);
+  map.insert("no-unknown-column", no_unknown_column);
+  map.insert("no-missing-foreign-key", no_missing_foreign_key);
   map
 }
 

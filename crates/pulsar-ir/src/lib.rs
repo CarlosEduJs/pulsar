@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::EdgeRef;
 use pulsar_core::SourceLocation;
@@ -143,6 +145,27 @@ pub struct SchemaColumn {
   pub col_type: String,
   pub is_nullable: bool,
   pub is_indexed: bool,
+  /// Default value expression (e.g. `autoincrement()`, `now()`, `true`).
+  pub col_default: Option<String>,
+  /// Whether this column has a UNIQUE constraint.
+  pub is_unique: bool,
+  /// Foreign key reference, if any.
+  pub foreign_key: Option<ForeignKeyRef>,
+}
+
+/// A reference to a foreign column.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ForeignKeyRef {
+  pub ref_table: String,
+  pub ref_column: String,
+}
+
+/// An index defined on a table.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SchemaIndex {
+  pub columns: Vec<String>,
+  pub is_unique: bool,
+  pub is_partial: bool,
 }
 
 /// A database table reconstructed from schema.
@@ -150,6 +173,27 @@ pub struct SchemaColumn {
 pub struct SchemaNode {
   pub table_name: String,
   pub columns: Vec<SchemaColumn>,
+  pub indexes: Vec<SchemaIndex>,
+}
+
+// Schema Provider
+// ===============
+
+/// Errors that can occur when loading a schema.
+#[derive(Debug, thiserror::Error)]
+pub enum SchemaError {
+  #[error("schema file not found: {0}")]
+  NotFound(String),
+  #[error("failed to read schema: {0}")]
+  Io(#[from] std::io::Error),
+  #[error("failed to parse schema: {0}")]
+  Parse(String),
+}
+
+/// A provider that loads database schema information.
+pub trait SchemaProvider {
+  /// Load all schema nodes keyed by table name.
+  fn load(&self) -> Result<HashMap<String, SchemaNode>, SchemaError>;
 }
 
 // Unified node type
@@ -231,6 +275,92 @@ impl IrGraph {
   /// Returns an iterator over edges and their endpoints.
   pub fn edge_references(&self) -> impl Iterator<Item = (NodeId, NodeId, &EdgeKind)> + '_ {
     self.graph.edge_references().map(|e| (e.source(), e.target(), e.weight()))
+  }
+
+  /// Finds the node id for a schema node with the given table name.
+  #[must_use]
+  pub fn find_schema(&self, table_name: &str) -> Option<NodeId> {
+    self
+      .node_indices()
+      .find(|&id| matches!(self.node(id), Some(NodeKind::Schema(s)) if s.table_name == table_name))
+  }
+
+  /// Links an SQL node to a schema node via an `Accesses` edge, if the schema exists.
+  /// Returns the schema node id if found.
+  pub fn link_sql_to_schema(&mut self, sql_id: NodeId, table_name: &str) -> Option<NodeId> {
+    let schema_id = self.find_schema(table_name)?;
+    self.add_edge(sql_id, schema_id, EdgeKind::Accesses);
+    Some(schema_id)
+  }
+
+  /// Links an ORM node to a schema node via a `MapsTo` edge, if the schema exists.
+  /// Returns the schema node id if found.
+  pub fn link_orm_to_schema(&mut self, orm_id: NodeId, table_name: &str) -> Option<NodeId> {
+    let schema_id = self.find_schema(table_name)?;
+    self.add_edge(orm_id, schema_id, EdgeKind::MapsTo);
+    Some(schema_id)
+  }
+
+  /// Loads and links a schema into the graph, returning the number of nodes added.
+  /// All existing SQL/ORM nodes that reference known tables are linked automatically.
+  pub fn load_schema(&mut self, schema: HashMap<String, SchemaNode>) -> usize {
+    let tables: Vec<(String, SchemaNode)> = schema.into_iter().collect();
+    let count = tables.len();
+
+    for (_table_name, node) in &tables {
+      self.add_schema(node.clone());
+    }
+
+    // Re-link existing SQL nodes matching loaded tables
+    let sql_links: Vec<(NodeId, String)> = self
+      .node_indices()
+      .filter_map(|id| match self.node(id)? {
+        NodeKind::Sql(sql) => sql.table.as_ref().map(|t| (id, t.name.clone())),
+        _ => None,
+      })
+      .collect();
+
+    for (id, table) in &sql_links {
+      let _ = self.link_sql_to_schema(*id, table);
+    }
+
+    count
+  }
+
+  // Graph traversal helpers
+  // =======================
+
+  /// Finds the schema node linked to an ORM node by following `MapsTo` or `Generates` → `Accesses`.
+  #[must_use]
+  pub fn schema_for_orm(&self, orm_id: NodeId) -> Option<&SchemaNode> {
+    // Check for direct MapsTo edge (ORM → Schema)
+    if let Some(schema_id) =
+      self.graph.edges(orm_id).find(|e| *e.weight() == EdgeKind::MapsTo).map(|e| e.target())
+    {
+      if let NodeKind::Schema(s) = self.node(schema_id)? {
+        return Some(s);
+      }
+    }
+    // Fall back to Generates → Accesses
+    let sql_id =
+      self.graph.edges(orm_id).find(|e| *e.weight() == EdgeKind::Generates).map(|e| e.target())?;
+    self.schema_for_sql(sql_id)
+  }
+
+  /// Finds the schema node linked to a SQL node by following `Accesses`.
+  #[must_use]
+  pub fn schema_for_sql(&self, sql_id: NodeId) -> Option<&SchemaNode> {
+    let schema_id =
+      self.graph.edges(sql_id).find(|e| *e.weight() == EdgeKind::Accesses).map(|e| e.target())?;
+    match self.node(schema_id)? {
+      NodeKind::Schema(s) => Some(s),
+      _ => None,
+    }
+  }
+
+  /// Returns the edges of a specific kind from a node.
+  pub fn edges_from(&self, node: NodeId, kind: EdgeKind) -> Vec<NodeId> {
+    self.graph.edges(node).filter(|e| *e.weight() == kind).map(|e| e.target()).collect()
   }
 }
 
@@ -357,7 +487,11 @@ mod tests {
         col_type: "integer".to_string(),
         is_nullable: false,
         is_indexed: true,
+        col_default: None,
+        is_unique: true,
+        foreign_key: None,
       }],
+      indexes: vec![],
     };
     let id = g.add_schema(schema.clone());
     assert_eq!(g.node_count(), 1);
