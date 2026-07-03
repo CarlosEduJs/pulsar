@@ -65,8 +65,15 @@ pub fn process_drizzle_chain(
   let has_limit = limit.is_some();
   let has_where = where_clause.is_some();
 
-  let orm_node =
-    build_orm_node(columns.clone(), where_clause, limit, loop_kind, in_callback, missing_await, location.clone());
+  let orm_node = build_orm_node(
+    columns.clone(),
+    where_clause,
+    limit,
+    loop_kind,
+    in_callback,
+    missing_await,
+    location.clone(),
+  );
   let sql_node = build_sql_node(columns, table_name, has_limit, has_where, in_callback, location);
 
   let orm_id = graph.add_orm(orm_node);
