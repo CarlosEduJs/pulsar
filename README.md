@@ -20,19 +20,22 @@ rules that flag problematic patterns — all in a single pipeline.
 
 ## Status
 
-**v0.2 — Query safety rules.** The pipeline now includes 5 rules covering common SQL and
-ORM pitfalls. Breaking changes are expected as the API stabilizes.
+**v0.3 — Context-aware rules.** The pipeline now includes 9 rules covering SQL, ORM,
+and cross-layer patterns. Breaking changes are expected as the API stabilizes.
 
-| Area               | Status |
-|--------------------|--------|
-| TypeScript parsing | ✅ Oxc frontend |
-| SQL IR             | ✅ sqlparser-rs frontend |
-| Drizzle ORM        | ✅ Method chain resolution + loop detection |
-| Rule engine        | ✅ 5 built-in rules |
-| CLI (pretty/JSON)  | ✅ `pulsar-cli check`/`init`/`explain` |
-| Config system      | ✅ `pulsar.toml` auto-detect + `--config` |
-| Prisma schema      | 🚧 Placeholder |
-| LSP                | 🚧 Planned |
+| Area                    | Status |
+|-------------------------|--------|
+| TypeScript parsing      | ✅ Oxc frontend |
+| SQL IR                  | ✅ sqlparser-rs frontend |
+| Drizzle ORM             | ✅ Method chain resolution + loop/callback tracking |
+| Raw SQL detection       | ✅ `sql\`…\`` tagged templates + `db.execute/all/get/run` |
+| Rule engine             | ✅ 9 built-in rules |
+| CLI (pretty/JSON)       | ✅ `pulsar-cli check`/`init`/`explain` |
+| Config system           | ✅ `pulsar.toml` auto-detect + `--config` |
+| Loop kind              | ✅ Counter vs Iteration distinction |
+| Callback tracking       | ✅ `.then()`, `.map()`, `setTimeout`, etc. |
+| Prisma schema           | 🚧 Placeholder |
+| LSP                     | 🚧 Planned |
 
 ## Quick Start
 
@@ -89,7 +92,11 @@ cargo run -p pulsar-cli -- check . --config my-pulsar.toml
 | `no-missing-limit` | Flags queries without a `LIMIT` clause that could return unbounded results. | Warning |
 | `no-unbounded-find` | Flags ORM queries lacking both a `.where()` filter and a `.limit()` bound. | Warning |
 | `no-always-true-where` | Flags `.where(true)` clauses that have no filtering effect. | Error |
-| `no-query-in-loop` | Flags database queries executed inside loops (N+1 prevention). | Error |
+| `no-query-in-loop` | Flags database queries executed inside counter loops (for, while). | Error |
+| `no-query-in-callback` | Flags queries inside callbacks (`.then()`, `.map()`, `setTimeout`). | Warning |
+| `no-n-plus-one` | Flags queries inside iteration loops (for-of, for-in). | Warning |
+| `no-raw-sql-dangerous` | Flags raw SQL usage; Error if interpolated, Warning otherwise. | Error/Warning |
+| `no-missing-await` | Flags ORM queries that lack the `await` keyword. | Error |
 
 ## Architecture
 
@@ -135,13 +142,13 @@ Pulsar looks for `pulsar.toml` in the project root (generated via `pulsar init`)
 ```toml
 [settings]
 ignore = ["node_modules", "dist", "build"]
-rules = ["no-select-star", "no-missing-limit", "no-unbounded-find", "no-always-true-where", "no-query-in-loop"]
+rules = ["no-select-star", "no-missing-limit", "no-unbounded-find", "no-always-true-where", "no-query-in-loop", "no-query-in-callback", "no-n-plus-one", "no-raw-sql-dangerous", "no-missing-await"]
 ```
 
 ## Roadmap
 
-- **v0.3**: Schema-aware analysis (postgres introspection, Prisma frontend)
-- **v0.4**: LSP integration, SARIF output, GitHub Action
+- **v0.4**: Schema-aware analysis (postgres introspection, Prisma frontend)
+- **v0.5**: LSP integration, SARIF output, GitHub Action
 
 See [`docs/ROADMAP.md`](docs/ROADMAP.md) for details.
 
