@@ -1,0 +1,5 @@
+[settings]
+rules = []
+
+[database]
+schema = "test/fixtures/schema/schema.prisma"

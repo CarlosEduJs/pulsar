@@ -326,6 +326,39 @@ impl IrGraph {
 
     count
   }
+
+  // Graph traversal helpers
+  // =======================
+
+  /// Finds the schema node linked to an ORM node by following `Generates` → `Accesses`.
+  #[must_use]
+  pub fn schema_for_orm(&self, orm_id: NodeId) -> Option<&SchemaNode> {
+    let sql_id = self
+      .graph
+      .edges(orm_id)
+      .find(|e| *e.weight() == EdgeKind::Generates)
+      .map(|e| e.target())?;
+    self.schema_for_sql(sql_id)
+  }
+
+  /// Finds the schema node linked to a SQL node by following `Accesses`.
+  #[must_use]
+  pub fn schema_for_sql(&self, sql_id: NodeId) -> Option<&SchemaNode> {
+    let schema_id = self
+      .graph
+      .edges(sql_id)
+      .find(|e| *e.weight() == EdgeKind::Accesses)
+      .map(|e| e.target())?;
+    match self.node(schema_id)? {
+      NodeKind::Schema(s) => Some(s),
+      _ => None,
+    }
+  }
+
+  /// Returns the edges of a specific kind from a node.
+  pub fn edges_from(&self, node: NodeId, kind: EdgeKind) -> Vec<NodeId> {
+    self.graph.edges(node).filter(|e| *e.weight() == kind).map(|e| e.target()).collect()
+  }
 }
 
 impl Default for IrGraph {

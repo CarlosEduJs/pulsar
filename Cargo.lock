@@ -608,6 +608,8 @@ dependencies = [
  "pulsar-core",
  "pulsar-diag",
  "pulsar-frontend-oxc",
+ "pulsar-frontend-prisma",
+ "pulsar-ir",
  "pulsar-rules",
  "serde",
  "toml",

@@ -179,7 +179,7 @@ fn run_init() -> Result<()> {
 ignore = [\"node_modules\", \"dist\", \"build\"]
 
 # Enabled rules (empty = all built-in rules)
-rules = [\"no-select-star\", \"no-missing-limit\", \"no-unbounded-find\", \"no-always-true-where\", \"no-query-in-loop\", \"no-query-in-callback\", \"no-n-plus-one\", \"no-raw-sql-dangerous\", \"no-missing-await\"]
+rules = [\"no-select-star\", \"no-missing-limit\", \"no-unbounded-find\", \"no-always-true-where\", \"no-query-in-loop\", \"no-query-in-callback\", \"no-n-plus-one\", \"no-raw-sql-dangerous\", \"no-missing-await\", \"no-unindexed-filter\", \"no-unknown-column\", \"no-missing-foreign-key\"]
 
 [database]
 # Path to Prisma schema file (enables schema-aware rules)
