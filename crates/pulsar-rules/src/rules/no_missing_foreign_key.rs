@@ -55,8 +55,8 @@ mod tests {
   use super::*;
   use pulsar_core::SourceLocation;
   use pulsar_ir::{
-    ColumnRef, EdgeKind, ForeignKeyRef, IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode,
-    SchemaColumn, SchemaNode, SQLNode, SqlKind, TableRef,
+    ColumnRef, EdgeKind, ForeignKeyRef, IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode, SQLNode,
+    SchemaColumn, SchemaNode, SqlKind, TableRef,
   };
 
   fn make_graph(has_fk: bool) -> IrGraph {

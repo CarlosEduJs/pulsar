@@ -280,9 +280,9 @@ impl IrGraph {
   /// Finds the node id for a schema node with the given table name.
   #[must_use]
   pub fn find_schema(&self, table_name: &str) -> Option<NodeId> {
-    self.node_indices().find(|&id| {
-      matches!(self.node(id), Some(NodeKind::Schema(s)) if s.table_name == table_name)
-    })
+    self
+      .node_indices()
+      .find(|&id| matches!(self.node(id), Some(NodeKind::Schema(s)) if s.table_name == table_name))
   }
 
   /// Links an SQL node to a schema node via an `Accesses` edge, if the schema exists.
@@ -333,22 +333,16 @@ impl IrGraph {
   /// Finds the schema node linked to an ORM node by following `Generates` → `Accesses`.
   #[must_use]
   pub fn schema_for_orm(&self, orm_id: NodeId) -> Option<&SchemaNode> {
-    let sql_id = self
-      .graph
-      .edges(orm_id)
-      .find(|e| *e.weight() == EdgeKind::Generates)
-      .map(|e| e.target())?;
+    let sql_id =
+      self.graph.edges(orm_id).find(|e| *e.weight() == EdgeKind::Generates).map(|e| e.target())?;
     self.schema_for_sql(sql_id)
   }
 
   /// Finds the schema node linked to a SQL node by following `Accesses`.
   #[must_use]
   pub fn schema_for_sql(&self, sql_id: NodeId) -> Option<&SchemaNode> {
-    let schema_id = self
-      .graph
-      .edges(sql_id)
-      .find(|e| *e.weight() == EdgeKind::Accesses)
-      .map(|e| e.target())?;
+    let schema_id =
+      self.graph.edges(sql_id).find(|e| *e.weight() == EdgeKind::Accesses).map(|e| e.target())?;
     match self.node(schema_id)? {
       NodeKind::Schema(s) => Some(s),
       _ => None,

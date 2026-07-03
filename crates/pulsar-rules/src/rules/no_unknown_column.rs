@@ -67,15 +67,16 @@ mod tests {
   use super::*;
   use pulsar_core::SourceLocation;
   use pulsar_ir::{
-    ColumnRef, EdgeKind, IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode, SchemaColumn, SchemaNode,
-    SQLNode, SqlKind, TableRef,
+    ColumnRef, EdgeKind, IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode, SQLNode, SchemaColumn,
+    SchemaNode, SqlKind, TableRef,
   };
 
   fn make_graph(select_wrong: bool, where_wrong: bool) -> IrGraph {
     let mut graph = IrGraph::new();
     let loc = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
 
-    let select_cols = if select_wrong { vec!["nonexistent".to_string()] } else { vec!["id".to_string()] };
+    let select_cols =
+      if select_wrong { vec!["nonexistent".to_string()] } else { vec!["id".to_string()] };
     let where_clause = if where_wrong {
       Some("eq(users.bad_col, 1)".to_string())
     } else {
@@ -84,12 +85,7 @@ mod tests {
 
     let orm = OrmNode {
       method: OrmMethod::Select,
-      args: OrmArgs {
-        columns: select_cols,
-        where_clause,
-        limit: None,
-        include: Vec::new(),
-      },
+      args: OrmArgs { columns: select_cols, where_clause, limit: None, include: Vec::new() },
       loop_kind: LoopKind::None,
       in_callback: false,
       missing_await: false,

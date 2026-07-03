@@ -70,8 +70,8 @@ mod tests {
   use super::*;
   use pulsar_core::SourceLocation;
   use pulsar_ir::{
-    ColumnRef, EdgeKind, IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode, SchemaColumn,
-    SchemaNode, SQLNode, SqlKind, TableRef,
+    ColumnRef, EdgeKind, IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode, SQLNode, SchemaColumn,
+    SchemaNode, SqlKind, TableRef,
   };
 
   fn make_graph(indexed_col: Option<&str>) -> IrGraph {

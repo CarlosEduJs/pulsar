@@ -104,9 +104,16 @@ fn extract_bracket_list(s: &str) -> Option<Vec<String>> {
   let rest = s.strip_prefix('[')?;
   let end = rest.find(']')?;
   let list = &rest[..end];
-  let items: Vec<String> =
-    list.split(',').map(|s| s.trim().trim_matches('"').to_string()).filter(|s| !s.is_empty()).collect();
-  if items.is_empty() { None } else { Some(items) }
+  let items: Vec<String> = list
+    .split(',')
+    .map(|s| s.trim().trim_matches('"').to_string())
+    .filter(|s| !s.is_empty())
+    .collect();
+  if items.is_empty() {
+    None
+  } else {
+    Some(items)
+  }
 }
 
 /// Parses a field declaration line like:
@@ -167,7 +174,9 @@ fn try_parse_field(line: &str) -> Option<SchemaColumn> {
     let inner = &after[..end];
     let fields = extract_named_list(inner, "fields");
     let references = extract_named_list(inner, "references");
-    if let (Some(f), Some(r)) = (fields.and_then(|v| v.into_iter().next()), references.and_then(|v| v.into_iter().next())) {
+    if let (Some(f), Some(r)) =
+      (fields.and_then(|v| v.into_iter().next()), references.and_then(|v| v.into_iter().next()))
+    {
       foreign_key = Some(ForeignKeyRef { ref_table: String::new(), ref_column: r });
       // Store referenced field in col_default as a marker; ref_table is resolved later
       col_default = Some(format!("fk:{}", f));
