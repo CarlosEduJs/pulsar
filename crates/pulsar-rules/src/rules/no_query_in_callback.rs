@@ -26,8 +26,9 @@ impl Rule for NoQueryInCallback {
         NodeKind::Orm(orm) if orm.in_callback => {
           diags.push(Diagnostic {
             severity: Severity::Warning,
-            message: "Database query inside a callback — extract it outside to avoid unintended behavior."
-              .to_string(),
+            message:
+              "Database query inside a callback — extract it outside to avoid unintended behavior."
+                .to_string(),
             location: orm.location.clone(),
             rule_id: self.id().to_string(),
           });
@@ -35,8 +36,9 @@ impl Rule for NoQueryInCallback {
         NodeKind::Sql(sql) if sql.in_callback => {
           diags.push(Diagnostic {
             severity: Severity::Warning,
-            message: "SQL query inside a callback — extract it outside to avoid unintended behavior."
-              .to_string(),
+            message:
+              "SQL query inside a callback — extract it outside to avoid unintended behavior."
+                .to_string(),
             location: sql.location.clone(),
             rule_id: self.id().to_string(),
           });
@@ -52,9 +54,7 @@ impl Rule for NoQueryInCallback {
 mod tests {
   use super::*;
   use pulsar_core::SourceLocation;
-  use pulsar_ir::{
-    IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode, SQLNode, SqlKind, TableRef,
-  };
+  use pulsar_ir::{IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode, SQLNode, SqlKind, TableRef};
 
   fn make_orm_graph(in_callback: bool) -> IrGraph {
     let mut graph = IrGraph::new();
@@ -137,10 +137,8 @@ mod tests {
   #[test]
   fn flags_both_when_present() {
     let mut graph = IrGraph::new();
-    let loc1 =
-      SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
-    let loc2 =
-      SourceLocation { file: "test.ts".to_string(), line: 2, column: 1, span: None };
+    let loc1 = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
+    let loc2 = SourceLocation { file: "test.ts".to_string(), line: 2, column: 1, span: None };
     let orm = OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs {

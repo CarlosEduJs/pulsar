@@ -34,7 +34,12 @@ impl Rule for NoRawSqlDangerous {
             "Raw SQL detected — prefer Drizzle query builder for type safety.".to_string(),
           )
         };
-        diags.push(Diagnostic { severity, message, location: raw.location.clone(), rule_id: self.id().to_string() });
+        diags.push(Diagnostic {
+          severity,
+          message,
+          location: raw.location.clone(),
+          rule_id: self.id().to_string(),
+        });
       }
     }
     diags
