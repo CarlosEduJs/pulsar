@@ -109,6 +109,7 @@ pub struct OrmNode {
   pub args: OrmArgs,
   pub loop_kind: LoopKind,
   pub in_callback: bool,
+  pub missing_await: bool,
   pub location: SourceLocation,
 }
 
@@ -335,6 +336,7 @@ mod tests {
       },
       loop_kind: LoopKind::None,
       in_callback: false,
+      missing_await: false,
       location: location("test.ts", 1, 1),
     };
     let id = g.add_orm(orm.clone());
@@ -374,6 +376,7 @@ mod tests {
       args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: Vec::new() },
       loop_kind: LoopKind::None,
       in_callback: false,
+      missing_await: false,
       location: location("test.ts", 1, 1),
     });
     g.add_edge(orm, sql, EdgeKind::Generates);

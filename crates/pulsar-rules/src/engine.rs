@@ -65,6 +65,7 @@ mod tests {
       args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: vec![] },
       loop_kind: LoopKind::None,
       in_callback: false,
+      missing_await: false,
       location: loc,
     };
     let s = graph.add_sql(sql);
@@ -95,6 +96,7 @@ mod tests {
       },
       loop_kind: LoopKind::None,
       in_callback: false,
+      missing_await: false,
       location: loc,
     };
     let s = graph.add_sql(sql);

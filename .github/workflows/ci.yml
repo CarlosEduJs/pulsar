@@ -101,6 +101,8 @@ jobs:
           expect_clean test/fixtures/no-query-in-callback/clean.ts
           expect_diags test/fixtures/no-raw-sql-dangerous/sql-template.ts "no-raw-sql-dangerous"
           expect_clean test/fixtures/no-raw-sql-dangerous/clean.ts
+          expect_diags test/fixtures/no-missing-await/missing-await.ts "no-missing-await"
+          expect_clean test/fixtures/no-missing-await/clean.ts
 
       - name: Smoke test (json — expects non-empty)
         run: |

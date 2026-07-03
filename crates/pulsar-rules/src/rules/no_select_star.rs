@@ -70,6 +70,7 @@ mod tests {
       args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
       loop_kind: LoopKind::None,
       in_callback: false,
+      missing_await: false,
       location,
     };
 
@@ -119,6 +120,7 @@ mod tests {
       args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
       loop_kind: LoopKind::None,
       in_callback: false,
+      missing_await: false,
       location,
     };
     let sql_id = graph.add_sql(sql);
@@ -154,6 +156,7 @@ mod tests {
       args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
       loop_kind: LoopKind::None,
       in_callback: false,
+      missing_await: false,
       location,
     };
     let sql_id = graph.add_sql(sql);
@@ -188,6 +191,7 @@ mod tests {
       args: OrmArgs { columns: Vec::new(), where_clause: None, limit: None, include: Vec::new() },
       loop_kind: LoopKind::None,
       in_callback: false,
+      missing_await: false,
       location,
     };
     let sql_id = graph.add_sql(sql);

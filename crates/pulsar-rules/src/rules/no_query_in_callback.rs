@@ -69,6 +69,7 @@ mod tests {
       },
       loop_kind: LoopKind::None,
       in_callback,
+      missing_await: false,
       location,
     };
     graph.add_orm(orm);
@@ -149,6 +150,7 @@ mod tests {
       },
       loop_kind: LoopKind::None,
       in_callback: true,
+      missing_await: false,
       location: loc1,
     };
     let sql = SQLNode {

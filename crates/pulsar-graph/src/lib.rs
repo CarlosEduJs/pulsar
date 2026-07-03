@@ -12,6 +12,7 @@ pub const fn build_orm_node(
   limit: Option<u64>,
   loop_kind: LoopKind,
   in_callback: bool,
+  missing_await: bool,
   location: SourceLocation,
 ) -> OrmNode {
   OrmNode {
@@ -19,6 +20,7 @@ pub const fn build_orm_node(
     args: OrmArgs { columns, where_clause, limit, include: Vec::new() },
     loop_kind,
     in_callback,
+    missing_await,
     location,
   }
 }
@@ -56,6 +58,7 @@ pub fn process_drizzle_chain(
   where_clause: Option<String>,
   loop_kind: LoopKind,
   in_callback: bool,
+  missing_await: bool,
   location: SourceLocation,
   graph: &mut IrGraph,
 ) {
@@ -63,7 +66,7 @@ pub fn process_drizzle_chain(
   let has_where = where_clause.is_some();
 
   let orm_node =
-    build_orm_node(columns.clone(), where_clause, limit, loop_kind, in_callback, location.clone());
+    build_orm_node(columns.clone(), where_clause, limit, loop_kind, in_callback, missing_await, location.clone());
   let sql_node = build_sql_node(columns, table_name, has_limit, has_where, in_callback, location);
 
   let orm_id = graph.add_orm(orm_node);
@@ -87,6 +90,7 @@ mod tests {
       Some("eq(users.id, 1)".to_string()),
       LoopKind::None,
       false,
+      false,
       loc,
       &mut graph,
     );
@@ -106,6 +110,7 @@ mod tests {
       None,
       None,
       LoopKind::None,
+      false,
       false,
       loc,
       &mut graph,
@@ -130,6 +135,7 @@ mod tests {
       Some(5),
       None,
       LoopKind::Counter,
+      false,
       false,
       loc,
       &mut graph,

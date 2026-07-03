@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use pulsar_rules::rules::{
-  NoAlwaysTrueWhere, NoMissingLimit, NoNPlusOne, NoQueryInCallback, NoQueryInLoop,
+  NoAlwaysTrueWhere, NoMissingAwait, NoMissingLimit, NoNPlusOne, NoQueryInCallback, NoQueryInLoop,
   NoRawSqlDangerous, NoSelectStar, NoUnboundedFind,
 };
 use pulsar_rules::{Rule, RuleEngine};
@@ -40,6 +40,10 @@ fn no_raw_sql_dangerous() -> Box<dyn Rule> {
   Box::new(NoRawSqlDangerous)
 }
 
+fn no_missing_await() -> Box<dyn Rule> {
+  Box::new(NoMissingAwait)
+}
+
 /// Returns all built-in rules keyed by their `id()`.
 #[must_use]
 pub fn builtin_rules() -> BTreeMap<&'static str, RuleConstructor> {
@@ -52,6 +56,7 @@ pub fn builtin_rules() -> BTreeMap<&'static str, RuleConstructor> {
   map.insert("no-query-in-callback", no_query_in_callback);
   map.insert("no-n-plus-one", no_n_plus_one);
   map.insert("no-raw-sql-dangerous", no_raw_sql_dangerous);
+  map.insert("no-missing-await", no_missing_await);
   map
 }
 

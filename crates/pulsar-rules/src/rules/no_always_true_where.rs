@@ -63,6 +63,7 @@ mod tests {
       },
       loop_kind: LoopKind::None,
       in_callback: false,
+      missing_await: false,
       location,
     };
 

@@ -287,13 +287,14 @@ fn try_extract_chain<'a>(
   graph: &mut IrGraph,
   ctx: ExtractContext,
 ) {
+  let missing_await = !matches!(expr, Expression::AwaitExpression(_));
   let inner = strip_await(expr);
 
   if let Expression::CallExpression(call) = inner {
     if let Some(chain) = resolve_chain(call) {
       if is_drizzle_select_chain(&chain) {
         let location = span_to_location(call.span, source, file_path);
-        process_drizzle_chain(&chain, location, graph, ctx);
+        process_drizzle_chain(&chain, location, graph, ctx, missing_await);
       }
     }
   }
@@ -355,6 +356,7 @@ fn process_drizzle_chain(
   location: SourceLocation,
   graph: &mut IrGraph,
   ctx: ExtractContext,
+  missing_await: bool,
 ) {
   let columns = extract_select_columns(chain);
   let table_name = extract_table(chain);
@@ -368,6 +370,7 @@ fn process_drizzle_chain(
     where_clause,
     ctx.loop_kind,
     ctx.in_callback,
+    missing_await,
     location,
     graph,
   );

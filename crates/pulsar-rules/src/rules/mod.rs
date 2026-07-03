@@ -1,4 +1,5 @@
 mod no_always_true_where;
+mod no_missing_await;
 mod no_missing_limit;
 mod no_n_plus_one;
 mod no_query_in_callback;
@@ -8,6 +9,7 @@ mod no_select_star;
 mod no_unbounded_find;
 
 pub use no_always_true_where::NoAlwaysTrueWhere;
+pub use no_missing_await::NoMissingAwait;
 pub use no_missing_limit::NoMissingLimit;
 pub use no_n_plus_one::NoNPlusOne;
 pub use no_query_in_callback::NoQueryInCallback;
