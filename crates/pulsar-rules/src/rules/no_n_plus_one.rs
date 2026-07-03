@@ -1,41 +1,35 @@
 use pulsar_core::{Diagnostic, Severity};
-use pulsar_ir::NodeKind;
+use pulsar_ir::{LoopKind, NodeKind};
 
 use crate::rule::{Rule, RuleContext};
 
-/// Flags `.where(true)` clauses which are always-true no-ops.
-///
-/// A WHERE clause with a literal `true` value has no filtering effect
-/// and is likely a mistake (e.g. a forgotten placeholder or debug code).
-pub struct NoAlwaysTrueWhere;
+pub struct NoNPlusOne;
 
-impl Rule for NoAlwaysTrueWhere {
+impl Rule for NoNPlusOne {
   fn id(&self) -> &'static str {
-    "no-always-true-where"
+    "no-n-plus-one"
   }
 
   fn docs(&self) -> &'static str {
-    "Flags `.where(true)` clauses which are always-true no-ops.\n\
+    "Flags database queries inside iteration loops (for-of, for-in).\n\
     \n\
-    A WHERE clause with a literal `true` value has no filtering effect \
-    and is likely a mistake (e.g. a forgotten placeholder or debug code)."
+    Queries inside for-of/for-in loops cause N+1 query problems: the query \
+    runs once per iteration instead of once. Use batch queries or collect \
+    identifiers first, then query with a WHERE IN clause."
   }
 
   fn run(&self, ctx: &RuleContext) -> Vec<Diagnostic> {
     let mut diags = Vec::new();
     for id in ctx.graph.node_indices() {
       if let NodeKind::Orm(orm) = ctx.graph.node(id).expect("node should exist") {
-        if let Some(ref where_clause) = orm.args.where_clause {
-          if where_clause == "true" {
-            diags.push(Diagnostic {
-              severity: Severity::Error,
-              message:
-                ".where(true) has no filtering effect — remove it or provide a real condition."
-                  .to_string(),
-              location: orm.location.clone(),
-              rule_id: self.id().to_string(),
-            });
-          }
+        if orm.loop_kind == LoopKind::Iteration {
+          diags.push(Diagnostic {
+            severity: Severity::Warning,
+            message: "Database query inside an iteration loop — causes N+1 queries. Use batch queries instead."
+              .to_string(),
+            location: orm.location.clone(),
+            rule_id: self.id().to_string(),
+          });
         }
       }
     }
@@ -49,7 +43,7 @@ mod tests {
   use pulsar_core::SourceLocation;
   use pulsar_ir::{IrGraph, LoopKind, OrmArgs, OrmMethod, OrmNode};
 
-  fn make_graph(where_clause: Option<&str>) -> IrGraph {
+  fn make_graph(loop_kind: LoopKind) -> IrGraph {
     let mut graph = IrGraph::new();
     let location = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
 
@@ -57,11 +51,11 @@ mod tests {
       method: OrmMethod::Select,
       args: OrmArgs {
         columns: vec!["id".to_string()],
-        where_clause: where_clause.map(ToString::to_string),
-        limit: None,
+        where_clause: Some("eq(users.id, 1)".to_string()),
+        limit: Some(1),
         include: Vec::new(),
       },
-      loop_kind: LoopKind::None,
+      loop_kind,
       in_callback: false,
       missing_await: false,
       location,
@@ -72,21 +66,21 @@ mod tests {
   }
 
   #[test]
-  fn flags_true_where() {
-    let graph = make_graph(Some("true"));
-    let rule = NoAlwaysTrueWhere;
+  fn flags_query_in_iteration_loop() {
+    let graph = make_graph(LoopKind::Iteration);
+    let rule = NoNPlusOne;
     let ctx =
       RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert_eq!(diags.len(), 1);
-    assert_eq!(diags[0].rule_id, "no-always-true-where");
-    assert_eq!(diags[0].severity, Severity::Error);
+    assert_eq!(diags[0].rule_id, "no-n-plus-one");
+    assert_eq!(diags[0].severity, Severity::Warning);
   }
 
   #[test]
-  fn allows_real_condition() {
-    let graph = make_graph(Some("eq(users.id, 1)"));
-    let rule = NoAlwaysTrueWhere;
+  fn allows_query_in_counter_loop() {
+    let graph = make_graph(LoopKind::Counter);
+    let rule = NoNPlusOne;
     let ctx =
       RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
@@ -94,9 +88,9 @@ mod tests {
   }
 
   #[test]
-  fn allows_no_where() {
-    let graph = make_graph(None);
-    let rule = NoAlwaysTrueWhere;
+  fn allows_query_outside_loop() {
+    let graph = make_graph(LoopKind::None);
+    let rule = NoNPlusOne;
     let ctx =
       RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
@@ -106,7 +100,7 @@ mod tests {
   #[test]
   fn empty_graph_no_diagnostics() {
     let graph = IrGraph::new();
-    let rule = NoAlwaysTrueWhere;
+    let rule = NoNPlusOne;
     let ctx =
       RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);

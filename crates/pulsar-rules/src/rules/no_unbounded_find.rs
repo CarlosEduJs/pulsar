@@ -65,6 +65,7 @@ mod tests {
       },
       loop_kind: LoopKind::None,
       in_callback: false,
+      missing_await: false,
       location,
     };
 
@@ -123,6 +124,7 @@ mod tests {
       args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: Vec::new() },
       loop_kind: LoopKind::None,
       in_callback: false,
+      missing_await: false,
       location,
     };
     graph.add_orm(orm);
@@ -142,6 +144,7 @@ mod tests {
       args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: Vec::new() },
       loop_kind: LoopKind::None,
       in_callback: false,
+      missing_await: false,
       location,
     };
     graph.add_orm(orm);

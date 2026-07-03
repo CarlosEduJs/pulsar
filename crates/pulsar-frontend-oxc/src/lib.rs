@@ -238,10 +238,17 @@ fn try_extract_raw_sql<'a>(
       if let Expression::StaticMemberExpression(member) = &call.callee {
         if let Expression::Identifier(obj) = &member.object {
           if obj.name.as_str() == "db" && RAW_DB_METHODS.contains(&member.property.name.as_str()) {
+            let has_interpolation = call.arguments.iter().any(|arg| {
+              arg_as_expr(arg).is_some_and(|e| match e {
+                Expression::StringLiteral(_) => false,
+                Expression::TemplateLiteral(t) => !t.expressions.is_empty(),
+                _ => true,
+              })
+            });
             let location = span_to_location(call.span, source, file_path);
             graph.add_raw_sql(RawSqlNode {
               kind: RawSqlKind::DbRawMethod,
-              has_interpolation: false,
+              has_interpolation,
               location,
             });
           }
@@ -279,13 +286,14 @@ fn try_extract_chain<'a>(
   graph: &mut IrGraph,
   ctx: ExtractContext,
 ) {
+  let missing_await = !matches!(expr, Expression::AwaitExpression(_));
   let inner = strip_await(expr);
 
   if let Expression::CallExpression(call) = inner {
     if let Some(chain) = resolve_chain(call) {
       if is_drizzle_select_chain(&chain) {
         let location = span_to_location(call.span, source, file_path);
-        process_drizzle_chain(&chain, location, graph, ctx);
+        process_drizzle_chain(&chain, location, graph, ctx, missing_await);
       }
     }
   }
@@ -347,6 +355,7 @@ fn process_drizzle_chain(
   location: SourceLocation,
   graph: &mut IrGraph,
   ctx: ExtractContext,
+  missing_await: bool,
 ) {
   let columns = extract_select_columns(chain);
   let table_name = extract_table(chain);
@@ -360,6 +369,7 @@ fn process_drizzle_chain(
     where_clause,
     ctx.loop_kind,
     ctx.in_callback,
+    missing_await,
     location,
     graph,
   );
