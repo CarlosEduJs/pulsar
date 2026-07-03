@@ -330,9 +330,18 @@ impl IrGraph {
   // Graph traversal helpers
   // =======================
 
-  /// Finds the schema node linked to an ORM node by following `Generates` → `Accesses`.
+  /// Finds the schema node linked to an ORM node by following `MapsTo` or `Generates` → `Accesses`.
   #[must_use]
   pub fn schema_for_orm(&self, orm_id: NodeId) -> Option<&SchemaNode> {
+    // Check for direct MapsTo edge (ORM → Schema)
+    if let Some(schema_id) =
+      self.graph.edges(orm_id).find(|e| *e.weight() == EdgeKind::MapsTo).map(|e| e.target())
+    {
+      if let NodeKind::Schema(s) = self.node(schema_id)? {
+        return Some(s);
+      }
+    }
+    // Fall back to Generates → Accesses
     let sql_id =
       self.graph.edges(orm_id).find(|e| *e.weight() == EdgeKind::Generates).map(|e| e.target())?;
     self.schema_for_sql(sql_id)

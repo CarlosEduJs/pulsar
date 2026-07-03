@@ -73,13 +73,11 @@ fn run_check(args: CheckArgs) -> Result<()> {
           Some(tables)
         }
         Err(e) => {
-          eprintln!("Warning: failed to parse schema {schema_path}: {e}");
-          None
+          return Err(anyhow::anyhow!("Failed to parse schema {schema_path}: {e}"));
         }
       },
       Err(e) => {
-        eprintln!("Warning: failed to read schema {schema_path}: {e}");
-        None
+        return Err(anyhow::anyhow!("Failed to read schema {schema_path}: {e}"));
       }
     }
   } else {
@@ -100,6 +98,7 @@ fn run_check(args: CheckArgs) -> Result<()> {
   let walker = walker_builder.build();
 
   let mut file_diagnostics: Vec<(String, String, Vec<pulsar_core::Diagnostic>)> = Vec::new();
+  let mut parse_failures: usize = 0;
 
   for result in walker {
     let entry = result?;
@@ -126,6 +125,7 @@ fn run_check(args: CheckArgs) -> Result<()> {
       Ok(graph) => graph,
       Err(e) => {
         eprintln!("Error parsing {}: {e}", entry_path.display());
+        parse_failures += 1;
         continue;
       }
     };
@@ -165,7 +165,7 @@ fn run_check(args: CheckArgs) -> Result<()> {
     }
   }
 
-  if errors > 0 {
+  if errors > 0 || parse_failures > 0 {
     process::exit(1);
   }
 

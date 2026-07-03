@@ -1,25 +1,16 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model User {
-  id    Int    @id @default(autoincrement())
-  email String @unique
+model users {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
   name  String?
 
   @@index([email])
 }
 
-model Post {
-  id        Int  @id @default(autoincrement())
-  title     String
-  authorId  Int
-  author    User @relation(fields: [authorId], references: [id])
+model posts {
+  id       Int   @id @default(autoincrement())
+  title    String
+  authorId Int
+  author   users @relation(fields: [authorId], references: [id])
 
   @@index([authorId])
 }

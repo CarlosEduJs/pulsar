@@ -10,17 +10,13 @@ pub fn parse_prisma_schema(source: &str) -> Result<HashMap<String, SchemaNode>, 
   let mut current_model: Option<String> = None;
   let mut current_columns: Vec<SchemaColumn> = Vec::new();
   let mut current_indexes: Vec<SchemaIndex> = Vec::new();
+  let mut inside_model = false;
 
   for line in source.lines() {
     let trimmed = line.trim();
 
-    // Skip empty lines, comments, and other Prisma blocks
-    if trimmed.is_empty()
-      || trimmed.starts_with("//")
-      || trimmed.starts_with("generator")
-      || trimmed.starts_with("datasource")
-      || trimmed.starts_with("enum")
-    {
+    // Skip empty lines and comments
+    if trimmed.is_empty() || trimmed.starts_with("//") {
       continue;
     }
 
@@ -31,11 +27,17 @@ pub fn parse_prisma_schema(source: &str) -> Result<HashMap<String, SchemaNode>, 
         .and_then(|s| s.split(['{', ' ', '\t']).next())
         .map(|s| s.trim().to_string());
       current_model = name;
+      inside_model = true;
       continue;
     }
 
-    if trimmed == "}" {
+    if trimmed == "}" && inside_model {
       flush_model(&mut current_model, &mut current_columns, &mut current_indexes, &mut tables);
+      inside_model = false;
+      continue;
+    }
+
+    if !inside_model {
       continue;
     }
 
@@ -418,9 +420,21 @@ model User {
 
   #[test]
   fn provider_loads_schema() {
-    let source = "model Foo { id Int @id }".to_string();
+    let source = r#"
+model Foo {
+  id   Int    @id
+  name String
+}
+"#
+    .to_string();
     let provider = PrismaSchemaProvider::from_source(source);
     let tables = provider.load().unwrap();
     assert_eq!(tables.len(), 1);
+    let foo = tables.get("Foo").unwrap();
+    assert_eq!(foo.columns.len(), 2);
+    assert_eq!(foo.columns[0].name, "id");
+    assert!(foo.columns[0].is_indexed);
+    assert_eq!(foo.columns[1].name, "name");
+    assert!(!foo.columns[1].is_indexed);
   }
 }
