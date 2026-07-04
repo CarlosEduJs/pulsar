@@ -71,18 +71,18 @@ Pulsar is organized as a Rust workspace with these crates:
 
 The rule engine produces diagnostics through a unified API that multiple consumers can use:
 
-| Consumer             | Format                                                                 |
-| -------------------- | ---------------------------------------------------------------------- |
-| **CLI**              | Human-readable colored output (ESLint-style) with source context       |
-| **LSP**              | In-editor diagnostics (future)                                         |
-| **SARIF**            | GitHub Code Scanning and CI integrations                               |
-| **GitHub Actions**   | Annotations via `warning`/`error` workflow commands                    |
-| **JSON**             | Structured output for custom tooling and dashboards                    |
+| Consumer           | Format                                                           |
+| ------------------ | ---------------------------------------------------------------- |
+| **CLI**            | Human-readable colored output (ESLint-style) with source context |
+| **LSP**            | In-editor diagnostics (future)                                   |
+| **SARIF**          | GitHub Code Scanning and CI integrations                         |
+| **GitHub Actions** | Annotations via `warning`/`error` workflow commands              |
+| **JSON**           | Structured output for custom tooling and dashboards              |
 
 ## Technology
 
-| Tool               | Role                                                    |
-| ------------------ | ------------------------------------------------------- |
-| **oxc**            | TypeScript/JavaScript parsing (blazing fast, Rust-native) |
-| **sqlparser-rs**   | SQL parsing with PostgreSQL dialect support              |
-| **insta**          | Snapshot-based testing for rule diagnostics              |
+| Tool             | Role                                                      |
+| ---------------- | --------------------------------------------------------- |
+| **oxc**          | TypeScript/JavaScript parsing (blazing fast, Rust-native) |
+| **sqlparser-rs** | SQL parsing with PostgreSQL dialect support               |
+| **insta**        | Snapshot-based testing for rule diagnostics               |
