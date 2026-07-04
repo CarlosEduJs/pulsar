@@ -11,14 +11,21 @@ Download the latest binary from [GitHub Releases](https://github.com/CarlosEduJs
 **Linux x86_64:**
 
 ```bash
-curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xz
+curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
 sudo mv pulsar /usr/local/bin/
 ```
 
-**macOS (ARM/x86_64):**
+**macOS (Apple Silicon):**
 
 ```bash
-curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-macos-aarch64.tar.gz | tar xz
+curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-aarch64-apple-darwin.tar.xz | tar xJ
+sudo mv pulsar /usr/local/bin/
+```
+
+**macOS (Intel):**
+
+```bash
+curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-apple-darwin.tar.xz | tar xJ
 sudo mv pulsar /usr/local/bin/
 ```
 

@@ -126,14 +126,12 @@ jobs:
           case "${{ runner.os }}" in
             Linux)
               url="https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz"
-              decompress="tar xJ"
               ;;
             macOS)
-              url="https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-macos-aarch64.tar.gz"
-              decompress="tar xz"
+              url="https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-aarch64-apple-darwin.tar.xz"
               ;;
           esac
-          curl -L "$url" | $decompress
+          curl -L "$url" | tar xJ
           sudo mv pulsar /usr/local/bin/
 
       - name: Check with Pulsar
