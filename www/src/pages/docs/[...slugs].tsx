@@ -20,10 +20,15 @@ export default function Page({ slugs }: PageProps<"/docs/[...slugs]">) {
   const MDX = page.data.body;
   const markdownUrl = getPageMarkdownUrl(page).url;
   return (
-    <DocsPage toc={page.data.toc}>
+    <>
+      <title>{page.data.title} — Pulsar</title>
+      <meta name="description" content={page.data.description} />
       <meta property="og:image" content={getPageImage(slugs).url} />
-      <DocsTitle>{page.data.title}</DocsTitle>
-      <DocsDescription className="mb-0">{page.data.description}</DocsDescription>
+      <meta property="og:title" content={`${page.data.title} — Pulsar`} />
+      <meta property="og:description" content={page.data.description} />
+      <DocsPage toc={page.data.toc}>
+        <DocsTitle>{page.data.title}</DocsTitle>
+        <DocsDescription className="mb-0">{page.data.description}</DocsDescription>
       <div className="flex flex-row gap-2 items-center border-b pt-2 pb-6">
         <MarkdownCopyButton markdownUrl={markdownUrl} />
         <ViewOptionsPopover
@@ -40,6 +45,7 @@ export default function Page({ slugs }: PageProps<"/docs/[...slugs]">) {
         />
       </DocsBody>
     </DocsPage>
+    </>
   );
 }
 
