@@ -1,0 +1,6 @@
+{
+  "title": "Guide",
+  "icon": "Compass",
+  "pages": ["index", "getting-started", "cli", "configuration", "ci-integration"],
+  "root": true
+}

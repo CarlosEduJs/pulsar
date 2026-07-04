@@ -8,7 +8,7 @@ import {
   DocsTitle,
   MarkdownCopyButton,
   ViewOptionsPopover,
-} from 'fumadocs-ui/layouts/docs/page';
+} from 'fumadocs-ui/layouts/notebook/page';
 import { unstable_notFound } from 'waku/router/server';
 import { gitConfig } from '@/lib/shared';
 import { getMDXComponents } from '@/components/mdx';

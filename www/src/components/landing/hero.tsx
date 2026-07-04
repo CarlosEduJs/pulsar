@@ -25,12 +25,12 @@ export function Hero() {
         </p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-          <Link to="/docs/getting-started">
+          <a href="https://github.com/CarlosEduJs/pulsar/releases" target="_blank" rel="noopener noreferrer">
             <Button size="lg">
-              Get Started
+              Download Now
             </Button>
-          </Link>
-          <Link to="/docs">
+          </a>
+          <Link to="/docs/guide">
             <Button
               size="lg"
               variant="outline"    
@@ -47,7 +47,6 @@ export function Hero() {
         transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
         className="mt-12 flex items-center gap-2 text-xs text-muted-foreground"
       >
-        <span className="inline-block size-2 rounded-full bg-primary" />
         v0.4.0 &middot; MIT &middot; Writted in Rust
       </motion.div>
     </section>

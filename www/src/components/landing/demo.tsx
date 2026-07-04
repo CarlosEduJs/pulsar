@@ -88,7 +88,7 @@ export function Demo() {
         transition={{ duration: 0.5, delay: 0.6, ease: 'easeOut' }}
         className="mt-10"
       >
-        <Link to="/docs/getting-started">
+        <Link to="/docs/guide/getting-started">
           <Button size="lg">
             Start analyzing your code
           </Button>

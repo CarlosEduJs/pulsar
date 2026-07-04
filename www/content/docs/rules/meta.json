@@ -1,5 +1,6 @@
 {
   "title": "Rules",
+  "icon": "ListChecks",
   "pages": [
     "index",
     "no-select-star",
@@ -15,5 +16,6 @@
     "no-unindexed-filter",
     "no-unknown-column",
     "no-missing-foreign-key"
-  ]
+  ],
+  "root": true
 }

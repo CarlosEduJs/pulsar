@@ -12,7 +12,7 @@ export function Header() {
 
         <nav className="flex items-center gap-1">
           <Link
-            to="/docs"
+            to="/docs/guide"
           >
             <Button size="sm" variant="ghost">
               Docs
@@ -26,9 +26,6 @@ export function Header() {
             <Button size="sm" variant="ghost">
               GitHub
             </Button>
-          </Link>
-          <Link to="/docs/getting-started">
-            <Button size="sm">Get Started</Button>
           </Link>
         </nav>
       </div>

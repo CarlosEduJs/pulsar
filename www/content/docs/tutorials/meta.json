@@ -1,10 +1,12 @@
 {
   "title": "Tutorials",
+  "icon": "GraduationCap",
   "pages": [
     "index",
     "setup-drizzle",
     "schema-aware",
     "ci-cd",
     "fixing-violations"
-  ]
+  ],
+  "root": true
 }
