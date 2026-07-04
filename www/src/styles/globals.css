@@ -17,6 +17,15 @@ html > body[data-scroll-locked] {
 
 @custom-variant dark (&:is(.dark *));
 
+@utility diagonal-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in oklch, var(--border), transparent 75%) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklch, var(--border), transparent 75%) 1px, transparent 1px),
+    linear-gradient(45deg, color-mix(in oklch, var(--border), transparent 75%) 1px, transparent 1px),
+    linear-gradient(-45deg, color-mix(in oklch, var(--border), transparent 75%) 1px, transparent 1px);
+  background-size: 24px 24px, 24px 24px, 24px 24px, 24px 24px;
+}
+
 @theme inline {
   --font-heading: var(--font-be-vietnam-pro);
   --font-sans: var(--font-sans);
@@ -213,4 +222,9 @@ th {
 
 code {
   border: none !important;
+}
+
+figure.shiki {
+  border: none !important;
+  box-shadow: none !important;
 }

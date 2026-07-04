@@ -1,16 +1,22 @@
-import { Link } from 'waku';
+import { Hero } from '@/components/landing/hero';
+import { Features } from '@/components/landing/features';
+import { Demo } from '@/components/landing/demo';
 
 export default function Home() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center text-center">
-      <h1 className="font-medium text-xl mb-4">Fumadocs on Waku.</h1>
-      <Link
-        to="/docs"
-        className="px-3 py-2 rounded-lg bg-fd-primary text-fd-primary-foreground font-medium text-sm mx-auto"
-      >
-        Open Docs
-      </Link>
-    </div>
+    <main className="flex-1 flex flex-col">
+      <div className="mx-auto w-full max-w-6xl border-l border-r border-border">
+        <section className="border-b border-border">
+          <Hero />
+        </section>
+        <section className="border-b border-border">
+          <Features />
+        </section>
+        <section>
+          <Demo />
+        </section>
+      </div>
+    </main>
   );
 }
 
