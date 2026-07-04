@@ -96,3 +96,29 @@ dist-plan:
 # Install development tools (just)
 setup:
   cargo install just
+
+# Website (www/)
+
+# Start dev server
+www-dev:
+  cd www && bun run dev
+
+# Production build
+www-build:
+  cd www && bun run build
+
+# Type check (MDX generation + tsc)
+www-check:
+  cd www && bun run types:check
+
+# Lint
+www-lint:
+  cd www && bun run lint
+
+# Format
+www-fmt:
+  cd www && bun run fmt
+
+# Format check
+www-fmt-check:
+  cd www && bun run fmt:check
