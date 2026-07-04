@@ -65,6 +65,7 @@ Use `--format json` to pipe diagnostics into jq or custom scripts:
 
 ```yaml
 - name: Check with Pulsar (JSON)
+  continue-on-error: true
   run: |
     pulsar check src/ --format json > diagnostics.json
 
@@ -78,8 +79,9 @@ Use `--format json` to pipe diagnostics into jq or custom scripts:
 ```
 
 <Callout type="info">
-  Pulsar already exits with code 1 when errors or parse failures are found, so the extra jq step is
-  only needed if you want custom filtering (e.g., only fail on specific rules).
+  The `continue-on-error: true` flag lets the job continue so the jq step can run. Without it,
+  `pulsar check` would exit 1 and the remaining steps would be skipped. The jq step still fails the
+  job when errors are present.
 </Callout>
 
 ## Blocking PRs on new violations
@@ -88,6 +90,7 @@ Combine with `reviewdog` or `actions/github-script` to annotate PRs:
 
 ```yaml
 - name: Check with Pulsar (JSON)
+  continue-on-error: true
   run: pulsar check src/ --format json > pulsar-report.json
 
 - name: Annotate PR
@@ -105,9 +108,17 @@ Combine with `reviewdog` or `actions/github-script` to annotate PRs:
           title: d.rule_id,
         });
       });
+
+- name: Fail on errors
+  run: |
+    errors=$(jq 'length' pulsar-report.json)
+    if [ "$errors" -gt 0 ]; then
+      echo "Pulsar found $errors diagnostic(s)"
+      exit 1
+    fi
 ```
 
-This creates inline annotations in the PR's **Files changed** tab for every diagnostic.
+The `continue-on-error: true` flag allows the job to continue past the check step so annotations can be created. The final step ensures the job still fails the PR when diagnostics exist.
 
 ## Matrix builds (multi-OS)
 

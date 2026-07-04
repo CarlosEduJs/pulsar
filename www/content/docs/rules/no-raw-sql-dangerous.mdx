@@ -8,7 +8,7 @@ icon: TriangleAlert
 
 ## What it does
 
-Flags raw SQL expressions (`sql\`...\``tagged templates and`db.$queryRaw()`) that contain string interpolation.
+Flags `db.$queryRaw()` calls that contain string interpolation. Safe parameterized forms like `sql`...``tagged templates are not flagged. Raw`db.$queryRaw()` with string interpolation is flagged as an error; raw `db.$queryRaw()` without interpolation is flagged as a warning.
 
 ## Why it matters
 

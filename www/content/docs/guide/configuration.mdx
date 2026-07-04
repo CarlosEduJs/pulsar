@@ -36,10 +36,10 @@ rules = ["no-select-star", "no-unbounded-find"]
 
 ```toml
 [settings]
-ignore = ["node_modules", "dist", "*.test.ts"]
+ignore = ["node_modules", "dist", ".test.ts"]
 ```
 
-Patterns use glob matching. Entries are compared against the file name, not the full path.
+Entries are compared against the file or directory name, not the full path. The pattern `.test.ts` matches any file or directory named `.test.ts`.
 
 ## Database schema (schema-aware rules)
 
@@ -57,7 +57,7 @@ When set, Pulsar loads the schema and cross-references your queries against it. 
 ```toml title="pulsar.toml"
 [settings]
 rules = ["-no-select-star"]
-ignore = ["node_modules", "dist", "*.test.ts"]
+ignore = ["node_modules", "dist", ".test.ts"]
 
 [database]
 schema = "./prisma/schema.prisma"

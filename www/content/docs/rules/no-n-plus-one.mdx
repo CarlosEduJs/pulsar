@@ -8,11 +8,11 @@ icon: TriangleAlert
 
 ## What it does
 
-Detects multiple queries to the same table within the same scope — the classic N+1 pattern. It only flags the pattern when it overlaps with `no-query-in-loop`, meaning the repeated queries are inside a loop or callback.
+Flags database queries inside iteration loops (`for...of`, `for...in`). These loops run N+1 queries instead of one.
 
 <Callout type="info">
-  This rule requires `no-query-in-loop` to be enabled. It extends loop detection by checking for
-  repeated same-table queries.
+  This rule complements `no-query-in-loop`. Counter-based loops (`for`, `while`, `do...while`) are
+  handled by `no-query-in-loop`; iteration loops are flagged here.
 </Callout>
 
 ## Why it matters
@@ -21,7 +21,7 @@ The N+1 problem is one of the most common ORM performance issues. Loading relate
 
 ## How it works
 
-Pulsar tracks the table referenced by each query inside loops and callbacks. When two or more queries access the same table within the same loop/callback scope, the N+1 pattern is detected and the rule fires.
+Pulsar checks the `loop_kind` on each ORM node. When the query is inside an iteration loop (`for...of` or `for...in`), the rule fires.
 
 ## When to disable
 

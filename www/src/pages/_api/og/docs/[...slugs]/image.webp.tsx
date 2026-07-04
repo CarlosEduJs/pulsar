@@ -1,5 +1,5 @@
 import { appName } from "@/lib/shared";
-import { source } from "@/lib/source";
+import { getDocsStaticParams, source } from "@/lib/source";
 import { ImageResponse } from "@takumi-rs/image-response";
 import { generate as DefaultImage } from "fumadocs-ui/og/takumi";
 import { ApiContext } from "waku/router";
@@ -20,12 +20,8 @@ export async function GET(_: Request, { params }: ApiContext<"/og/docs/[...slugs
 }
 
 export async function getConfig() {
-  const pages = source
-    .generateParams()
-    .map((item) => (item.lang ? [item.lang, ...item.slug] : item.slug));
-
   return {
     render: "static" as const,
-    staticPaths: pages,
+    staticPaths: getDocsStaticParams(),
   } as const;
 }

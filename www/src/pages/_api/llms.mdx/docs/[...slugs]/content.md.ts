@@ -1,4 +1,4 @@
-import { getLLMText, source } from "@/lib/source";
+import { getDocsStaticParams, getLLMText, source } from "@/lib/source";
 import { ApiContext } from "waku/router";
 import { unstable_notFound } from "waku/router/server";
 
@@ -18,12 +18,8 @@ export async function GET(
 }
 
 export async function getConfig() {
-  const pages = source
-    .generateParams()
-    .map((item) => (item.lang ? [item.lang, ...item.slug] : item.slug));
-
   return {
     render: "static" as const,
-    staticPaths: pages,
+    staticPaths: getDocsStaticParams(),
   } as const;
 }

@@ -9,18 +9,21 @@ const features = [
     title: "Quality & Correctness",
     description:
       "Catches SELECT *, missing LIMIT, unbounded finds, always-true WHERE, and missing awaits before they ship.",
+    rules: 5,
     icon: "▲",
   },
   {
     title: "Performance",
     description:
       "Eliminates N+1 queries, loop-based queries, and callback-based queries. The IR graph tracks every pattern.",
+    rules: 3,
     icon: "◆",
   },
   {
     title: "Schema-Aware",
     description:
       "Cross-references your TypeScript with your Prisma schema. Detects unknown columns, missing indexes, and missing foreign keys.",
+    rules: 3,
     icon: "■",
   },
 ];
@@ -72,11 +75,7 @@ export function Features() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="mt-auto">
-                <span className="text-xs text-muted-foreground/60">
-                  {index === 0 && "5 rules"}
-                  {index === 1 && "3 rules"}
-                  {index === 2 && "3 rules"}
-                </span>
+                <span className="text-xs text-muted-foreground/60">{feature.rules} rules</span>
               </CardContent>
             </Card>
           </motion.div>

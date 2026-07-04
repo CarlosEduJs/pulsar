@@ -178,7 +178,11 @@ for (const id of ids) {
 // After
 import { inArray } from "drizzle-orm";
 
-const usersBatch = await db.select().from(users).where(inArray(users.id, ids));
+const usersBatch = await db
+  .select({ id: users.id, name: users.name, email: users.email })
+  .from(users)
+  .where(inArray(users.id, ids))
+  .limit(100);
 ```
 
 #### Fix 5: `no-missing-await`

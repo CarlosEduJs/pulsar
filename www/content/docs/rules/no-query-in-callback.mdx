@@ -8,7 +8,7 @@ icon: TriangleAlert
 
 ## What it does
 
-Flags Drizzle queries passed as callbacks to functions like `Promise.all`, `.map()`, `.filter()`, or event handlers.
+Flags Drizzle queries inside callbacks passed to `.map()`, `.filter()`, `.forEach()`, promise handlers, or event listeners.
 
 ## Why it matters
 
@@ -16,11 +16,11 @@ Queries inside callbacks are executed asynchronously and often unintentionally �
 
 ## How it works
 
-Pulsar inspects the AST to determine whether a query expression appears inside a callback argument — for example, the function passed to `.map()`, `.filter()`, `.reduce()`, `Promise.all()`, or event listeners. Queries inside callbacks are flagged even though modern engines may handle them concurrently.
+Pulsar inspects the AST to determine whether a query expression appears inside a callback argument — for example, the function passed to `.map()`, `.filter()`, `.forEach()`, `.then()`, or event listeners. Queries inside callbacks are flagged even though modern engines may handle them concurrently.
 
 ## When to disable
 
-Disable this rule if you are intentionally running concurrent queries inside `Promise.all()` and have verified the pattern is safe (e.g., with connection pooling and limited batch size).
+Disable this rule if you are intentionally running concurrent queries inside callbacks and have verified the pattern is safe (e.g., with connection pooling and limited batch size).
 
 ## Examples
 

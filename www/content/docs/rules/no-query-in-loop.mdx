@@ -8,7 +8,7 @@ icon: TriangleAlert
 
 ## What it does
 
-Flags Drizzle query expressions (`db.select`, `db.insert`, `db.update`, `db.delete`) that appear inside `for`, `while`, `for...of`, `forEach`, or `map` loops.
+Flags Drizzle query expressions (`db.select`, `db.insert`, `db.update`, `db.delete`) that appear inside `for`, `while`, `do...while`, `for...of`, or `for...in` loops.
 
 ## Why it matters
 
@@ -16,7 +16,7 @@ Running a database query inside a loop triggers N+1 round-trips to the database.
 
 ## How it works
 
-Pulsar checks the AST position of every Drizzle query expression. If the query is inside a `for`, `while`, `do...while`, `for...of`, `for...in`, `forEach`, or `map` body, the rule fires.
+Pulsar checks the AST position of every Drizzle query expression. If the query is inside a `for`, `while`, `do...while`, `for...of`, or `for...in` body, the rule fires.
 
 ## When to disable
 

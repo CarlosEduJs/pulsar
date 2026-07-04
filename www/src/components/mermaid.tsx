@@ -11,7 +11,8 @@ export async function Mermaid({ chart }: { chart: string }) {
     });
 
     return <div dangerouslySetInnerHTML={{ __html: svg }} />;
-  } catch {
+  } catch (e) {
+    console.error("Mermaid render failed:", e);
     return (
       <CodeBlock title="Mermaid">
         <Pre>{chart}</Pre>

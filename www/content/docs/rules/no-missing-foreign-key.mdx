@@ -21,7 +21,7 @@ An include without a foreign key suggests a mismatch between your code and your 
 
 ## How it works
 
-The rule finds the table being queried, extracts the relation column from the `.include()` arguments, and checks the schema for a foreign key defined on that column referencing the target table.
+The rule finds the table being queried and checks whether any column in that table has a foreign key defined. If the table has no foreign keys at all, any `.include()` call on that table is flagged.
 
 ## When to disable
 

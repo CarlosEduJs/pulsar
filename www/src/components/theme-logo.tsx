@@ -12,22 +12,12 @@ export function ThemeLogo() {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return (
-      <div className="flex items-center gap-2">
-        <img src="/logo.svg" alt={appName} className="h-6 w-6" />
-        <h1 className="font-semibold text-sm">{appName}</h1>
-      </div>
-    );
-  }
+  const logoSrc =
+    !mounted || resolvedTheme === "dark" || theme === "dark" ? "/logo.svg" : "/logo-for-white.svg";
 
   return (
     <div className="flex items-center gap-2">
-      {resolvedTheme === "dark" || theme === "dark" ? (
-        <img src="/logo.svg" alt={appName} className="h-6 w-6" />
-      ) : (
-        <img src="/logo-for-white.svg" alt={appName} className="h-6 w-6" />
-      )}
+      <img src={logoSrc} alt={appName} className="h-6 w-6" />
       <h1 className="font-semibold text-sm">{appName}</h1>
     </div>
   );

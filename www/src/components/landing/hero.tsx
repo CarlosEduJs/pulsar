@@ -45,7 +45,7 @@ export function Hero() {
         transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
         className="mt-12 flex items-center gap-2 text-xs text-muted-foreground"
       >
-        v0.4.0 &middot; MIT &middot; Writted in Rust
+        v0.4.0 &middot; MIT &middot; Written in Rust
       </motion.div>
     </section>
   );

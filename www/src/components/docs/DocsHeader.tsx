@@ -7,7 +7,18 @@ import Link from "fumadocs-core/link";
 import { buttonVariants } from "fumadocs-ui/components/ui/button";
 import { cn } from "cnfast";
 import { ChevronDown, Languages, Sidebar } from "lucide-react";
-import { useMemo, useRef, useState, type ComponentProps } from "react";
+import { useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
+
+function SidebarOpenReader({
+  useSidebar,
+  children,
+}: {
+  useSidebar: () => { open: boolean };
+  children: (open: boolean) => ReactNode;
+}) {
+  const { open } = useSidebar();
+  return <>{children(open)}</>;
+}
 
 export function DocsHeader(props: ComponentProps<"header">) {
   const {
@@ -16,15 +27,14 @@ export function DocsHeader(props: ComponentProps<"header">) {
     isNavTransparent,
     props: { tabMode, nav, tabs, sidebar },
   } = useNotebookLayout();
-  const { open } = slots.sidebar?.useSidebar?.() ?? {};
   const navMode = nav?.mode ?? "auto";
   const sidebarCollapsible = sidebar.collapsible ?? true;
   const showLayoutTabs = tabMode === "navbar" && tabs.length > 0;
 
-  return (
+  const renderHeader = (sidebarOpen: boolean) => (
     <header
       id="nd-subnav"
-      data-transparent={isNavTransparent && !open}
+      data-transparent={isNavTransparent && !sidebarOpen}
       {...props}
       className={cn(
         "sticky [grid-area:header] flex flex-col top-(--fd-docs-row-1) z-10 backdrop-blur-sm transition-colors data-[transparent=false]:bg-fd-background/80 layout:[--fd-header-height:--spacing(14)]",
@@ -137,6 +147,14 @@ export function DocsHeader(props: ComponentProps<"header">) {
       {showLayoutTabs && <LayoutTabs tabs={tabs} />}
     </header>
   );
+
+  if (slots.sidebar) {
+    return (
+      <SidebarOpenReader useSidebar={slots.sidebar.useSidebar}>{renderHeader}</SidebarOpenReader>
+    );
+  }
+
+  return renderHeader(false);
 }
 
 function LayoutTabs({ tabs, className, ...props }: { tabs: LayoutTab[]; className?: string }) {

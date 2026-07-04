@@ -16,15 +16,11 @@ export function Header() {
               Docs
             </Button>
           </Link>
-          <Link
-            to="https://github.com/CarlosEduJs/pulsar"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href="https://github.com/CarlosEduJs/pulsar" target="_blank" rel="noopener noreferrer">
             <Button size="sm" variant="ghost">
               GitHub
             </Button>
-          </Link>
+          </a>
         </nav>
       </div>
     </header>

@@ -43,6 +43,7 @@ Create a file called `test.ts` to see Pulsar in action:
 
 ```ts title="test.ts"
 import { db } from "./db";
+import { users, posts } from "./schema";
 
 // This triggers no-select-star (implicit SELECT *)
 const users = db.select().from(users);
@@ -68,12 +69,12 @@ pulsar check test.ts
 Output:
 
 ```text
-test.ts:5:20  error  no-select-star  Avoid implicit SELECT *. Specify columns explicitly.
+test.ts:4:20  error  no-select-star  Avoid implicit SELECT *. Specify columns explicitly.
 
   const users = db.select().from(users);
                      ^^^^^^^^^^^^^^^^^^
 
-test.ts:8:20  warning  no-missing-limit  Query is missing a LIMIT clause.
+test.ts:7:20  warning  no-missing-limit  Query is missing a LIMIT clause.
 
   const posts = await db.select({ id: posts.id }).from(posts);
                                            ^^^^^^^^^^^^^^^^^^

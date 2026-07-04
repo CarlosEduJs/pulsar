@@ -149,3 +149,7 @@ jobs:
       - name: Lint www
         run: bun run lint
         working-directory: www
+
+      - name: Type-check www
+        run: bun run types:check
+        working-directory: www

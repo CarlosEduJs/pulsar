@@ -6,8 +6,10 @@ export default defineConfig({
   vite: {
     resolve: {
       tsconfigPaths: true,
-      external: ["@takumi-rs/image-response"],
       dedupe: ["waku"],
+    },
+    ssr: {
+      external: ["@takumi-rs/image-response"],
     },
 
     plugins: [tailwindcss(), mdx()],

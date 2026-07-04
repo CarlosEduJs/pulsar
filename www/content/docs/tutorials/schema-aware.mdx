@@ -173,7 +173,7 @@ pulsar check src/
 If using the `--format json` flag, you can pipe the output to jq for further analysis:
 
 ```bash
-pulsar check src/ --format json | jq 'group_by(.rule_id) | map({rule: .[0].rule_id, count: length})'
+pulsar check src/ --format json | jq 'sort_by(.rule_id) | group_by(.rule_id) | map({rule: .[0].rule_id, count: length})'
 ```
 
 </Step>

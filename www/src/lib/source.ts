@@ -27,6 +27,10 @@ export function getPageMarkdownUrl(page: (typeof source)["$inferPage"]) {
   };
 }
 
+export function getDocsStaticParams() {
+  return source.generateParams().map((item) => (item.lang ? [item.lang, ...item.slug] : item.slug));
+}
+
 export async function getLLMText(page: (typeof source)["$inferPage"]) {
   const processed = await page.data.getText("processed");
 

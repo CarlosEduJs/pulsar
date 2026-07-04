@@ -12,10 +12,7 @@ export default function Home() {
         content="Detect quality, performance, and schema consistency issues in your TypeScript ORM code before they reach production."
       />
       <meta property="og:image" content="/banner.png" />
-      <meta
-        property="og:title"
-        content="Pulsar — Static Analyzer for TypeScript ORM Code"
-      />
+      <meta property="og:title" content="Pulsar — Static Analyzer for TypeScript ORM Code" />
       <meta
         property="og:description"
         content="Detect quality, performance, and schema consistency issues in your TypeScript ORM code before they reach production."
@@ -41,5 +38,5 @@ export default function Home() {
 export async function getConfig() {
   return {
     render: "static",
-  };
+  } as const;
 }

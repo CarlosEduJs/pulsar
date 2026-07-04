@@ -33,7 +33,7 @@ cargo run -p pulsar-cli -- check . --format json
 cargo run -p pulsar-cli -- init
 ```
 
-See the [Getting Started guide](www/content/docs/guide/getting-started.mdx) for a full walkthrough.
+See the [Getting Started guide](https://carlosedujs.github.io/pulsar/docs/guide/getting-started) for a full walkthrough.
 
 ### Example
 
