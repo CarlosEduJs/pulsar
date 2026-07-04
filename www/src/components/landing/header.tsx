@@ -1,6 +1,6 @@
-import { ThemeLogo } from '@/components/theme-logo';
-import { Button } from '@/components/ui/button';
-import { Link } from 'waku';
+import { ThemeLogo } from "@/components/theme-logo";
+import { Button } from "@/components/ui/button";
+import { Link } from "waku";
 
 export function Header() {
   return (
@@ -11,9 +11,7 @@ export function Header() {
         </Link>
 
         <nav className="flex items-center gap-1">
-          <Link
-            to="/docs/guide"
-          >
+          <Link to="/docs/guide">
             <Button size="sm" variant="ghost">
               Docs
             </Button>

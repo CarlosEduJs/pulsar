@@ -73,6 +73,7 @@ import Database from "better-sqlite3";
 const sqlite = new Database(":memory:");
 export const db = drizzle(sqlite);
 ```
+
 </Step>
 <Step>
 
@@ -120,6 +121,7 @@ src/queries.ts:22:20  error    no-missing-await      Query is missing an `await`
   const user = db.select({ id: users.id }).from(users).where(eq(users.id, 1));
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ```
+
 </Step>
 <Step>
 
@@ -190,6 +192,7 @@ const user = db.select({ id: users.id }).from(users).where(eq(users.id, 1));
 // After
 const user = await db.select({ id: users.id }).from(users).where(eq(users.id, 1));
 ```
+
 </Step>
 <Step>
 
@@ -202,6 +205,7 @@ pulsar check src/
 ```
 
 No output means zero violations.
+
 </Step>
 </Steps>
 

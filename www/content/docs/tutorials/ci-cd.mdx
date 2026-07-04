@@ -78,7 +78,8 @@ Use `--format json` to pipe diagnostics into jq or custom scripts:
 ```
 
 <Callout type="info">
-  Pulsar already exits with code 1 when errors or parse failures are found, so the extra jq step is only needed if you want custom filtering (e.g., only fail on specific rules).
+  Pulsar already exits with code 1 when errors or parse failures are found, so the extra jq step is
+  only needed if you want custom filtering (e.g., only fail on specific rules).
 </Callout>
 
 ## Blocking PRs on new violations
@@ -156,13 +157,13 @@ pulsar-check:
 
 ## Best practices
 
-| Practice | Why |
-|----------|-----|
-| Cache the binary | Save 15-30s per run |
-| Run on PRs only | Avoid wasting CI minutes on every push to WIP branches |
-| Use `--format json` in CI | Easier to parse, annotate, and forward to monitoring |
-| Keep `pulsar.toml` in version control | Ensures consistent rules across machines |
-| Run Pulsar before tests | Fail fast — no point running tests if the code has schema mismatches |
+| Practice                              | Why                                                                  |
+| ------------------------------------- | -------------------------------------------------------------------- |
+| Cache the binary                      | Save 15-30s per run                                                  |
+| Run on PRs only                       | Avoid wasting CI minutes on every push to WIP branches               |
+| Use `--format json` in CI             | Easier to parse, annotate, and forward to monitoring                 |
+| Keep `pulsar.toml` in version control | Ensures consistent rules across machines                             |
+| Run Pulsar before tests               | Fail fast — no point running tests if the code has schema mismatches |
 
 <Cards>
   <Card title="Next: Fixing Common Violations" href="/docs/tutorials/fixing-violations" />

@@ -14,15 +14,15 @@ pulsar check [path] [options]
 
 **Arguments:**
 
-| Argument | Description |
-|----------|-------------|
+| Argument | Description                                                |
+| -------- | ---------------------------------------------------------- |
 | `path`   | File or directory to check (defaults to current directory) |
 
 **Options:**
 
-| Flag | Description |
-|------|-------------|
-| `--config <file>` | Path to `pulsar.toml` config file |
+| Flag              | Description                                 |
+| ----------------- | ------------------------------------------- |
+| `--config <file>` | Path to `pulsar.toml` config file           |
 | `--format <fmt>`  | Output format: `pretty` (default) or `json` |
 
 The `check` command walks all `.ts` and `.tsx` files recursively, parses each file, builds an IR graph, and runs every enabled rule against it.
@@ -44,9 +44,9 @@ pulsar check src/ --config ./config/pulsar.toml
 
 **Exit codes:**
 
-| Code | Meaning |
-|------|---------|
-| `0`  | No errors or parse failures |
+| Code | Meaning                              |
+| ---- | ------------------------------------ |
+| `0`  | No errors or parse failures          |
 | `1`  | One or more errors or parse failures |
 
 ## `init`
@@ -71,7 +71,7 @@ Useful when you want a quick reminder of what a rule does without opening the do
 
 ## Global flags
 
-| Flag | Description |
-|------|-------------|
-| `--help`    | Print help information |
+| Flag        | Description              |
+| ----------- | ------------------------ |
+| `--help`    | Print help information   |
 | `--version` | Print the version number |

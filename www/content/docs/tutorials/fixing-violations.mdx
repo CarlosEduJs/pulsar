@@ -102,9 +102,7 @@ for (const id of ids) {
 ```
 
 ```ts title="Good"
-const results = await db.select()
-  .from(users)
-  .where(inArray(users.id, ids));
+const results = await db.select().from(users).where(inArray(users.id, ids));
 // 1 query = 1 round-trip
 ```
 
@@ -113,16 +111,12 @@ Use `inArray()` to filter by a list of values in a single query.
 ### `no-query-in-callback` — Same problem, different pattern
 
 ```ts title="Bad"
-const users = await Promise.all(ids.map((id) =>
-  db.select().from(users).where(eq(users.id, id))
-));
+const users = await Promise.all(ids.map((id) => db.select().from(users).where(eq(users.id, id))));
 // Still N queries, just concurrent
 ```
 
 ```ts title="Good"
-const users = await db.select()
-  .from(users)
-  .where(inArray(users.id, ids));
+const users = await db.select().from(users).where(inArray(users.id, ids));
 ```
 
 The fix is the same as loop — use `inArray` or a JOIN.
@@ -138,9 +132,7 @@ for (const post of posts) {
 
 ```ts title="Good"
 const authorIds = posts.map((p) => p.authorId);
-const authors = await db.select()
-  .from(users)
-  .where(inArray(users.id, authorIds));
+const authors = await db.select().from(users).where(inArray(users.id, authorIds));
 // 1 query to `users`
 ```
 
@@ -177,9 +169,7 @@ model User {
 ```
 
 ```ts title="Bad"
-const user = await db.select().from(users)
-  .where(eq(users.name, "Alice"))
-  .limit(1);
+const user = await db.select().from(users).where(eq(users.name, "Alice")).limit(1);
 // Full table scan on `name`
 ```
 
@@ -232,13 +222,13 @@ model Post {
 
 ## Summary
 
-| Category | Pattern | Fix |
-|----------|---------|-----|
-| Quality | `select()` without args, no `.limit()`, no `where` | Add columns, limit, or filter |
-| Correctness | `where(true)`, missing `await` | Remove no-op, add `await` |
-| Performance | Queries in loops/callbacks | Use `inArray` or JOINs |
-| Security | Interpolated raw SQL | Use `sql` tagged template |
-| Schema | Unindexed filter, wrong column, missing FK | Fix schema or query |
+| Category    | Pattern                                            | Fix                           |
+| ----------- | -------------------------------------------------- | ----------------------------- |
+| Quality     | `select()` without args, no `.limit()`, no `where` | Add columns, limit, or filter |
+| Correctness | `where(true)`, missing `await`                     | Remove no-op, add `await`     |
+| Performance | Queries in loops/callbacks                         | Use `inArray` or JOINs        |
+| Security    | Interpolated raw SQL                               | Use `sql` tagged template     |
+| Schema      | Unindexed filter, wrong column, missing FK         | Fix schema or query           |
 
 <Cards>
   <Card title="Back to Tutorials" href="/docs/tutorials" />

@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useTheme } from 'next-themes';
-import { appName } from '@/lib/shared';
-import * as React from 'react';
+import { useTheme } from "next-themes";
+import { appName } from "@/lib/shared";
+import * as React from "react";
 
 export function ThemeLogo() {
   const { theme, resolvedTheme } = useTheme();
@@ -21,9 +21,9 @@ export function ThemeLogo() {
     );
   }
 
- return (
+  return (
     <div className="flex items-center gap-2">
-      {resolvedTheme === 'dark' || theme === 'dark' ? (
+      {resolvedTheme === "dark" || theme === "dark" ? (
         <img src="/logo.svg" alt={appName} className="h-6 w-6" />
       ) : (
         <img src="/logo-for-white.svg" alt={appName} className="h-6 w-6" />

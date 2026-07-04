@@ -58,13 +58,13 @@ src/db/posts.ts:8:20  error  no-unknown-column  Column `non_existent` selected i
 
 ## Rule categories
 
-| Category | Rules | What they prevent |
-|----------|-------|-------------------|
-| **Quality** | `no-select-star`, `no-missing-limit`, `no-unbounded-find` | Sloppy queries that return too much or miss filters |
-| **Correctness** | `no-always-true-where`, `no-missing-await` | Logic bugs that crash at runtime |
-| **Performance** | `no-query-in-loop`, `no-query-in-callback`, `no-n-plus-one` | N+1 queries and unnecessary database round-trips |
-| **Security** | `no-raw-sql-dangerous` | SQL injection via interpolated raw queries |
-| **Schema** | `no-unindexed-filter`, `no-unknown-column`, `no-missing-foreign-key` | Mismatches between code and database schema |
+| Category        | Rules                                                                | What they prevent                                   |
+| --------------- | -------------------------------------------------------------------- | --------------------------------------------------- |
+| **Quality**     | `no-select-star`, `no-missing-limit`, `no-unbounded-find`            | Sloppy queries that return too much or miss filters |
+| **Correctness** | `no-always-true-where`, `no-missing-await`                           | Logic bugs that crash at runtime                    |
+| **Performance** | `no-query-in-loop`, `no-query-in-callback`, `no-n-plus-one`          | N+1 queries and unnecessary database round-trips    |
+| **Security**    | `no-raw-sql-dangerous`                                               | SQL injection via interpolated raw queries          |
+| **Schema**      | `no-unindexed-filter`, `no-unknown-column`, `no-missing-foreign-key` | Mismatches between code and database schema         |
 
 ## Quick start
 
@@ -77,6 +77,7 @@ src/db/posts.ts:8:20  error  no-unknown-column  Column `non_existent` selected i
 curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xz
 sudo mv pulsar /usr/local/bin/
 ```
+
 </Step>
 <Step>
 
@@ -85,6 +86,7 @@ sudo mv pulsar /usr/local/bin/
 ```bash
 pulsar init
 ```
+
 </Step>
 <Step>
 
@@ -93,6 +95,7 @@ pulsar init
 ```bash
 pulsar check src/
 ```
+
 </Step>
 </Steps>
 

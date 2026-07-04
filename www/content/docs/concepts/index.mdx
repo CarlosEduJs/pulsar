@@ -8,7 +8,8 @@ Pulsar is built around a multi-frontend pipeline that extracts code into an inte
 
 ## Pipeline overview
 
-<Mermaid chart="
+<Mermaid
+  chart="
 flowchart LR
   TS[TypeScript] --> oxc[oxc parser] --> ORM[ORM / SQL / RawSQL Nodes]
   SQL[SQL strings] --> sqlp[SQL parser] --> SQLN[SQL Nodes]
@@ -18,17 +19,18 @@ flowchart LR
   SN --> Graph
   Graph --> Engine[Rule Engine]
   Engine --> Format[Formatter<br />pretty / JSON]
-" />
+"
+/>
 
 ## Frontends
 
 Each frontend parses a different input format and produces typed IR nodes:
 
-| Frontend | Input | Output |
-|----------|-------|--------|
-| `pulsar-frontend-oxc` | TypeScript/TSX | `OrmNode`, `SQLNode`, `RawSqlNode` |
-| `pulsar-frontend-sql` | SQL strings | `SQLNode` |
-| `pulsar-frontend-prisma` | Prisma schema | `SchemaNode` |
+| Frontend                 | Input          | Output                             |
+| ------------------------ | -------------- | ---------------------------------- |
+| `pulsar-frontend-oxc`    | TypeScript/TSX | `OrmNode`, `SQLNode`, `RawSqlNode` |
+| `pulsar-frontend-sql`    | SQL strings    | `SQLNode`                          |
+| `pulsar-frontend-prisma` | Prisma schema  | `SchemaNode`                       |
 
 ## IR Graph
 
@@ -53,14 +55,14 @@ Diagnostics are formatted by a `DiagnosticFormatter` trait. Two implementations 
 
 Pulsar is organized as a Rust workspace with these crates:
 
-| Crate | Purpose |
-|-------|---------|
-| `pulsar-cli` | CLI binary, config loading, command dispatch |
-| `pulsar-core` | Shared types: `Diagnostic`, `Severity`, `SourceLocation` |
-| `pulsar-ir` | IR graph: `SQLNode`, `OrmNode`, `RawSqlNode`, `SchemaNode`, `IrGraph` |
-| `pulsar-frontend-oxc` | TypeScript extraction via oxc |
-| `pulsar-frontend-sql` | SQL string parsing |
-| `pulsar-frontend-prisma` | Prisma schema parsing |
-| `pulsar-graph` | Drizzle chain resolution and node building |
-| `pulsar-rules` | All 12 rules and the rule engine |
-| `pulsar-diag` | Output formatters |
+| Crate                    | Purpose                                                               |
+| ------------------------ | --------------------------------------------------------------------- |
+| `pulsar-cli`             | CLI binary, config loading, command dispatch                          |
+| `pulsar-core`            | Shared types: `Diagnostic`, `Severity`, `SourceLocation`              |
+| `pulsar-ir`              | IR graph: `SQLNode`, `OrmNode`, `RawSqlNode`, `SchemaNode`, `IrGraph` |
+| `pulsar-frontend-oxc`    | TypeScript extraction via oxc                                         |
+| `pulsar-frontend-sql`    | SQL string parsing                                                    |
+| `pulsar-frontend-prisma` | Prisma schema parsing                                                 |
+| `pulsar-graph`           | Drizzle chain resolution and node building                            |
+| `pulsar-rules`           | All 12 rules and the rule engine                                      |
+| `pulsar-diag`            | Output formatters                                                     |

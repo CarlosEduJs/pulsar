@@ -23,12 +23,14 @@ The file is parsed by `pulsar-frontend-prisma` into a `HashMap<String, SchemaNod
 
 For each analyzed TypeScript file, the schema tables are added to the file's IR graph. SQL nodes are then linked to their corresponding schema nodes via `Accesses` edges:
 
-<Mermaid chart="
+<Mermaid
+  chart="
 flowchart LR
   ORM[OrmNode<br />SELECT from users] -->|Generates| SQL[SQLNode<br />table: users]
   SQL -->|Accesses| Schema[SchemaNode<br />table: users]
   ORM -.->|MapsTo| Schema
-" />
+"
+/>
 
 Rules access the schema through the `schema_for_orm()` or `schema_for_sql()` helpers.
 
@@ -38,11 +40,11 @@ Schema-aware rules silently return empty results when no schema is loaded. This 
 
 ## Schema-aware rules
 
-| Rule | What it checks |
-|------|----------------|
-| [no-unindexed-filter](/docs/rules/no-unindexed-filter) | WHERE columns that lack an index (`@id`, `@unique`, `@@index`) |
-| [no-unknown-column](/docs/rules/no-unknown-column) | SELECT/WHERE columns not in the schema |
-| [no-missing-foreign-key](/docs/rules/no-missing-foreign-key) | Include relations without a foreign key |
+| Rule                                                         | What it checks                                                 |
+| ------------------------------------------------------------ | -------------------------------------------------------------- |
+| [no-unindexed-filter](/docs/rules/no-unindexed-filter)       | WHERE columns that lack an index (`@id`, `@unique`, `@@index`) |
+| [no-unknown-column](/docs/rules/no-unknown-column)           | SELECT/WHERE columns not in the schema                         |
+| [no-missing-foreign-key](/docs/rules/no-missing-foreign-key) | Include relations without a foreign key                        |
 
 ## Prisma schema support
 

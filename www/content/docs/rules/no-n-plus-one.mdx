@@ -11,7 +11,8 @@ icon: TriangleAlert
 Detects multiple queries to the same table within the same scope — the classic N+1 pattern. It only flags the pattern when it overlaps with `no-query-in-loop`, meaning the repeated queries are inside a loop or callback.
 
 <Callout type="info">
-  This rule requires `no-query-in-loop` to be enabled. It extends loop detection by checking for repeated same-table queries.
+  This rule requires `no-query-in-loop` to be enabled. It extends loop detection by checking for
+  repeated same-table queries.
 </Callout>
 
 ## Why it matters

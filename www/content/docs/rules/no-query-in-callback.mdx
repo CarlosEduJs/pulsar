@@ -25,9 +25,11 @@ Disable this rule if you are intentionally running concurrent queries inside `Pr
 ## Examples
 
 ```ts title="Bad"
-const users = await Promise.all(ids.map((id) =>
-  db.select().from(users).where(eq(users.id, id)) // [!code --]
-));
+const users = await Promise.all(
+  ids.map(
+    (id) => db.select().from(users).where(eq(users.id, id)), // [!code --]
+  ),
+);
 ```
 
 ```ts title="Good"

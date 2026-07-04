@@ -7,7 +7,8 @@ icon: TriangleAlert
 <Callout type="warning">Severity: **Warning**</Callout>
 
 <Callout type="info">
-  This is a **schema-aware** rule. It requires a `[database]` section in your config pointing to a Prisma schema file.
+  This is a **schema-aware** rule. It requires a `[database]` section in your config pointing to a
+  Prisma schema file.
 </Callout>
 
 ## What it does
@@ -30,14 +31,18 @@ Disable this rule for small tables where the cost of an index outweighs the quer
 
 ```ts title="Bad"
 // Assume `users.name` has no index in the schema
-const user = await db.select({ id: users.id }).from(users)
+const user = await db
+  .select({ id: users.id })
+  .from(users)
   .where(eq(users.name, "test")) // [!code --]
   .limit(1);
 ```
 
 ```ts title="Good"
 // Assume `users.email` is marked @unique in the schema
-const user = await db.select({ id: users.id }).from(users)
+const user = await db
+  .select({ id: users.id })
+  .from(users)
   .where(eq(users.email, "test@test.com")) // [!code ++]
   .limit(1);
 ```

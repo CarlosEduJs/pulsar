@@ -13,7 +13,7 @@ Think of it as a map of your code's interaction with the database:
 - Each **database table** from your schema becomes a `SchemaNode`.
 - Each **raw SQL expression** (`sql\`...\``, `db.$queryRaw()`) becomes a `RawSqlNode`.
 
-Edges connect these nodes: an ORM call *generates* a SQL query, a SQL query *accesses* a table, and sometimes an ORM call *maps directly* to a schema table.
+Edges connect these nodes: an ORM call _generates_ a SQL query, a SQL query _accesses_ a table, and sometimes an ORM call _maps directly_ to a schema table.
 
 ## Node types
 
@@ -74,11 +74,11 @@ struct SchemaNode {
 
 ## Edge types
 
-| Edge | When it is created |
-|------|-------------------|
-| `Generates` | When parsing a Drizzle chain like `db.select(...).from(users)`, the resulting `OrmNode` generates a `SQLNode` |
-| `Accesses` | When a `SQLNode` references a table that exists in the loaded Prisma schema, an edge to the matching `SchemaNode` is added |
-| `MapsTo` | When schema-aware rules link an `OrmNode` directly to a `SchemaNode` (shorthand for the full Generates → Accesses path) |
+| Edge        | When it is created                                                                                                         |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `Generates` | When parsing a Drizzle chain like `db.select(...).from(users)`, the resulting `OrmNode` generates a `SQLNode`              |
+| `Accesses`  | When a `SQLNode` references a table that exists in the loaded Prisma schema, an edge to the matching `SchemaNode` is added |
+| `MapsTo`    | When schema-aware rules link an `OrmNode` directly to a `SchemaNode` (shorthand for the full Generates → Accesses path)    |
 
 ## Graph traversal
 
@@ -100,8 +100,10 @@ await db.select({ id: users.id }).from(users).where(eq(users.id, 1)).limit(1);
 
 The graph would contain:
 
-<Mermaid chart="
+<Mermaid
+  chart="
 flowchart LR
   ORM[OrmNode<br />SELECT id FROM users<br />WHERE id = 1<br />LIMIT 1] -->|Generates| SQL[SQLNode<br />SELECT id FROM users<br />WHERE id = 1<br />LIMIT 1]
   SQL -->|Accesses| Schema[SchemaNode<br />users<br />id, email, name]
-" />
+"
+/>

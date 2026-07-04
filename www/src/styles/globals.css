@@ -1,6 +1,6 @@
-@import 'tailwindcss';
-@import 'fumadocs-ui/css/shadcn.css';
-@import 'fumadocs-ui/css/preset.css';
+@import "tailwindcss";
+@import "fumadocs-ui/css/shadcn.css";
+@import "fumadocs-ui/css/preset.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource/be-vietnam-pro";
@@ -19,11 +19,31 @@ html > body[data-scroll-locked] {
 
 @utility diagonal-grid {
   background-image:
-    linear-gradient(to right, color-mix(in oklch, var(--border), transparent 75%) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklch, var(--border), transparent 75%) 1px, transparent 1px),
-    linear-gradient(45deg, color-mix(in oklch, var(--border), transparent 75%) 1px, transparent 1px),
-    linear-gradient(-45deg, color-mix(in oklch, var(--border), transparent 75%) 1px, transparent 1px);
-  background-size: 24px 24px, 24px 24px, 24px 24px, 24px 24px;
+    linear-gradient(
+      to right,
+      color-mix(in oklch, var(--border), transparent 75%) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--border), transparent 75%) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      45deg,
+      color-mix(in oklch, var(--border), transparent 75%) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      -45deg,
+      color-mix(in oklch, var(--border), transparent 75%) 1px,
+      transparent 1px
+    );
+  background-size:
+    24px 24px,
+    24px 24px,
+    24px 24px,
+    24px 24px;
 }
 
 @theme inline {
@@ -173,15 +193,19 @@ html > body[data-scroll-locked] {
     letter-spacing: -0.02em;
     font-weight: 600;
   }
-  h4, h5, h6 {
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-heading);
     letter-spacing: -0.01em;
   }
-  body, p {
+  body,
+  p {
     font-family: var(--font-body);
     line-height: 1.6;
   }
-  code, pre {
+  code,
+  pre {
     font-family: var(--font-mono);
   }
 }

@@ -40,6 +40,7 @@ model Post {
   published  Boolean @default(false)
 }
 ```
+
 </Step>
 <Step>
 
@@ -56,6 +57,7 @@ schema = "./prisma/schema.prisma"
 ```
 
 An empty `rules` list enables all built-in rules, including the three schema-aware ones.
+
 </Step>
 <Step>
 
@@ -71,19 +73,21 @@ const users = { id: 1, name: "test", email: "test@test.com" };
 const posts = { id: 1, title: "Test", authorId: 1, contnt: "body", published: true };
 
 // 1. Filter on an unindexed column
-const byName = await db.select({ id: users.id, name: users.name })
+const byName = await db
+  .select({ id: users.id, name: users.name })
   .from(users)
-  .where(eq(users.name, "Alice"))    // `name` has no index
+  .where(eq(users.name, "Alice")) // `name` has no index
   .limit(1);
 
 // 2. Reference a column that does not exist in the schema
-const byTypo = await db.select({ contnt: posts.contnt })   // `contnt` != `content`
+const byTypo = await db
+  .select({ contnt: posts.contnt }) // `contnt` != `content`
   .from(posts)
   .limit(1);
 
 // 3. Include a relation without a foreign key
 const postsWithoutFK = await db.query.posts.findMany({
-  include: { author: true },          // no @relation on authorId
+  include: { author: true }, // no @relation on authorId
 });
 ```
 
@@ -119,6 +123,7 @@ src/queries.ts:23:20  warning  no-missing-foreign-key  Include relation `author`
     include: { author: true },
                ^^^^^^
 ```
+
 </Step>
 <Step>
 
@@ -155,6 +160,7 @@ model Post {
   ...
 }
 ```
+
 </Step>
 <Step>
 
@@ -169,6 +175,7 @@ If using the `--format json` flag, you can pipe the output to jq for further ana
 ```bash
 pulsar check src/ --format json | jq 'group_by(.rule_id) | map({rule: .[0].rule_id, count: length})'
 ```
+
 </Step>
 </Steps>
 
