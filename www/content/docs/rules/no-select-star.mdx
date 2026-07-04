@@ -1,0 +1,37 @@
+---
+title: no-select-star
+description: Disallow implicit SELECT * queries
+icon: TriangleAlert
+---
+
+<Callout type="error">Severity: **Error**</Callout>
+
+## What it does
+
+Requires every `db.select()` call to explicitly name the columns it returns. Using `db.select()` without arguments is equivalent to `SELECT *` and brings back all columns from the table.
+
+## Why it matters
+
+Implicit `SELECT *` can:
+
+- Return more data than needed, wasting bandwidth and memory.
+- Break your app when columns are added or removed from the schema.
+- Make the query intent unclear to future readers.
+
+## How it works
+
+Pulsar inspects every `db.select()` call in the Drizzle chain. If the first argument to `.select()` is missing or empty (no object with column projections), the rule fires.
+
+## When to disable
+
+Disable this rule if you prefer `SELECT *` for quick prototyping or if your queries always need all columns and you explicitly want to avoid maintaining a column list.
+
+## Examples
+
+```ts title="Bad"
+const user = await db.select().from(users);
+```
+
+```ts title="Good"
+const user = await db.select({ id: users.id, name: users.name }).from(users);
+```

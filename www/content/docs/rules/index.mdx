@@ -1,0 +1,46 @@
+---
+title: Rules Overview
+description: All 12 rules organized by category
+icon: ListChecks
+---
+
+## Quality
+
+| Rule                                               | Severity | Description                                 |
+| -------------------------------------------------- | -------- | ------------------------------------------- |
+| [no-select-star](/docs/rules/no-select-star)       | Error    | Disallow implicit `SELECT *`                |
+| [no-missing-limit](/docs/rules/no-missing-limit)   | Warning  | Require `LIMIT` on table queries            |
+| [no-unbounded-find](/docs/rules/no-unbounded-find) | Error    | Require `where` on `findFirst`/`findUnique` |
+
+## Correctness
+
+| Rule                                                     | Severity | Description                          |
+| -------------------------------------------------------- | -------- | ------------------------------------ |
+| [no-always-true-where](/docs/rules/no-always-true-where) | Error    | Catch `where(true)` and equivalent   |
+| [no-missing-await](/docs/rules/no-missing-await)         | Error    | Flag Drizzle queries without `await` |
+
+## Performance
+
+| Rule                                                     | Severity | Description                        |
+| -------------------------------------------------------- | -------- | ---------------------------------- |
+| [no-query-in-loop](/docs/rules/no-query-in-loop)         | Warning  | Detect queries inside loops        |
+| [no-query-in-callback](/docs/rules/no-query-in-callback) | Warning  | Detect queries inside callbacks    |
+| [no-n-plus-one](/docs/rules/no-n-plus-one)               | Warning  | Detect repeated same-table queries |
+
+## Security
+
+| Rule                                                     | Severity | Description               |
+| -------------------------------------------------------- | -------- | ------------------------- |
+| [no-raw-sql-dangerous](/docs/rules/no-raw-sql-dangerous) | Error    | Flag interpolated raw SQL |
+
+## Schema
+
+| Rule                                                         | Severity | Description                     |
+| ------------------------------------------------------------ | -------- | ------------------------------- |
+| [no-unindexed-filter](/docs/rules/no-unindexed-filter)       | Warning  | Filter on unindexed columns     |
+| [no-unknown-column](/docs/rules/no-unknown-column)           | Error    | Reference columns not in schema |
+| [no-missing-foreign-key](/docs/rules/no-missing-foreign-key) | Warning  | Include relations without FK    |
+
+<Callout type="info">
+  Schema-aware rules require a `[database]` section in your config pointing to a Prisma schema file.
+</Callout>

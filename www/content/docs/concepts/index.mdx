@@ -1,0 +1,88 @@
+---
+title: Architecture
+description: How Pulsar works under the hood
+icon: Network
+---
+
+Pulsar is built around a multi-frontend pipeline that extracts code into an intermediate representation and runs rules against it.
+
+## Pipeline overview
+
+<Mermaid
+  chart="
+flowchart LR
+  TS[TypeScript] --> oxc[oxc parser] --> ORM[ORM / SQL / RawSQL Nodes]
+  SQL[SQL strings] --> sqlp[SQL parser] --> SQLN[SQL Nodes]
+  PS[Prisma schema] --> prisma[Prisma parser] --> SN[Schema Nodes]
+  ORM --> Graph[Unified IR Graph]
+  SQLN --> Graph
+  SN --> Graph
+  Graph --> Engine[Rule Engine]
+  Engine --> Format[Formatter<br />pretty / JSON]
+"
+/>
+
+## Frontends
+
+Each frontend parses a different input format and produces typed IR nodes:
+
+| Frontend                 | Input          | Output                             |
+| ------------------------ | -------------- | ---------------------------------- |
+| `pulsar-frontend-oxc`    | TypeScript/TSX | `OrmNode`, `SQLNode`, `RawSqlNode` |
+| `pulsar-frontend-sql`    | SQL strings    | `SQLNode`                          |
+| `pulsar-frontend-prisma` | Prisma schema  | `SchemaNode`                       |
+
+## IR Graph
+
+All nodes are placed in a unified dependency graph (`petgraph::Graph`) with typed edges:
+
+- **Generates** — an ORM node generated a SQL node
+- **Accesses** — a SQL node accesses a schema table
+- **MapsTo** — a node maps directly to another (e.g., ORM → Schema)
+
+## Rule Engine
+
+Rules implement the `Rule` trait and are registered in a `BTreeMap` keyed by rule ID. The engine iterates over all active rules and calls `run(graph, source_text, file_path)` for each one.
+
+## Formatters
+
+Diagnostics are formatted by a `DiagnosticFormatter` trait. Two implementations exist:
+
+- **PrettyFormatter** — ESLint-style output with source context and highlighting
+- **JsonFormatter** — structured JSON for CI/CD tooling
+
+## Crates
+
+Pulsar is organized as a Rust workspace with these crates:
+
+| Crate                    | Purpose                                                               |
+| ------------------------ | --------------------------------------------------------------------- |
+| `pulsar-cli`             | CLI binary, config loading, command dispatch                          |
+| `pulsar-core`            | Shared types: `Diagnostic`, `Severity`, `SourceLocation`              |
+| `pulsar-ir`              | IR graph: `SQLNode`, `OrmNode`, `RawSqlNode`, `SchemaNode`, `IrGraph` |
+| `pulsar-frontend-oxc`    | TypeScript extraction via oxc                                         |
+| `pulsar-frontend-sql`    | SQL string parsing                                                    |
+| `pulsar-frontend-prisma` | Prisma schema parsing                                                 |
+| `pulsar-graph`           | Drizzle chain resolution and node building                            |
+| `pulsar-rules`           | All 12 rules and the rule engine                                      |
+| `pulsar-diag`            | Output formatters                                                     |
+
+## Diagnostics API
+
+The rule engine produces diagnostics through a unified API that multiple consumers can use:
+
+| Consumer           | Format                                                           |
+| ------------------ | ---------------------------------------------------------------- |
+| **CLI**            | Human-readable colored output (ESLint-style) with source context |
+| **LSP**            | In-editor diagnostics (future)                                   |
+| **SARIF**          | GitHub Code Scanning and CI integrations                         |
+| **GitHub Actions** | Annotations via `warning`/`error` workflow commands              |
+| **JSON**           | Structured output for custom tooling and dashboards              |
+
+## Technology
+
+| Tool             | Role                                                      |
+| ---------------- | --------------------------------------------------------- |
+| **oxc**          | TypeScript/JavaScript parsing (blazing fast, Rust-native) |
+| **sqlparser-rs** | SQL parsing with PostgreSQL dialect support               |
+| **insta**        | Snapshot-based testing for rule diagnostics               |

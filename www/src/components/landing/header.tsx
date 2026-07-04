@@ -1,0 +1,28 @@
+import { ThemeLogo } from "@/components/theme-logo";
+import { Button } from "@/components/ui/button";
+import { Link } from "waku";
+
+export function Header() {
+  return (
+    <header className="border-b border-border">
+      <div className="mx-auto flex h-14 items-center justify-between px-4 max-w-6xl border-l border-r border-border">
+        <Link to="/">
+          <ThemeLogo />
+        </Link>
+
+        <nav className="flex items-center gap-1">
+          <Link to="/docs/guide">
+            <Button size="sm" variant="ghost">
+              Docs
+            </Button>
+          </Link>
+          <a href="https://github.com/CarlosEduJs/pulsar" target="_blank" rel="noopener noreferrer">
+            <Button size="sm" variant="ghost">
+              GitHub
+            </Button>
+          </a>
+        </nav>
+      </div>
+    </header>
+  );
+}

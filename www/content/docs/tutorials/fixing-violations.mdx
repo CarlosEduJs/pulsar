@@ -1,0 +1,235 @@
+---
+title: Fixing Common Rule Violations
+description: Walk through real violations from every rule category
+icon: Wrench
+---
+
+This tutorial covers how to fix each type of violation Pulsar detects. The examples go from bad to good, with explanations for each fix.
+
+## Quality rules
+
+### `no-select-star` — Be explicit about columns
+
+```ts title="Bad"
+const user = await db.select().from(users);
+```
+
+`SELECT *` returns **all columns**. If the schema changes (column added/removed), your app may break or leak data.
+
+```ts title="Good"
+const user = await db.select({ id: users.id, name: users.name }).from(users);
+```
+
+Only request the columns you actually use.
+
+### `no-missing-limit` — Always bound your queries
+
+```ts title="Bad"
+const users = await db.select({ id: users.id }).from(users);
+```
+
+Returns every row in the table — dangerous for large datasets.
+
+```ts title="Good"
+const users = await db.select({ id: users.id }).from(users).limit(100);
+```
+
+Add `.limit(N)` to cap the result set. Use a generous limit if you need most rows, but always set one.
+
+### `no-unbounded-find` — Filter `findFirst`/`findUnique`
+
+```ts title="Bad"
+const user = await db.query.users.findFirst();
+```
+
+Returns an **arbitrary row** — nearly always a bug. `findUnique` without `where` is invalid at the database level.
+
+```ts title="Good"
+const user = await db.query.users.findFirst({
+  where: eq(users.id, 1),
+});
+```
+
+Always provide a `where` clause that uniquely identifies the row you want.
+
+## Correctness rules
+
+### `no-always-true-where` — No-op filters are bugs
+
+```ts title="Bad"
+const users = await db.select().from(users).where(true);
+```
+
+`where(true)` returns all rows — it is almost always debugging leftover.
+
+```ts title="Good"
+const users = await db.select().from(users).where(eq(users.role, "admin"));
+```
+
+Replace with an actual condition. If you truly want all rows, omit `.where()` entirely.
+
+### `no-missing-await` — Don't forget `await`
+
+```ts title="Bad"
+const user = db.select().from(users).where(eq(users.id, 1));
+// `user` is a Promise — the query is a dangling fire-and-forget
+```
+
+The query runs but errors are silently swallowed and `user` is never the actual result.
+
+```ts title="Good"
+const user = await db.select().from(users).where(eq(users.id, 1));
+```
+
+Add `await`. If you need concurrent queries, use `Promise.all`:
+
+```ts
+const [users, posts] = await Promise.all([
+  db.select().from(users).limit(10),
+  db.select().from(posts).limit(10),
+]);
+```
+
+## Performance rules
+
+### `no-query-in-loop` — Batch instead of loop
+
+```ts title="Bad"
+for (const id of ids) {
+  const user = await db.select().from(users).where(eq(users.id, id));
+}
+// N queries = N round-trips
+```
+
+```ts title="Good"
+const results = await db.select().from(users).where(inArray(users.id, ids));
+// 1 query = 1 round-trip
+```
+
+Use `inArray()` to filter by a list of values in a single query.
+
+### `no-query-in-callback` — Same problem, different pattern
+
+```ts title="Bad"
+const users = await Promise.all(ids.map((id) => db.select().from(users).where(eq(users.id, id))));
+// Still N queries, just concurrent
+```
+
+```ts title="Good"
+const users = await db.select().from(users).where(inArray(users.id, ids));
+```
+
+The fix is the same as loop — use `inArray` or a JOIN.
+
+### `no-n-plus-one` — Repeated same-table queries
+
+```ts title="Bad"
+for (const post of posts) {
+  const author = await db.select().from(users).where(eq(users.id, post.authorId));
+}
+// N queries to `users`
+```
+
+```ts title="Good"
+const authorIds = posts.map((p) => p.authorId);
+const authors = await db.select().from(users).where(inArray(users.id, authorIds));
+// 1 query to `users`
+```
+
+Collect all IDs first, then query once.
+
+## Security rules
+
+### `no-raw-sql-dangerous` — Use parameterized raw SQL
+
+```ts title="Bad"
+const user = await db.$queryRaw(`SELECT * FROM users WHERE id = ${id}`);
+// String interpolation — SQL injection risk
+```
+
+```ts title="Good"
+import { sql } from "drizzle-orm";
+
+const user = await db.$queryRaw(sql`SELECT * FROM users WHERE id = ${id}`);
+```
+
+The `sql` tagged template handles parameterization automatically. Drizzle sends the values separately from the query template, preventing injection.
+
+## Schema rules
+
+These rules require a `[database]` section pointing to a Prisma schema file.
+
+### `no-unindexed-filter` — Index your filter columns
+
+```prisma title="schema.prisma"
+model User {
+  id   Int    @id @default(autoincrement())
+  name String  // no index
+}
+```
+
+```ts title="Bad"
+const user = await db.select().from(users).where(eq(users.name, "Alice")).limit(1);
+// Full table scan on `name`
+```
+
+```prisma title="schema.prisma" ins={4}
+model User {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  @@index([name])
+}
+```
+
+After adding the index, the same query uses an index scan instead of a full table scan.
+
+### `no-unknown-column` — Column typos are caught early
+
+```ts title="Bad"
+const user = await db.select({ contnt: users.contnt }).from(users).limit(1);
+// `contnt` is not in the schema — runtime error
+```
+
+```ts title="Good"
+const user = await db.select({ content: users.content }).from(users).limit(1);
+```
+
+### `no-missing-foreign-key` — Explicit relationships
+
+```prisma title="schema.prisma"
+model Post {
+  id       Int  @id @default(autoincrement())
+  authorId Int
+  // no @relation — FK is not enforced
+}
+```
+
+```ts title="Bad"
+const result = await db.query.posts.findMany({
+  include: { author: true },
+});
+// Join may work by accident but is not schema-enforced
+```
+
+```prisma title="schema.prisma" ins={4}
+model Post {
+  id       Int  @id @default(autoincrement())
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id])
+}
+```
+
+## Summary
+
+| Category    | Pattern                                            | Fix                           |
+| ----------- | -------------------------------------------------- | ----------------------------- |
+| Quality     | `select()` without args, no `.limit()`, no `where` | Add columns, limit, or filter |
+| Correctness | `where(true)`, missing `await`                     | Remove no-op, add `await`     |
+| Performance | Queries in loops/callbacks                         | Use `inArray` or JOINs        |
+| Security    | Interpolated raw SQL                               | Use `sql` tagged template     |
+| Schema      | Unindexed filter, wrong column, missing FK         | Fix schema or query           |
+
+<Cards>
+  <Card title="Back to Tutorials" href="/docs/tutorials" />
+</Cards>

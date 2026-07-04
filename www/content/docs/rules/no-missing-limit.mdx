@@ -1,0 +1,33 @@
+---
+title: no-missing-limit
+description: Require a LIMIT clause on table queries
+icon: TriangleAlert
+---
+
+<Callout type="warning">Severity: **Warning**</Callout>
+
+## What it does
+
+Flags `db.select()` and `db.query` calls that query a table without appending `.limit()`.
+
+## Why it matters
+
+Unbounded queries can return thousands or millions of rows. A missing `LIMIT` is a common source of performance issues and accidental full-table scans.
+
+## How it works
+
+Pulsar walks the Drizzle method chain looking for a `.limit()` call. If the chain contains `.select()` or a `db.query` builder and no `.limit()` is found, the rule fires.
+
+## When to disable
+
+Disable this rule if you deliberately run unbounded queries (e.g., exporting data, admin panels where all rows are needed).
+
+## Examples
+
+```ts title="Bad"
+const users = await db.select({ id: users.id }).from(users);
+```
+
+```ts title="Good"
+const users = await db.select({ id: users.id }).from(users).limit(10);
+```

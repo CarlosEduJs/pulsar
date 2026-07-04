@@ -1,0 +1,63 @@
+---
+title: Schema-Aware Analysis
+description: Cross-referencing code with your database schema
+icon: Database
+---
+
+Schema-aware rules take Pulsar beyond generic code analysis by loading your actual database schema and cross-referencing it with your queries.
+
+## How it works
+
+### 1. Schema loading
+
+When a `[database]` section is present in `pulsar.toml`, Pulsar loads the Prisma schema file:
+
+```toml
+[database]
+schema = "./prisma/schema.prisma"
+```
+
+The file is parsed by `pulsar-frontend-prisma` into a `HashMap<String, SchemaNode>` keyed by table name.
+
+### 2. Graph linking
+
+For each analyzed TypeScript file, the schema tables are added to the file's IR graph. SQL nodes are then linked to their corresponding schema nodes via `Accesses` edges:
+
+<Mermaid
+  chart="
+flowchart LR
+  ORM[OrmNode<br />SELECT from users] -->|Generates| SQL[SQLNode<br />table: users]
+  SQL -->|Accesses| Schema[SchemaNode<br />table: users]
+  ORM -.->|MapsTo| Schema
+"
+/>
+
+Rules access the schema through the `schema_for_orm()` or `schema_for_sql()` helpers.
+
+### 3. Rule evaluation
+
+Schema-aware rules silently return empty results when no schema is loaded. This means you can run Pulsar without a schema config and only the non-schema rules will fire.
+
+## Schema-aware rules
+
+| Rule                                                         | What it checks                                                             |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| [no-unindexed-filter](/docs/rules/no-unindexed-filter)       | WHERE columns that lack an index (`@id`, `@unique`, `@@unique`, `@@index`) |
+| [no-unknown-column](/docs/rules/no-unknown-column)           | SELECT/WHERE columns not in the schema                                     |
+| [no-missing-foreign-key](/docs/rules/no-missing-foreign-key) | Include relations without a foreign key                                    |
+
+## Prisma schema support
+
+The built-in Prisma parser (`pulsar-frontend-prisma`) supports:
+
+- Model declarations with field names, types, and nullability
+- `@id` — primary key (implies index)
+- `@unique` — unique constraint (implies index)
+- `@default()` — default values (literals, `autoincrement()`, `now()`)
+- `@relation()` — foreign key references
+- `@@index()` — multi-column indexes
+- `@@unique()` — multi-column unique constraints
+
+<Callout type="info">
+  PostgreSQL introspection (generating schema from a live database) is planned for a future release.
+</Callout>

@@ -1,0 +1,108 @@
+---
+title: Welcome
+description: Pulsar — a static analyzer for TypeScript ORM code
+icon: Zap
+---
+
+Pulsar is a static analysis tool that catches bugs, performance issues, and schema mismatches in your **TypeScript ORM** code — before they reach production.
+
+## Installation
+
+```bash
+curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
+sudo mv pulsar /usr/local/bin/
+pulsar check src/
+```
+
+## Why Pulsar?
+
+ORMs make database access convenient, but they also hide the SQL underneath. It's easy to write queries that look correct but hide performance traps, miss edge cases, or drift from your schema.
+
+Pulsar bridges the gap — it understands both your TypeScript code and your database schema, so it can catch issues that generic linters miss.
+
+## What it catches
+
+```text
+src/db/users.ts:12:20  error  no-select-star  Avoid implicit SELECT *. Specify columns explicitly.
+
+  const user = await db.select().from(users);
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+
+src/db/users.ts:15:20  warning  no-missing-limit  Query is missing a LIMIT clause.
+
+  const users = await db.select({ id: users.id }).from(users);
+                                          ^^^^^^^^^^^^^^^^^^^^
+
+src/db/posts.ts:8:20  error  no-unknown-column  Column `non_existent` selected in query but does not exist in schema table `posts`.
+
+  const posts = await db.select({ non_existent: posts.non_existent }).from(posts);
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+```
+
+## Feature highlights
+
+<Cards>
+  <Card title="12 Built-in Rules" href="/docs/rules">
+    9 general rules + 3 schema-aware rules covering quality, performance, security, and correctness.
+  </Card>
+  <Card title="Schema-Aware" href="/docs/concepts/schema-aware">
+    Load your Prisma schema and catch column mismatches, missing indexes, and missing foreign keys.
+  </Card>
+  <Card title="ESLint-Style Output">
+    Familiar pretty-printed diagnostics with source context, or JSON output for CI pipelines.
+  </Card>
+  <Card title="CI Ready" href="/docs/guide/ci-integration">
+    Exit codes, JSON format, and zero-config setup for GitHub Actions and other CI/CD tools.
+  </Card>
+</Cards>
+
+## Rule categories
+
+| Category        | Rules                                                                | What they prevent                                   |
+| --------------- | -------------------------------------------------------------------- | --------------------------------------------------- |
+| **Quality**     | `no-select-star`, `no-missing-limit`, `no-unbounded-find`            | Sloppy queries that return too much or miss filters |
+| **Correctness** | `no-always-true-where`, `no-missing-await`                           | Logic bugs that crash at runtime                    |
+| **Performance** | `no-query-in-loop`, `no-query-in-callback`, `no-n-plus-one`          | N+1 queries and unnecessary database round-trips    |
+| **Security**    | `no-raw-sql-dangerous`                                               | SQL injection via interpolated raw queries          |
+| **Schema**      | `no-unindexed-filter`, `no-unknown-column`, `no-missing-foreign-key` | Mismatches between code and database schema         |
+
+## Quick start
+
+<Steps>
+<Step>
+
+### Install
+
+```bash
+curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
+sudo mv pulsar /usr/local/bin/
+```
+
+</Step>
+<Step>
+
+### Generate a config
+
+```bash
+pulsar init
+```
+
+</Step>
+<Step>
+
+### Check your code
+
+```bash
+pulsar check src/
+```
+
+</Step>
+</Steps>
+
+<Cards>
+  <Card title="Getting Started" href="/docs/guide/getting-started" />
+  <Card title="CLI Reference" href="/docs/guide/cli" />
+  <Card title="Configuration" href="/docs/guide/configuration" />
+</Cards>
+
+> Modern programming languages come with excellent compilers and linters, yet the persistence layer has largely been left behind — still depending on tests, benchmarks, and painful production surprises to surface problems. Pulsar was built to close that gap, treating TypeScript, ORMs, SQL, and schema not as separate concerns, but as parts of one unified program.

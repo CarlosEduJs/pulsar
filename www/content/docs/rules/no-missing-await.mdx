@@ -1,0 +1,34 @@
+---
+title: no-missing-await
+description: Flag Drizzle queries without await
+icon: TriangleAlert
+---
+
+<Callout type="error">Severity: **Error**</Callout>
+
+## What it does
+
+Flags Drizzle query expressions (`db.select`, `db.insert`, `db.update`, `db.delete`, `db.$queryRaw`) that are not preceded by an `await` keyword.
+
+## Why it matters
+
+Forgetting `await` means your code continues executing before the query completes. The query runs as a dangling promise — errors are unhandled and the result is never used.
+
+## How it works
+
+Pulsar checks whether the Drizzle query expression is wrapped in an `await` expression or assigned to a variable that is later awaited. If the query is used without `await` and not passed to `Promise.all()` or similar, the rule fires.
+
+## When to disable
+
+Disable this rule if you intentionally fire-and-forget a query (e.g., logging, analytics events where the result is irrelevant).
+
+## Examples
+
+```ts title="Bad"
+const user = db.select().from(users).where(eq(users.id, 1));
+// `user` is a Promise, not the result
+```
+
+```ts title="Good"
+const user = await db.select().from(users).where(eq(users.id, 1));
+```

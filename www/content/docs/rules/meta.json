@@ -1,0 +1,21 @@
+{
+  "title": "Rules",
+  "icon": "ListChecks",
+  "pages": [
+    "index",
+    "no-select-star",
+    "no-missing-limit",
+    "no-unbounded-find",
+    "no-always-true-where",
+    "no-query-in-loop",
+    "no-query-in-callback",
+    "no-n-plus-one",
+    "no-raw-sql-dangerous",
+    "no-missing-await",
+    "---Schema-Aware---",
+    "no-unindexed-filter",
+    "no-unknown-column",
+    "no-missing-foreign-key"
+  ],
+  "root": true
+}

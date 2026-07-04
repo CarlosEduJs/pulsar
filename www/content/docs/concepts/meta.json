@@ -1,0 +1,6 @@
+{
+  "title": "Concepts",
+  "icon": "Network",
+  "pages": ["index", "ir-graph", "schema-aware"],
+  "root": true
+}

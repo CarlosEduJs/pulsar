@@ -1,0 +1,40 @@
+---
+title: no-unknown-column
+description: Error when referencing columns not in the schema
+icon: TriangleAlert
+---
+
+<Callout type="error">Severity: **Error**</Callout>
+
+<Callout type="info">
+  This is a **schema-aware** rule. It requires a `[database]` section in your config pointing to a
+  Prisma schema file.
+</Callout>
+
+## What it does
+
+Flags column references in SELECT and WHERE clauses that do not exist in the database schema.
+
+## Why it matters
+
+A column that doesn't exist in the schema will cause a runtime database error. Catching these mismatches at analysis time prevents broken deployments.
+
+## How it works
+
+The rule loads the Prisma schema, finds the table referenced in the query, extracts column names from the query's SELECT and WHERE clauses, and checks each one against the schema columns.
+
+## When to disable
+
+Disable this rule if your queries reference columns from database views or raw SQL that are not represented in your Prisma schema.
+
+## Examples
+
+```ts title="Bad"
+// `nonexistent` is not a column in the users table
+const user = await db.select({ nonexistent: users.nonexistent }).from(users); // [!code --]
+```
+
+```ts title="Good"
+// `id` and `name` exist in the users table
+const user = await db.select({ id: users.id, name: users.name }).from(users); // [!code ++]
+```

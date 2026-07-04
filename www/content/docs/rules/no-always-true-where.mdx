@@ -1,0 +1,33 @@
+---
+title: no-always-true-where
+description: Catch where(true) and equivalent always-true filters
+icon: TriangleAlert
+---
+
+<Callout type="error">Severity: **Error**</Callout>
+
+## What it does
+
+Flags `.where(true)`, `.where(() => true)`, and other expressions that always evaluate to true.
+
+## Why it matters
+
+A `where(true)` clause is almost always a mistake — it acts as a no-op filter, returning all rows. It is often left behind during debugging or refactoring.
+
+## How it works
+
+Pulsar evaluates the expression passed to `.where()`. If it is a boolean literal `true`, an arrow function that returns `true`, or any expression that Pulsar can statically determine to be always truthy, the rule fires.
+
+## When to disable
+
+Disable this rule if you have a legitimate use case for `where(true)` — though this is extremely rare in practice.
+
+## Examples
+
+```ts title="Bad"
+const users = await db.select().from(users).where(true);
+```
+
+```ts title="Good"
+const user = await db.select().from(users).where(eq(users.id, 1));
+```

@@ -1,0 +1,225 @@
+---
+title: Setting up Pulsar in a Drizzle Project
+description: From zero to a fully analyzed Drizzle codebase
+icon: TreePine
+---
+
+This tutorial walks through creating a fresh Drizzle project, adding Pulsar, and fixing the violations it finds.
+
+<Steps>
+<Step>
+
+### Create a Drizzle project
+
+Set up a new project with Drizzle ORM and SQLite:
+
+```bash
+mkdir my-app && cd my-app
+npm init -y
+npm install drizzle-orm better-sqlite3
+npm install -D drizzle-kit @types/better-sqlite3
+
+mkdir src
+```
+
+Create a minimal schema and query file:
+
+```ts title="src/schema.ts"
+import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey(),
+  name: text("name"),
+  email: text("email").unique(),
+});
+
+export const posts = sqliteTable("posts", {
+  id: integer("id").primaryKey(),
+  title: text("title"),
+  authorId: integer("author_id"),
+});
+```
+
+```ts title="src/queries.ts"
+import { db } from "./db";
+import { users, posts } from "./schema";
+import { eq } from "drizzle-orm";
+
+// --- Problematic queries ---
+
+// 1. SELECT * (implicit)
+const allUsers = db.select().from(users);
+
+// 2. No LIMIT
+const someUsers = db.select({ id: users.id }).from(users);
+
+// 3. No WHERE on findFirst
+const firstUser = db.query.users.findFirst();
+
+// 4. Query inside a loop
+const ids = [1, 2, 3];
+for (const id of ids) {
+  const user = db.select().from(users).where(eq(users.id, id));
+}
+
+// 5. Missing await
+const user = db.select({ id: users.id }).from(users).where(eq(users.id, 1));
+```
+
+```ts title="src/db.ts"
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import Database from "better-sqlite3";
+
+const sqlite = new Database(":memory:");
+export const db = drizzle(sqlite);
+```
+
+</Step>
+<Step>
+
+### Run Pulsar for the first time
+
+Generate a default config:
+
+```bash
+pulsar init
+```
+
+Open `pulsar.toml` and notice all 12 rules are enabled. For now we will leave it as-is.
+
+Run the check:
+
+```bash
+pulsar check src/
+```
+
+You should see output similar to:
+
+```text
+src/queries.ts:8:20  error    no-select-star       Avoid implicit SELECT *. Specify columns explicitly.
+
+  const allUsers = db.select().from(users);
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+
+src/queries.ts:11:20  warning  no-missing-limit      Query is missing a LIMIT clause.
+
+  const someUsers = db.select({ id: users.id }).from(users);
+                                            ^^^^^^^^^^^^^^^^^^^^
+
+src/queries.ts:14:20  error    no-unbounded-find     Query is unbounded — add a .where() or .limit().
+
+  const firstUser = db.query.users.findFirst();
+                                           ^^^
+
+src/queries.ts:18:22  warning  no-query-in-loop      Database query inside a loop.
+
+    const user = db.select().from(users).where(eq(users.id, id));
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+src/queries.ts:22:20  error    no-missing-await      Query is missing an `await`.
+
+  const user = db.select({ id: users.id }).from(users).where(eq(users.id, 1));
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+```
+
+</Step>
+<Step>
+
+### Fix each violation
+
+#### Fix 1: `no-select-star`
+
+Replace `db.select()` with explicit column selection:
+
+```ts title="src/queries.ts" ins={3}
+// Before
+const allUsers = db.select().from(users);
+
+// After
+const allUsers = db.select({ id: users.id, name: users.name, email: users.email }).from(users);
+```
+
+#### Fix 2: `no-missing-limit`
+
+Add `.limit()` to bounded queries:
+
+```ts title="src/queries.ts" ins={3}
+// Before
+const someUsers = db.select({ id: users.id }).from(users);
+
+// After
+const someUsers = db.select({ id: users.id }).from(users).limit(100);
+```
+
+#### Fix 3: `no-unbounded-find`
+
+Add a `where` clause to `findFirst`:
+
+```ts title="src/queries.ts" ins={4}
+// Before
+const firstUser = db.query.users.findFirst();
+
+// After
+const firstUser = db.query.users.findFirst({
+  where: eq(users.id, 1),
+});
+```
+
+#### Fix 4: `no-query-in-loop`
+
+Move the query outside the loop using `inArray`:
+
+```ts title="src/queries.ts" ins={3-4}
+// Before
+for (const id of ids) {
+  const user = db.select().from(users).where(eq(users.id, id));
+}
+
+// After
+import { inArray } from "drizzle-orm";
+
+const usersBatch = await db
+  .select({ id: users.id, name: users.name, email: users.email })
+  .from(users)
+  .where(inArray(users.id, ids))
+  .limit(100);
+```
+
+#### Fix 5: `no-missing-await`
+
+Add `await` to the query expression:
+
+```ts title="src/queries.ts" ins={3}
+// Before
+const user = db.select({ id: users.id }).from(users).where(eq(users.id, 1));
+
+// After
+const user = await db.select({ id: users.id }).from(users).where(eq(users.id, 1));
+```
+
+</Step>
+<Step>
+
+### Verify the fixes
+
+Run Pulsar again:
+
+```bash
+pulsar check src/
+```
+
+No output means zero violations.
+
+</Step>
+</Steps>
+
+## Key takeaways
+
+- Start with `pulsar init` to get a baseline config
+- Fix violations one at a time — Pulsar's output pinpoints the exact location
+- The most common fixes are adding `await`, adding `.limit()`, and moving queries out of loops
+- Use `pulsar explain <rule-id>` to learn more about any rule
+
+<Cards>
+  <Card title="Next: Schema-Aware Analysis" href="/docs/tutorials/schema-aware" />
+</Cards>

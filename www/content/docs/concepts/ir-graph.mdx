@@ -1,0 +1,109 @@
+---
+title: IR Graph
+description: How Pulsar models code as a graph of typed nodes
+icon: GitBranch
+---
+
+The IR (Intermediate Representation) graph is the core data structure in Pulsar. Every piece of analyzed code becomes a node in a directed graph, with edges representing semantic relationships.
+
+Think of it as a map of your code's interaction with the database:
+
+- Each **Drizzle ORM call** (`db.select()`, `db.insert()`, etc.) becomes an `OrmNode`.
+- Each **SQL query** it generates becomes a `SQLNode`.
+- Each **database table** from your schema becomes a `SchemaNode`.
+- Each **raw SQL expression** (`sql\`...\``, `db.$queryRaw()`) becomes a `RawSqlNode`.
+
+Edges connect these nodes: an ORM call _generates_ a SQL query, a SQL query _accesses_ a table, and sometimes an ORM call _maps directly_ to a schema table.
+
+## Node types
+
+### `OrmNode`
+
+Represents a Drizzle ORM method call chain (`.select()`, `.findMany()`, `.findFirst()`, `.insert()`, `.update()`, `.delete()`).
+
+```rust
+struct OrmNode {
+  method: OrmMethod,       // Select, Insert, Update, Delete
+  args: OrmArgs,           // columns, where_clause, limit, include
+  loop_kind: LoopKind,     // NotInLoop, ForLoop, ForOf, WhileLoop, ForEach, Map
+  in_callback: bool,       // true if inside a callback (Promise.all, .map(), etc.)
+  missing_await: bool,     // true if expression lacks await
+  location: SourceLocation,
+}
+```
+
+### `SQLNode`
+
+Represents a parsed SQL query (either extracted from an ORM chain or parsed from a raw SQL string).
+
+```rust
+struct SQLNode {
+  kind: SqlKind,           // Select, Insert, Update, Delete
+  columns: Vec<ColumnRef>, // referenced columns
+  table: Option<TableRef>, // target table
+  limit: bool,             // has LIMIT clause
+  where_clause: bool,      // has WHERE clause
+  in_callback: bool,
+  location: SourceLocation,
+}
+```
+
+### `RawSqlNode`
+
+Represents a raw SQL expression in TypeScript code.
+
+```rust
+struct RawSqlNode {
+  kind: RawSqlKind,             // TaggedTemplate or DbRawMethod
+  has_interpolation: bool,      // contains string interpolation
+  location: SourceLocation,
+}
+```
+
+### `SchemaNode`
+
+Represents a database table parsed from a Prisma schema.
+
+```rust
+struct SchemaNode {
+  table_name: String,
+  columns: Vec<SchemaColumn>,   // name, col_type, is_nullable, is_indexed, is_unique, foreign_key
+  indexes: Vec<SchemaIndex>,    // columns, is_unique, is_partial
+}
+```
+
+## Edge types
+
+| Edge        | When it is created                                                                                                         |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `Generates` | When parsing a Drizzle chain like `db.select(...).from(users)`, the resulting `OrmNode` generates a `SQLNode`              |
+| `Accesses`  | When a `SQLNode` references a table that exists in the loaded Prisma schema, an edge to the matching `SchemaNode` is added |
+| `MapsTo`    | When schema-aware rules link an `OrmNode` directly to a `SchemaNode` (shorthand for the full Generates → Accesses path)    |
+
+## Graph traversal
+
+The graph is built using `petgraph::Graph<NodeKind, EdgeKind>`.
+
+Rules traverse the graph using helper methods:
+
+- `schema_for_orm(orm_id)` — follows `MapsTo` or `Generates → Accesses` to find the linked schema node
+- `schema_for_sql(sql_id)` — follows `Accesses` to find the linked schema node
+- `edges_from(node, kind)` — returns all target nodes connected by a specific edge kind
+
+## Example
+
+For this Drizzle query:
+
+```ts
+await db.select({ id: users.id }).from(users).where(eq(users.id, 1)).limit(1);
+```
+
+The graph would contain:
+
+<Mermaid
+  chart="
+flowchart LR
+  ORM[OrmNode<br />SELECT id FROM users<br />WHERE id = 1<br />LIMIT 1] -->|Generates| SQL[SQLNode<br />SELECT id FROM users<br />WHERE id = 1<br />LIMIT 1]
+  SQL -->|Accesses| Schema[SchemaNode<br />users<br />id, email, name]
+"
+/>

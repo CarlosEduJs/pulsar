@@ -1,0 +1,119 @@
+---
+title: CI Integration
+description: Run Pulsar in your CI/CD pipeline
+icon: Cloud
+---
+
+## GitHub Actions
+
+Add a step to your workflow to install and run Pulsar:
+
+```yaml title=".github/workflows/ci.yml"
+- name: Install Pulsar
+  run: |
+    curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
+    sudo mv pulsar /usr/local/bin/
+
+- name: Check with Pulsar
+  run: pulsar check src/
+```
+
+### Caching the binary
+
+To avoid re-downloading on every run, cache the binary:
+
+```yaml
+- name: Cache Pulsar
+  id: cache
+  uses: actions/cache@v4
+  with:
+    path: /usr/local/bin/pulsar
+    key: pulsar-${{ runner.os }}
+
+- name: Install Pulsar (if not cached)
+  if: steps.cache.outputs.cache-hit != 'true'
+  run: |
+    curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
+    sudo mv pulsar /usr/local/bin/
+```
+
+### Matrix builds
+
+Run on multiple operating systems:
+
+```yaml
+strategy:
+  matrix:
+    os: [ubuntu-latest, macos-latest]
+steps:
+  - name: Install Pulsar
+    run: |
+      case "${{ runner.os }}" in
+        Linux)
+          url="https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz"
+          ;;
+        macOS)
+          url="https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-aarch64-apple-darwin.tar.xz"
+          ;;
+      esac
+      curl -L "$url" | tar xJ
+      sudo mv pulsar /usr/local/bin/
+```
+
+## GitLab CI
+
+```yaml
+pulsar-check:
+  script:
+    - curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
+    - sudo mv pulsar /usr/local/bin/
+    - pulsar check src/
+  only:
+    - merge_requests
+```
+
+## CircleCI
+
+```yaml
+- run:
+    name: Install Pulsar
+    command: |
+      curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
+      sudo mv pulsar /usr/local/bin/
+
+- run:
+    name: Check with Pulsar
+    command: pulsar check src/
+```
+
+## Exit codes
+
+| Code | Meaning                               |
+| ---- | ------------------------------------- |
+| `0`  | Pass — no errors or parse failures    |
+| `1`  | Fail — errors or parse failures found |
+
+## JSON output
+
+For machine parsing, use the `--format json` flag:
+
+```bash
+pulsar check src/ --format json
+```
+
+The JSON format is an array of diagnostic objects:
+
+```json
+[
+  {
+    "severity": "Error",
+    "rule_id": "no-select-star",
+    "message": "Avoid implicit SELECT *. Specify columns explicitly.",
+    "location": {
+      "file": "src/db/users.ts",
+      "line": 12,
+      "column": 20
+    }
+  }
+]
+```

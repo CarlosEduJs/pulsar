@@ -132,3 +132,24 @@ jobs:
           cargo run --release --locked -p pulsar-cli -- check test/fixtures/no-issues.ts --format json > /tmp/smoke.json 2>/dev/null
           cat /tmp/smoke.json
           jq -e 'length == 0' /tmp/smoke.json || { echo "FAIL: expected empty JSON array"; exit 1; }
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: latest
+
+      - name: Install www dependencies
+        run: bun install --frozen-lockfile
+        working-directory: www
+
+      - name: Check www format
+        run: bun run fmt:check
+        working-directory: www
+
+      - name: Lint www
+        run: bun run lint
+        working-directory: www
+
+      - name: Type-check www
+        run: bun run types:check
+        working-directory: www

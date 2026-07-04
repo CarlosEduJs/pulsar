@@ -1,0 +1,33 @@
+---
+title: no-unbounded-find
+description: Require a where clause in findFirst/findUnique
+icon: TriangleAlert
+---
+
+<Callout type="error">Severity: **Error**</Callout>
+
+## What it does
+
+Flags `findFirst()` and `findUnique()` calls made without a `.where()` clause.
+
+## Why it matters
+
+`findFirst()` without a filter returns an arbitrary row — likely a bug. `findUnique()` without a filter is invalid at the database level.
+
+## How it works
+
+Pulsar identifies `findFirst()` and `findUnique()` calls on Drizzle query builders and checks if the argument object contains a `where` key. If the where clause is missing, the rule fires.
+
+## When to disable
+
+Disable this rule if you intentionally call `findFirst()` to grab an arbitrary row (e.g., sampling data).
+
+## Examples
+
+```ts title="Bad"
+const user = await db.query.users.findFirst();
+```
+
+```ts title="Good"
+const user = await db.query.users.findFirst({ where: eq(users.id, 1) });
+```

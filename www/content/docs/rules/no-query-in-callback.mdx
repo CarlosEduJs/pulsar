@@ -1,0 +1,37 @@
+---
+title: no-query-in-callback
+description: Detect database queries inside callbacks
+icon: TriangleAlert
+---
+
+<Callout type="warning">Severity: **Warning**</Callout>
+
+## What it does
+
+Flags Drizzle queries inside callbacks passed to `.map()`, `.filter()`, `.forEach()`, promise handlers, or event listeners.
+
+## Why it matters
+
+Queries inside callbacks are executed asynchronously and often unintentionally — the callback runs once per element, creating multiple overlapping queries.
+
+## How it works
+
+Pulsar inspects the AST to determine whether a query expression appears inside a callback argument — for example, the function passed to `.map()`, `.filter()`, `.forEach()`, `.then()`, or event listeners. Queries inside callbacks are flagged even though modern engines may handle them concurrently.
+
+## When to disable
+
+Disable this rule if you are intentionally running concurrent queries inside callbacks and have verified the pattern is safe (e.g., with connection pooling and limited batch size).
+
+## Examples
+
+```ts title="Bad"
+const users = await Promise.all(
+  ids.map(
+    (id) => db.select().from(users).where(eq(users.id, id)), // [!code --]
+  ),
+);
+```
+
+```ts title="Good"
+const users = await db.select().from(users).where(inArray(users.id, ids)); // [!code ++]
+```

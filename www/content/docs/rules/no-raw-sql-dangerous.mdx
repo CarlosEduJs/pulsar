@@ -1,0 +1,38 @@
+---
+title: no-raw-sql-dangerous
+description: Flag interpolated raw SQL
+icon: TriangleAlert
+---
+
+<Callout type="error">Severity: **Error**</Callout>
+
+## What it does
+
+Flags `db.$queryRaw()` calls that contain string interpolation. Safe parameterized forms like `sql`...``tagged templates are not flagged. Raw`db.$queryRaw()` with string interpolation is flagged as an error; raw `db.$queryRaw()` without interpolation is flagged as a warning.
+
+## Why it matters
+
+String interpolation in raw SQL is the primary vector for SQL injection attacks. Parameterized queries should always be used instead.
+
+The rule distinguishes between:
+
+- **String literals** (`"value"`) — safe, no interpolation.
+- **Template literals without expressions** (`` `value` ``) — safe.
+- **Template literals with expressions** (`` `WHERE id = ${id}` ``) — interpolated, flagged.
+- **Other expressions** (variables, function calls) — assumed interpolated, flagged.
+
+## Examples
+
+```ts title="Bad"
+const users = await db.$queryRaw(`SELECT * FROM users WHERE id = ${id}`); // [!code --]
+```
+
+```ts title="Good"
+const users = await db.$queryRaw(sql`SELECT * FROM users WHERE id = ${id}`); // [!code ++]
+```
+
+Using `sql\`...\`` tagged templates with parameter placeholders is safe — Drizzle handles parameterization automatically.
+
+## When to disable
+
+Disable this rule if you are certain the interpolated values are sanitized (e.g., validated enum values or trusted server-side constants). Remember that disabling this rule removes SQL injection protection.

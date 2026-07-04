@@ -1,0 +1,35 @@
+---
+title: no-query-in-loop
+description: Detect database queries inside loops
+icon: TriangleAlert
+---
+
+<Callout type="warning">Severity: **Warning**</Callout>
+
+## What it does
+
+Flags Drizzle query expressions (`db.select`, `db.insert`, `db.update`, `db.delete`) that appear inside `for`, `while`, `do...while`, `for...of`, or `for...in` loops.
+
+## Why it matters
+
+Running a database query inside a loop triggers N+1 round-trips to the database. Batching the query outside the loop reduces latency and database load.
+
+## How it works
+
+Pulsar checks the AST position of every Drizzle query expression. If the query is inside a `for`, `while`, `do...while`, `for...of`, or `for...in` body, the rule fires.
+
+## When to disable
+
+Disable this rule when you intentionally query inside a loop with a small, fixed iteration count (e.g., < 5) and the query pattern is unavoidable.
+
+## Examples
+
+```ts title="Bad"
+for (const id of ids) {
+  const user = await db.select().from(users).where(eq(users.id, id)); // [!code --]
+}
+```
+
+```ts title="Good"
+const results = await db.select().from(users).where(inArray(users.id, ids)); // [!code ++]
+```

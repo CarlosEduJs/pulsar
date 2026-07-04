@@ -1,0 +1,192 @@
+---
+title: Schema-Aware Analysis with Prisma
+description: Catch column mismatches, missing indexes, and missing foreign keys
+icon: Database
+---
+
+This tutorial shows how to connect Pulsar to your Prisma schema so it can catch schema-level issues that generic linters cannot.
+
+<Steps>
+<Step>
+
+### Create a Prisma schema
+
+Create a schema with deliberate issues to demonstrate:
+
+```prisma title="prisma/schema.prisma"
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  name  String
+  email String  @unique
+  // NOTE: no index on `name` — will trigger no-unindexed-filter
+}
+
+model Post {
+  id         Int     @id @default(autoincrement())
+  title      String
+  content    String?
+  authorId   Int
+  // NOTE: no @relation on authorId — will trigger no-missing-foreign-key
+  // NOTE: `content` has typo — will trigger no-unknown-column when querying "contnt"
+  published  Boolean @default(false)
+}
+```
+
+</Step>
+<Step>
+
+### Configure Pulsar
+
+Create `pulsar.toml` in the project root:
+
+```toml title="pulsar.toml"
+[settings]
+rules = []
+
+[database]
+schema = "./prisma/schema.prisma"
+```
+
+An empty `rules` list enables all built-in rules, including the three schema-aware ones.
+
+</Step>
+<Step>
+
+### Write queries that trigger schema rules
+
+```ts title="src/queries.ts"
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+// Assume these tables are mapped via drizzle-zod or drizzle-prisma
+// For this tutorial we declare inline types:
+
+const users = { id: 1, name: "test", email: "test@test.com" };
+const posts = { id: 1, title: "Test", authorId: 1, contnt: "body", published: true };
+
+// 1. Filter on an unindexed column
+const byName = await db
+  .select({ id: users.id, name: users.name })
+  .from(users)
+  .where(eq(users.name, "Alice")) // `name` has no index
+  .limit(1);
+
+// 2. Reference a column that does not exist in the schema
+const byTypo = await db
+  .select({ contnt: posts.contnt }) // `contnt` != `content`
+  .from(posts)
+  .limit(1);
+
+// 3. Include a relation without a foreign key
+const postsWithoutFK = await db.query.posts.findMany({
+  include: { author: true }, // no @relation on authorId
+});
+```
+
+<Callout type="info">
+  For the schema-aware rules to work, Pulsar must be able to resolve the table name from your TypeScript code to a model in your Prisma schema. The resolution depends on naming conventions — ensure variable names match table names.
+</Callout>
+</Step>
+<Step>
+
+### Run the analysis
+
+```bash
+pulsar check src/
+```
+
+Expected output:
+
+```text
+Loaded schema from ./prisma/schema.prisma (2 tables)
+
+src/queries.ts:13:20  warning  no-unindexed-filter   Filter on column `name` which has no index.
+
+    .where(eq(users.name, "Alice"))
+                   ^^^^^^^^
+
+src/queries.ts:18:20  error    no-unknown-column     Column `contnt` does not exist in schema table `posts`.
+
+  const byTypo = await db.select({ contnt: posts.contnt })
+                                            ^^^^^^^^^^^^^^
+
+src/queries.ts:23:20  warning  no-missing-foreign-key  Include relation `author` on table `posts` has no foreign key.
+
+    include: { author: true },
+               ^^^^^^
+```
+
+</Step>
+<Step>
+
+### Fix the issues
+
+#### Add an index to `name`
+
+```prisma title="prisma/schema.prisma" ins={5}
+model User {
+  id    Int     @id @default(autoincrement())
+  name  String
+  email String  @unique
+
+  @@index([name])
+}
+```
+
+#### Fix the column typo
+
+```ts title="src/queries.ts" del={1} ins={2}
+// Before
+const byTypo = await db.select({ contnt: posts.contnt }).from(posts).limit(1);
+// After
+const byTypo = await db.select({ content: posts.content }).from(posts).limit(1);
+```
+
+#### Add the missing relation
+
+```prisma title="prisma/schema.prisma" ins={5}
+model Post {
+  ...
+  authorId   Int
+  author     User   @relation(fields: [authorId], references: [id])  // was missing
+  ...
+}
+```
+
+</Step>
+<Step>
+
+### Verify
+
+```bash
+pulsar check src/
+```
+
+If using the `--format json` flag, you can pipe the output to jq for further analysis:
+
+```bash
+pulsar check src/ --format json | jq 'sort_by(.rule_id) | group_by(.rule_id) | map({rule: .[0].rule_id, count: length})'
+```
+
+</Step>
+</Steps>
+
+## Key takeaways
+
+- Schema-aware rules require zero code changes to your existing config — just point `[database].schema` at your Prisma file
+- They silently produce no output when no schema is configured, so you can safely share configs across projects
+- `no-unknown-column` catches typos before they reach production
+- `no-unindexed-filter` helps you identify performance bottlenecks during code review
+- `no-missing-foreign-key` ensures your schema relationships are explicit
+
+<Cards>
+  <Card title="Next: CI/CD Integration" href="/docs/tutorials/ci-cd" />
+</Cards>
