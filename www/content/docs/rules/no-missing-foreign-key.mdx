@@ -1,0 +1,43 @@
+---
+title: no-missing-foreign-key
+description: Warn when including relations without a foreign key
+icon: TriangleAlert
+---
+
+<Callout type="warning">Severity: **Warning**</Callout>
+
+<Callout type="info">
+  This is a **schema-aware** rule. It requires a `[database]` section in your config pointing to a Prisma schema file.
+</Callout>
+
+## What it does
+
+Flags `.include()` calls in Drizzle queries where the included relation does not have a corresponding foreign key defined in the database schema.
+
+## Why it matters
+
+An include without a foreign key suggests a mismatch between your code and your schema. The join may still succeed (e.g., if columns happen to match), but the relationship is not enforced at the database level, risking data integrity issues.
+
+## How it works
+
+The rule finds the table being queried, extracts the relation column from the `.include()` arguments, and checks the schema for a foreign key defined on that column referencing the target table.
+
+## When to disable
+
+Disable this rule if your schema uses implicit relationships or if the foreign key is managed outside Prisma (e.g., via raw migrations or a separate schema management tool).
+
+## Examples
+
+```ts title="Bad"
+// `posts` table has no FK on `authorId` referencing `users`
+const result = await db.query.posts.findMany({
+  include: { author: true }, // [!code --]
+});
+```
+
+```ts title="Good"
+// `posts.authorId` has an `@relation` pointing to `users.id`
+const result = await db.query.posts.findMany({
+  include: { author: true }, // [!code ++]
+});
+```

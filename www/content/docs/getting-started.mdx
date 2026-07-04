@@ -1,0 +1,97 @@
+---
+title: Getting Started
+description: Install Pulsar and run your first check
+icon: Rocket
+---
+
+## Installation
+
+Download the latest binary from [GitHub Releases](https://github.com/CarlosEduJs/pulsar/releases).
+
+**Linux x86_64:**
+
+```bash
+curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xz
+sudo mv pulsar /usr/local/bin/
+```
+
+**macOS (ARM/x86_64):**
+
+```bash
+curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-macos-aarch64.tar.gz | tar xz
+sudo mv pulsar /usr/local/bin/
+```
+
+**Windows:**
+
+Download the `.zip` from [GitHub Releases](https://github.com/CarlosEduJs/pulsar/releases) and add the extracted `pulsar.exe` to your `PATH`.
+
+<Callout type="info">
+  After installing, make sure the binary is in your `PATH`. Run `pulsar --help` to verify.
+</Callout>
+
+## Create a sample file
+
+Create a file called `test.ts` to see Pulsar in action:
+
+```ts title="test.ts"
+import { db } from "./db";
+
+// This triggers no-select-star (implicit SELECT *)
+const users = db.select().from(users);
+
+// This triggers no-missing-limit (no LIMIT clause)
+const posts = await db.select({ id: posts.id }).from(posts);
+```
+
+## Initialize a config
+
+```bash
+pulsar init
+```
+
+This creates a `pulsar.toml` file with all rules enabled and commented-out options you can tweak later.
+
+## Run your first check
+
+```bash
+pulsar check test.ts
+```
+
+Output:
+
+```text
+test.ts:5:20  error  no-select-star  Avoid implicit SELECT *. Specify columns explicitly.
+
+  const users = db.select().from(users);
+                     ^^^^^^^^^^^^^^^^^^
+
+test.ts:8:20  warning  no-missing-limit  Query is missing a LIMIT clause.
+
+  const posts = await db.select({ id: posts.id }).from(posts);
+                                           ^^^^^^^^^^^^^^^^^^
+```
+
+Each diagnostic shows the **file**, **line:column**, **rule ID**, and a **message** with the relevant source code highlighted.
+
+## Learn about a rule
+
+```bash
+pulsar explain no-select-star
+```
+
+Prints the rule's documentation directly in your terminal.
+
+## Next steps
+
+<Cards>
+  <Card title="CLI Reference" href="/docs/cli">
+    All commands, flags, and options.
+  </Card>
+  <Card title="Configuration" href="/docs/configuration">
+    Fine-tune which rules run and how.
+  </Card>
+  <Card title="All Rules" href="/docs/rules">
+    Every rule explained with examples.
+  </Card>
+</Cards>

@@ -1,0 +1,63 @@
+---
+title: Configuration
+description: How to configure Pulsar with pulsar.toml
+icon: Settings
+---
+
+Pulsar uses a TOML config file named `pulsar.toml`. It is auto-detected in the current directory, or you can specify a custom path with `--config`.
+
+## Minimal config
+
+```toml title="pulsar.toml"
+[settings]
+rules = []
+```
+
+An empty `rules` array means **all rules are enabled**. To disable a rule, list it with a `-` prefix:
+
+```toml
+[settings]
+rules = ["-no-select-star", "-no-missing-limit"]
+```
+
+To run only a specific set of rules, list them explicitly:
+
+```toml
+[settings]
+rules = ["no-select-star", "no-unbounded-find"]
+```
+
+<Callout type="info">
+  Rule IDs with `-` prefix are **disabled**. Rule IDs without prefix are **enabled**. You cannot mix enable and disable in the same list.
+</Callout>
+
+## Ignoring files
+
+```toml
+[settings]
+ignore = ["node_modules", "dist", "*.test.ts"]
+```
+
+Patterns use glob matching. Entries are compared against the file name, not the full path.
+
+## Database schema (schema-aware rules)
+
+To enable the three schema-aware rules, point Pulsar at your Prisma schema:
+
+```toml
+[database]
+schema = "./prisma/schema.prisma"
+```
+
+When set, Pulsar loads the schema and cross-references your queries against it. Without this section, schema-aware rules are silently skipped.
+
+## Full example
+
+```toml title="pulsar.toml"
+[settings]
+rules = ["-no-select-star"]
+ignore = ["node_modules", "dist", "*.test.ts"]
+
+[database]
+schema = "./prisma/schema.prisma"
+```

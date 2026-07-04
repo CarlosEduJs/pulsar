@@ -1,0 +1,16 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "getting-started",
+    "cli",
+    "configuration",
+    "---Tutorials---",
+    "tutorials",
+    "---Rules---",
+    "rules",
+    "---Advanced---",
+    "concepts",
+    "ci-integration"
+  ]
+}

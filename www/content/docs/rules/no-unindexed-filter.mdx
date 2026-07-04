@@ -1,0 +1,43 @@
+---
+title: no-unindexed-filter
+description: Warn when filtering on unindexed columns
+icon: TriangleAlert
+---
+
+<Callout type="warning">Severity: **Warning**</Callout>
+
+<Callout type="info">
+  This is a **schema-aware** rule. It requires a `[database]` section in your config pointing to a Prisma schema file.
+</Callout>
+
+## What it does
+
+Flags WHERE clauses that filter on columns that do not have an index defined in the database schema.
+
+## Why it matters
+
+Filtering on unindexed columns causes full-table scans, degrading query performance as the table grows. Adding an appropriate index can dramatically speed up queries.
+
+## How it works
+
+The rule loads the Prisma schema, finds the table referenced in the query, extracts the column names used in the WHERE clause, and checks each column against the schema indexes (`@id`, `@unique`, `@@index`).
+
+## When to disable
+
+Disable this rule for small tables where the cost of an index outweighs the query performance benefit, or for tables that are only queried occasionally.
+
+## Examples
+
+```ts title="Bad"
+// Assume `users.name` has no index in the schema
+const user = await db.select({ id: users.id }).from(users)
+  .where(eq(users.name, "test")) // [!code --]
+  .limit(1);
+```
+
+```ts title="Good"
+// Assume `users.email` is marked @unique in the schema
+const user = await db.select({ id: users.id }).from(users)
+  .where(eq(users.email, "test@test.com")) // [!code ++]
+  .limit(1);
+```

@@ -1,0 +1,40 @@
+---
+title: no-n-plus-one
+description: Detect repeated same-table queries (N+1 pattern)
+icon: TriangleAlert
+---
+
+<Callout type="warning">Severity: **Warning**</Callout>
+
+## What it does
+
+Detects multiple queries to the same table within the same scope — the classic N+1 pattern. It only flags the pattern when it overlaps with `no-query-in-loop`, meaning the repeated queries are inside a loop or callback.
+
+<Callout type="info">
+  This rule requires `no-query-in-loop` to be enabled. It extends loop detection by checking for repeated same-table queries.
+</Callout>
+
+## Why it matters
+
+The N+1 problem is one of the most common ORM performance issues. Loading related data in a loop instead of using a JOIN or `IN` clause results in O(N) queries instead of O(1).
+
+## How it works
+
+Pulsar tracks the table referenced by each query inside loops and callbacks. When two or more queries access the same table within the same loop/callback scope, the N+1 pattern is detected and the rule fires.
+
+## When to disable
+
+Disable this rule if you have confirmed that the repeated queries are cached (e.g., via a query cache layer) or if the iteration count is guaranteed to be very small.
+
+## Examples
+
+```ts title="Bad"
+for (const post of posts) {
+  const author = await db.select().from(users).where(eq(users.id, post.authorId)); // [!code --]
+}
+```
+
+```ts title="Good"
+const authorIds = posts.map((p) => p.authorId);
+const authors = await db.select().from(users).where(inArray(users.id, authorIds)); // [!code ++]
+```

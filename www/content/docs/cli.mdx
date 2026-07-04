@@ -1,0 +1,77 @@
+---
+title: CLI Reference
+description: All commands, flags, and options
+icon: Terminal
+---
+
+## `check`
+
+Analyze one or more TypeScript files for rule violations.
+
+```bash
+pulsar check [path] [options]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `path`   | File or directory to check (defaults to current directory) |
+
+**Options:**
+
+| Flag | Description |
+|------|-------------|
+| `--config <file>` | Path to `pulsar.toml` config file |
+| `--format <fmt>`  | Output format: `pretty` (default) or `json` |
+
+The `check` command walks all `.ts` and `.tsx` files recursively, parses each file, builds an IR graph, and runs every enabled rule against it.
+
+If a `[database]` section is configured, the schema is loaded once and linked to each file's graph, enabling schema-aware rules.
+
+**Usage examples:**
+
+```bash
+# Check a specific file
+pulsar check src/db/users.ts
+
+# Check an entire directory with JSON output
+pulsar check src/ --format json
+
+# Use a custom config file
+pulsar check src/ --config ./config/pulsar.toml
+```
+
+**Exit codes:**
+
+| Code | Meaning |
+|------|---------|
+| `0`  | No errors or parse failures |
+| `1`  | One or more errors or parse failures |
+
+## `init`
+
+Generate a default `pulsar.toml` config file with all rules enabled.
+
+```bash
+pulsar init
+```
+
+The generated file includes commented-out sections for ignoring files and connecting a Prisma schema.
+
+## `explain`
+
+Print documentation for a specific rule to the terminal.
+
+```bash
+pulsar explain no-select-star
+```
+
+Useful when you want a quick reminder of what a rule does without opening the docs site.
+
+## Global flags
+
+| Flag | Description |
+|------|-------------|
+| `--help`    | Print help information |
+| `--version` | Print the version number |

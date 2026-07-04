@@ -4,7 +4,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource/be-vietnam-pro";
-@import "@fontsource/poppins";
 @import "@fontsource-variable/inconsolata";
 
 html {
@@ -59,10 +58,9 @@ html > body[data-scroll-locked] {
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-  --font-body: var(--font-poppins);
+  --font-body: var(--font-be-vietnam-pro);
   --font-mono: var(--font-inconsolata);
   --font-be-vietnam-pro: Be Vietnam Pro;
-  --font-poppins: Poppins;
   --font-inconsolata: Inconsolata Variable;
 }
 
@@ -196,5 +194,23 @@ button {
 }
 
 a {
+  border: none !important;
+}
+
+table {
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0px !important;
+  box-shadow: none !important;
+  background-color: inherit;
+}
+
+th {
+  background: var(--color-primary) !important;
+  color: var(--color-primary-foreground) !important;
+  padding-block: 0.1rem !important;
+}
+
+code {
   border: none !important;
 }
