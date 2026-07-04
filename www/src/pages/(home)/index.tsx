@@ -11,7 +11,7 @@ export default function Home() {
         name="description"
         content="Detect quality, performance, and schema consistency issues in your TypeScript ORM code before they reach production."
       />
-      <meta property="og:image" content="/banner.png" />
+      <meta property="og:image" content="/og/home/image.webp" />
       <meta property="og:title" content="Pulsar — Static Analyzer for TypeScript ORM Code" />
       <meta
         property="og:description"

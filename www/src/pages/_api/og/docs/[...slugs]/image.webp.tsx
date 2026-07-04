@@ -1,7 +1,7 @@
 import { appName } from "@/lib/shared";
 import { getDocsStaticParams, source } from "@/lib/source";
 import { ImageResponse } from "@takumi-rs/image-response";
-import { generate as DefaultImage } from "fumadocs-ui/og/takumi";
+import { OgTemplate } from "@/lib/og-template";
 import { ApiContext } from "waku/router";
 
 export async function GET(_: Request, { params }: ApiContext<"/og/docs/[...slugs]/image.webp">) {
@@ -10,7 +10,7 @@ export async function GET(_: Request, { params }: ApiContext<"/og/docs/[...slugs
   if (!page) return new Response(undefined, { status: 404 });
 
   return new ImageResponse(
-    <DefaultImage title={page.data.title} description={page.data.description} site={appName} />,
+    <OgTemplate title={page.data.title} description={page.data.description} site={appName} />,
     {
       width: 1200,
       height: 630,
