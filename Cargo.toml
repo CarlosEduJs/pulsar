@@ -42,6 +42,7 @@ owo-colors = "4"
 clap = { version = "4", features = ["derive"] }
 ignore = "0.4"
 tempfile = "3"
+proptest = "1"
 
 # Config for 'dist'
 [workspace.metadata.dist]

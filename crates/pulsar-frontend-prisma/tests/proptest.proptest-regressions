@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 12fa9771dc0b3b5a94faeda8b8ad339d6d11aaef2799f5a796e6029033113165 # shrinks to schema = "model Comment {\n  id Int\n}\n\nmodel Comment {\n  id Int\n}"
