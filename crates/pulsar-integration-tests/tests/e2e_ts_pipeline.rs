@@ -2,7 +2,7 @@
   clippy::cast_possible_truncation,
   clippy::cast_sign_loss,
   clippy::similar_names,
-  clippy::too_many_lines,
+  clippy::too_many_lines
 )]
 
 use pulsar_integration_tests::*;
@@ -13,10 +13,7 @@ fn basic_ts_detects_select_star() {
   let diags = analyze_ts(&fixtures::basic_ts());
   assert!(!diags.is_empty(), "basic.ts should produce diagnostics");
   let rule_ids: Vec<&str> = diags.iter().map(|d| d.rule_id.as_str()).collect();
-  assert!(
-    rule_ids.contains(&"no-select-star"),
-    "expected no-select-star, got: {rule_ids:?}",
-  );
+  assert!(rule_ids.contains(&"no-select-star"), "expected no-select-star, got: {rule_ids:?}",);
 }
 
 #[test]
@@ -64,10 +61,7 @@ fn no_missing_limit_detects_missing_limit() {
   let source = fixtures::read_rule_fixture("no-missing-limit", "query-without-limit.ts");
   let diags = analyze_ts(&source);
   let rule_ids: Vec<&str> = diags.iter().map(|d| d.rule_id.as_str()).collect();
-  assert!(
-    rule_ids.contains(&"no-missing-limit"),
-    "expected no-missing-limit, got: {rule_ids:?}",
-  );
+  assert!(rule_ids.contains(&"no-missing-limit"), "expected no-missing-limit, got: {rule_ids:?}",);
 }
 
 #[test]
@@ -86,10 +80,7 @@ fn no_unbounded_find_detects_unbounded() {
   let source = fixtures::read_rule_fixture("no-unbounded-find", "unbounded-query.ts");
   let diags = analyze_ts(&source);
   let rule_ids: Vec<&str> = diags.iter().map(|d| d.rule_id.as_str()).collect();
-  assert!(
-    rule_ids.contains(&"no-unbounded-find"),
-    "expected no-unbounded-find, got: {rule_ids:?}",
-  );
+  assert!(rule_ids.contains(&"no-unbounded-find"), "expected no-unbounded-find, got: {rule_ids:?}",);
 }
 
 #[test]
@@ -119,10 +110,7 @@ fn no_query_in_loop_detects() {
   let source = fixtures::read_rule_fixture("no-query-in-loop", "query-in-for-loop.ts");
   let diags = analyze_ts(&source);
   let rule_ids: Vec<&str> = diags.iter().map(|d| d.rule_id.as_str()).collect();
-  assert!(
-    rule_ids.contains(&"no-query-in-loop"),
-    "expected no-query-in-loop, got: {rule_ids:?}",
-  );
+  assert!(rule_ids.contains(&"no-query-in-loop"), "expected no-query-in-loop, got: {rule_ids:?}",);
 }
 
 #[test]
@@ -152,8 +140,5 @@ fn no_missing_await_detects() {
   let source = fixtures::read_rule_fixture("no-missing-await", "missing-await.ts");
   let diags = analyze_ts(&source);
   let rule_ids: Vec<&str> = diags.iter().map(|d| d.rule_id.as_str()).collect();
-  assert!(
-    rule_ids.contains(&"no-missing-await"),
-    "expected no-missing-await, got: {rule_ids:?}",
-  );
+  assert!(rule_ids.contains(&"no-missing-await"), "expected no-missing-await, got: {rule_ids:?}",);
 }

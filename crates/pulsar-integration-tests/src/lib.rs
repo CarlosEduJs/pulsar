@@ -5,7 +5,7 @@
   clippy::missing_errors_doc,
   clippy::cast_possible_truncation,
   clippy::cast_sign_loss,
-  clippy::similar_names,
+  clippy::similar_names
 )]
 
 use pulsar_core::{Diagnostic, SourceLocation};
@@ -56,8 +56,7 @@ pub fn analyze_ts(source: &str) -> Vec<Diagnostic> {
 /// Panics if the schema cannot be parsed.
 pub fn load_schema(graph: &mut IrGraph, prisma_source: &str) {
   let schema =
-    pulsar_frontend_prisma::parse_prisma_schema(prisma_source)
-      .expect("Prisma schema should parse");
+    pulsar_frontend_prisma::parse_prisma_schema(prisma_source).expect("Prisma schema should parse");
   graph.load_schema(schema);
 }
 
@@ -75,14 +74,8 @@ pub fn analyze_ts_with_schema(ts_source: &str, prisma_source: &str) -> Vec<Diagn
 ///
 /// Panics if the SQL cannot be parsed.
 pub fn analyze_sql(sql: &str) -> Vec<Diagnostic> {
-  let loc = SourceLocation {
-    file: "test.sql".to_string(),
-    line: 1,
-    column: 1,
-    span: None,
-  };
-  let sql_node = pulsar_frontend_sql::parse_sql(sql, loc)
-    .expect("SQL should parse");
+  let loc = SourceLocation { file: "test.sql".to_string(), line: 1, column: 1, span: None };
+  let sql_node = pulsar_frontend_sql::parse_sql(sql, loc).expect("SQL should parse");
   let mut graph = IrGraph::new();
   graph.add_sql(sql_node);
   let engine = all_rules_engine();
