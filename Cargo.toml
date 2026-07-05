@@ -12,6 +12,7 @@ members = [
     "crates/pulsar-cli",
     "crates/pulsar-test-utils",
 ]
+exclude = ["fuzz"]
 
 [package]
 name = "pulsar-workspace"
