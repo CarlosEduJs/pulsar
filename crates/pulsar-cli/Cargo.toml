@@ -25,6 +25,7 @@ oxc.workspace = true
 
 [dev-dependencies]
 pulsar-test-utils.workspace = true
+tempfile.workspace = true
 
 [lints]
 workspace = true
