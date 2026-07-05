@@ -33,7 +33,7 @@ cargo run -p pulsar-cli -- check . --format json
 cargo run -p pulsar-cli -- init
 ```
 
-See the [Getting Started guide](https://carlosedujs.github.io/pulsar/docs/guide/getting-started) for a full walkthrough.
+See the [Getting Started guide](https://https://pulsar-iota-inky.vercel.app/pulsar/docs/guide/getting-started) for a full walkthrough.
 
 ### Example
 
@@ -49,10 +49,10 @@ See the [Getting Started guide](https://carlosedujs.github.io/pulsar/docs/guide/
 
 ## Documentation
 
-- [Guide](www/content/docs/guide/) — getting started, CLI, configuration, CI integration
-- [Rules](www/content/docs/rules/) — all 12 built-in lint rules with examples
-- [Tutorials](www/content/docs/tutorials/) — setup, schema-aware analysis, CI/CD, fixing violations
-- [Concepts](www/content/docs/concepts/) — IR graph, schema-aware analysis internals
+- [Guide](https://pulsar-iota-inky.vercel.app/docs/guide/) — getting started, CLI, configuration, CI integration
+- [Rules](https://pulsar-iota-inky.vercel.app/docs/rules/) — all 12 built-in lint rules with examples
+- [Tutorials](https://pulsar-iota-inky.vercel.app/docs/tutorials/) — setup, schema-aware analysis, CI/CD, fixing violations
+- [Concepts](https://pulsar-iota-inky.vercel.app/docs/concepts/) — IR graph, schema-aware analysis internals
 
 ## Roadmap
 
