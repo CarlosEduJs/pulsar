@@ -16,5 +16,8 @@ pulsar-ir.workspace = true
 oxc.workspace = true
 thiserror.workspace = true
 
+[dev-dependencies]
+pulsar-test-utils.workspace = true
+
 [lints]
 workspace = true

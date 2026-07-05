@@ -35,7 +35,7 @@ impl Rule for NoUnindexedFilter {
       for col_name in &filtered_cols {
         let col = schema.columns.iter().find(|c| c.name == *col_name);
         match col {
-          Some(c) if c.is_indexed => continue,
+          Some(c) if c.is_indexed => {}
           Some(c) => {
             diags.push(Diagnostic {
               severity: Severity::Warning,
@@ -99,7 +99,7 @@ mod tests {
       limit: false,
       where_clause: true,
       in_callback: false,
-      location: loc.clone(),
+      location: loc,
     };
 
     let schema = SchemaNode {

@@ -7,6 +7,7 @@ import {
   DocsPage,
   DocsTitle,
   MarkdownCopyButton,
+  PageLastUpdate,
   ViewOptionsPopover,
 } from "fumadocs-ui/layouts/notebook/page";
 import { unstable_notFound } from "waku/router/server";
@@ -44,6 +45,7 @@ export default function Page({ slugs }: PageProps<"/docs/[...slugs]">) {
             })}
           />
         </DocsBody>
+        {page.data.lastModified && <PageLastUpdate date={page.data.lastModified} />}
       </DocsPage>
     </>
   );

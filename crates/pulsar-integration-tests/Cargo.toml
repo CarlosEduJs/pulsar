@@ -1,0 +1,19 @@
+[package]
+name = "pulsar-integration-tests"
+version = "0.1.0"
+edition = "2021"
+description = "End-to-end and cross-crate integration tests for Pulsar"
+publish = false
+
+[dependencies]
+pulsar-core.workspace = true
+pulsar-ir.workspace = true
+pulsar-frontend-oxc.workspace = true
+pulsar-frontend-sql.workspace = true
+pulsar-frontend-prisma.workspace = true
+pulsar-rules.workspace = true
+pulsar-test-utils.workspace = true
+oxc.workspace = true
+
+[lints]
+workspace = true

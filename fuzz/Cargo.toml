@@ -1,0 +1,67 @@
+[package]
+name = "pulsar-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.pulsar-core]
+path = "../crates/pulsar-core"
+
+[dependencies.pulsar-ir]
+path = "../crates/pulsar-ir"
+
+[dependencies.pulsar-frontend-sql]
+path = "../crates/pulsar-frontend-sql"
+
+[dependencies.pulsar-frontend-prisma]
+path = "../crates/pulsar-frontend-prisma"
+
+[dependencies.pulsar-frontend-oxc]
+path = "../crates/pulsar-frontend-oxc"
+
+[dependencies.oxc]
+version = "0.44"
+
+[dependencies.pulsar-rules]
+path = "../crates/pulsar-rules"
+
+[dependencies.pulsar-test-utils]
+path = "../crates/pulsar-test-utils"
+
+# --- SQL parser fuzz ---
+[[bin]]
+name = "fuzz_sql_parser"
+path = "fuzz_targets/fuzz_sql_parser.rs"
+test = false
+doc = false
+bench = false
+
+# --- Prisma parser fuzz ---
+[[bin]]
+name = "fuzz_prisma_parser"
+path = "fuzz_targets/fuzz_prisma_parser.rs"
+test = false
+doc = false
+bench = false
+
+# --- Oxc frontend fuzz ---
+[[bin]]
+name = "fuzz_oxc_frontend"
+path = "fuzz_targets/fuzz_oxc_frontend.rs"
+test = false
+doc = false
+bench = false
+
+# --- Combined end-to-end fuzz ---
+[[bin]]
+name = "fuzz_combined"
+path = "fuzz_targets/fuzz_combined.rs"
+test = false
+doc = false
+bench = false

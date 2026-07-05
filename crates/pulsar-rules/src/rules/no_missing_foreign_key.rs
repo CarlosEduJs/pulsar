@@ -84,7 +84,7 @@ mod tests {
       limit: false,
       where_clause: false,
       in_callback: false,
-      location: loc.clone(),
+      location: loc,
     };
 
     let schema = SchemaNode {

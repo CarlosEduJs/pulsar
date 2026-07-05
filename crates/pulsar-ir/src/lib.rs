@@ -193,6 +193,10 @@ pub enum SchemaError {
 /// A provider that loads database schema information.
 pub trait SchemaProvider {
   /// Load all schema nodes keyed by table name.
+  ///
+  /// # Errors
+  ///
+  /// Returns `SchemaError` if the schema cannot be read or parsed.
   fn load(&self) -> Result<HashMap<String, SchemaNode>, SchemaError>;
 }
 
@@ -359,6 +363,7 @@ impl IrGraph {
   }
 
   /// Returns the edges of a specific kind from a node.
+  #[must_use]
   pub fn edges_from(&self, node: NodeId, kind: EdgeKind) -> Vec<NodeId> {
     self.graph.edges(node).filter(|e| *e.weight() == kind).map(|e| e.target()).collect()
   }

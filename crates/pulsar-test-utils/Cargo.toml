@@ -1,0 +1,16 @@
+[package]
+name = "pulsar-test-utils"
+version = "0.1.0"
+edition = "2021"
+description = "Shared test utilities for Pulsar workspace crates"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/carlosedujs/pulsar"
+publish = false
+
+[dependencies]
+pulsar-core.workspace = true
+pulsar-ir.workspace = true
+pulsar-rules.workspace = true
+
+[lints]
+workspace = true

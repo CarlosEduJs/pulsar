@@ -13,5 +13,9 @@ categories = ["development-tools::static-analysis"]
 serde.workspace = true
 thiserror.workspace = true
 
+[dev-dependencies]
+pulsar-test-utils.workspace = true
+serde_json.workspace = true
+
 [lints]
 workspace = true

@@ -127,6 +127,11 @@ fn extract_from_statement_with_ctx<'a>(
         extract_from_statement_with_ctx(s, source, file_path, graph, ctx);
       }
     }
+    Statement::ReturnStatement(ret_stmt) => {
+      if let Some(arg) = &ret_stmt.argument {
+        try_extract_from_expr(arg, source, file_path, graph, ctx);
+      }
+    }
     _ => {}
   }
 }

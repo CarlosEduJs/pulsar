@@ -14,5 +14,8 @@ pulsar-core.workspace = true
 pulsar-ir.workspace = true
 thiserror.workspace = true
 
+[dev-dependencies]
+proptest.workspace = true
+
 [lints]
 workspace = true
