@@ -214,11 +214,11 @@ fn prisma_schema_empty_source() {
 
 // ─── Cross-crate regression ──────────────────────────────────
 
-// TODO(#?): Remove `#[ignore]` once `pulsar_frontend_prisma::parse_prisma_schema`
+// TODO(#?): Remove once `pulsar_frontend_prisma::parse_prisma_schema`
 // properly sets `ForeignKey.ref_table` from `@relation` references.
 // Tracked at https://github.com/carlosedujs/pulsar/issues/???
 #[test]
-#[ignore]
+#[ignore = "ForeignKey.ref_table not yet populated by @relation parser"]
 fn known_parser_limitation_fk_ref_table_empty() {
   let schema = r#"
     model posts {
