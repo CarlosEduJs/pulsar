@@ -20,7 +20,7 @@ pub fn fixtures_dir() -> PathBuf {
   ];
 
   for p in &candidates {
-    if p.join("basic.ts").exists() {
+    if p.is_dir() {
       return p.to_path_buf();
     }
   }

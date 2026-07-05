@@ -10,6 +10,7 @@ publish = false
 [dependencies]
 pulsar-core.workspace = true
 pulsar-ir.workspace = true
+pulsar-rules.workspace = true
 
 [lints]
 workspace = true

@@ -11,30 +11,7 @@
 
 use pulsar_core::{Diagnostic, SourceLocation};
 use pulsar_ir::IrGraph;
-use pulsar_rules::rules::{
-  NoAlwaysTrueWhere, NoMissingAwait, NoMissingForeignKey, NoMissingLimit, NoNPlusOne,
-  NoQueryInCallback, NoQueryInLoop, NoRawSqlDangerous, NoSelectStar, NoUnboundedFind,
-  NoUnindexedFilter, NoUnknownColumn,
-};
-use pulsar_rules::RuleEngine;
-
-/// Creates a [`RuleEngine`] with all 12 lint rules registered.
-pub fn all_rules_engine() -> RuleEngine {
-  let mut engine = RuleEngine::new();
-  engine.register(Box::new(NoSelectStar));
-  engine.register(Box::new(NoMissingLimit));
-  engine.register(Box::new(NoUnboundedFind));
-  engine.register(Box::new(NoAlwaysTrueWhere));
-  engine.register(Box::new(NoQueryInLoop));
-  engine.register(Box::new(NoQueryInCallback));
-  engine.register(Box::new(NoNPlusOne));
-  engine.register(Box::new(NoRawSqlDangerous));
-  engine.register(Box::new(NoMissingAwait));
-  engine.register(Box::new(NoUnindexedFilter));
-  engine.register(Box::new(NoUnknownColumn));
-  engine.register(Box::new(NoMissingForeignKey));
-  engine
-}
+use pulsar_test_utils::rules::all_rules_engine;
 
 /// Convenience wrapper: extract a TypeScript source into an [`IrGraph`].
 ///

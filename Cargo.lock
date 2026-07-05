@@ -820,7 +820,6 @@ dependencies = [
  "proptest",
  "pulsar-core",
  "pulsar-ir",
- "pulsar-test-utils",
  "thiserror 2.0.18",
 ]
 
@@ -830,6 +829,7 @@ version = "0.1.0"
 dependencies = [
  "pulsar-core",
  "pulsar-ir",
+ "pulsar-rules",
 ]
 
 [[package]]

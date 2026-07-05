@@ -13,6 +13,13 @@ fn loc() -> SourceLocation {
   SourceLocation { file: "prop_test.ts".to_string(), line: 1, column: 1, span: None }
 }
 
+/// Build a rule engine with all available rules.
+///
+/// NOTE: Keep in sync with `pulsar_test_utils::rules::all_rules_engine`.
+/// The canonical copy lives in `pulsar-test-utils` and is used by
+/// `pulsar-integration-tests` and the fuzz targets. This local copy
+/// exists because `pulsar-rules` cannot take a dev-dependency on
+/// `pulsar-test-utils` (would create a cycle).
 fn all_rules_engine() -> RuleEngine {
   let mut engine = RuleEngine::new();
   engine.register(Box::new(NoSelectStar));

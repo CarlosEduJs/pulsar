@@ -31,6 +31,9 @@ version = "0.44"
 [dependencies.pulsar-rules]
 path = "../crates/pulsar-rules"
 
+[dependencies.pulsar-test-utils]
+path = "../crates/pulsar-test-utils"
+
 # --- SQL parser fuzz ---
 [[bin]]
 name = "fuzz_sql_parser"

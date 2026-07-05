@@ -515,6 +515,7 @@ dependencies = [
  "pulsar-frontend-sql",
  "pulsar-ir",
  "pulsar-rules",
+ "pulsar-test-utils",
 ]
 
 [[package]]
@@ -542,6 +543,15 @@ dependencies = [
  "pulsar-core",
  "pulsar-ir",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "pulsar-test-utils"
+version = "0.1.0"
+dependencies = [
+ "pulsar-core",
+ "pulsar-ir",
+ "pulsar-rules",
 ]
 
 [[package]]
