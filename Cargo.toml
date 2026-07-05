@@ -10,6 +10,7 @@ members = [
     "crates/pulsar-rules",
     "crates/pulsar-diag",
     "crates/pulsar-cli",
+    "crates/pulsar-test-utils",
 ]
 
 [package]
@@ -27,6 +28,7 @@ pulsar-frontend-prisma = { path = "crates/pulsar-frontend-prisma" }
 pulsar-graph = { path = "crates/pulsar-graph" }
 pulsar-rules = { path = "crates/pulsar-rules" }
 pulsar-diag = { path = "crates/pulsar-diag" }
+pulsar-test-utils = { path = "crates/pulsar-test-utils" }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

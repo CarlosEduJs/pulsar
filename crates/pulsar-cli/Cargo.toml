@@ -23,5 +23,8 @@ toml.workspace = true
 ignore.workspace = true
 oxc.workspace = true
 
+[dev-dependencies]
+pulsar-test-utils.workspace = true
+
 [lints]
 workspace = true

@@ -16,5 +16,8 @@ serde_json.workspace = true
 owo-colors.workspace = true
 thiserror.workspace = true
 
+[dev-dependencies]
+pulsar-test-utils.workspace = true
+
 [lints]
 workspace = true

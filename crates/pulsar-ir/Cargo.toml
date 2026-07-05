@@ -15,5 +15,8 @@ serde.workspace = true
 petgraph.workspace = true
 thiserror.workspace = true
 
+[dev-dependencies]
+pulsar-test-utils.workspace = true
+
 [lints]
 workspace = true

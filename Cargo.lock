@@ -611,6 +611,7 @@ dependencies = [
  "pulsar-frontend-prisma",
  "pulsar-ir",
  "pulsar-rules",
+ "pulsar-test-utils",
  "serde",
  "toml",
 ]
@@ -619,6 +620,7 @@ dependencies = [
 name = "pulsar-core"
 version = "0.1.0"
 dependencies = [
+ "pulsar-test-utils",
  "serde",
  "thiserror 2.0.18",
 ]
@@ -629,6 +631,7 @@ version = "0.1.0"
 dependencies = [
  "owo-colors",
  "pulsar-core",
+ "pulsar-test-utils",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
@@ -642,6 +645,7 @@ dependencies = [
  "pulsar-core",
  "pulsar-graph",
  "pulsar-ir",
+ "pulsar-test-utils",
  "thiserror 2.0.18",
 ]
 
@@ -650,6 +654,7 @@ name = "pulsar-frontend-prisma"
 version = "0.1.0"
 dependencies = [
  "pulsar-ir",
+ "pulsar-test-utils",
  "thiserror 2.0.18",
 ]
 
@@ -659,6 +664,7 @@ version = "0.1.0"
 dependencies = [
  "pulsar-core",
  "pulsar-ir",
+ "pulsar-test-utils",
  "sqlparser",
  "thiserror 2.0.18",
 ]
@@ -669,6 +675,7 @@ version = "0.1.0"
 dependencies = [
  "pulsar-core",
  "pulsar-ir",
+ "pulsar-test-utils",
 ]
 
 [[package]]
@@ -677,6 +684,7 @@ version = "0.1.0"
 dependencies = [
  "petgraph",
  "pulsar-core",
+ "pulsar-test-utils",
  "serde",
  "thiserror 2.0.18",
 ]
@@ -687,7 +695,16 @@ version = "0.1.0"
 dependencies = [
  "pulsar-core",
  "pulsar-ir",
+ "pulsar-test-utils",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "pulsar-test-utils"
+version = "0.1.0"
+dependencies = [
+ "pulsar-core",
+ "pulsar-ir",
 ]
 
 [[package]]
