@@ -39,7 +39,7 @@ jobs:
         run: cargo fmt --all --check
 
       - name: Clippy
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
       - name: Test
         run: cargo test --locked
@@ -69,13 +69,6 @@ jobs:
             shift
             echo "=== $fixture (expects 0 diagnostics) ==="
             cargo run --release --locked -p pulsar-cli -- check "$fixture" "$@" > /tmp/smoke.txt 2>/dev/null
-            cat /tmp/smoke.txt
-            [ ! -s /tmp/smoke.txt ] || { echo "FAIL: $fixture should have no stdout"; exit 1; }
-          }
-          expect_clean() {
-            local fixture="$1"
-            echo "=== $fixture (expects 0 diagnostics) ==="
-            cargo run --release --locked -p pulsar-cli -- check "$fixture" > /tmp/smoke.txt 2>/dev/null
             cat /tmp/smoke.txt
             [ ! -s /tmp/smoke.txt ] || { echo "FAIL: $fixture should have no stdout"; exit 1; }
           }
