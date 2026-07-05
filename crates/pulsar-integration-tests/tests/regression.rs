@@ -2,7 +2,7 @@
   clippy::cast_possible_truncation,
   clippy::cast_sign_loss,
   clippy::similar_names,
-  clippy::too_many_lines,
+  clippy::too_many_lines
 )]
 
 use pulsar_core::SourceLocation;
@@ -41,10 +41,7 @@ fn sql_multiple_statements_takes_first() {
 fn sql_whitespace_only_returns_error() {
   let loc = SourceLocation { file: "test.sql".to_string(), line: 1, column: 1, span: None };
   let result = pulsar_frontend_sql::parse_sql("   \n\t  ", loc);
-  assert!(matches!(
-    result,
-    Err(pulsar_frontend_sql::SqlParseError::ParseError(_)),
-  ));
+  assert!(matches!(result, Err(pulsar_frontend_sql::SqlParseError::ParseError(_)),));
 }
 
 #[test]
@@ -227,10 +224,7 @@ fn known_parser_limitation_fk_ref_table_empty() {
   let map = pulsar_frontend_prisma::parse_prisma_schema(schema).unwrap();
   let posts = map.get("posts").unwrap();
   let author = posts.columns.iter().find(|c| c.name == "author").unwrap();
-  assert!(
-    author.foreign_key.is_some(),
-    "@relation field should have a foreign_key",
-  );
+  assert!(author.foreign_key.is_some(), "@relation field should have a foreign_key",);
   if let Some(fk) = &author.foreign_key {
     assert_eq!(fk.ref_column, "id", "ref_column should be preserved");
     // ref_table is currently empty — regression guard

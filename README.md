@@ -69,6 +69,11 @@ See the [Getting Started guide](https://https://pulsar-iota-inky.vercel.app/puls
 | Callback tracking       | ✅ `.then()`, `.map()`, `setTimeout`, etc. |
 | Schema-aware rules      | ✅ Prisma frontend + 3 cross-layer rules |
 | Prisma schema           | ✅ Parser for `.prisma` files |
+| Property-based testing  | ✅ proptest (SQL, Prisma, Rules) |
+| Fuzz testing            | ✅ cargo-fuzz (SQL, Prisma, Oxc, Combined) |
+| Integration tests       | ✅ End-to-end pipeline via Rust API |
+| Regression tests        | ✅ Edge cases + all fixtures |
+| Test utilities          | ✅ `pulsar-test-utils` (builders, factories, fixtures) |
 
 ## Development
 
@@ -76,16 +81,32 @@ See the [Getting Started guide](https://https://pulsar-iota-inky.vercel.app/puls
 
 - Rust 1.80+
 - [bun](https://bun.sh) (for the website)
+- [cargo-fuzz](https://github.com/rust-fuzz/cargo-fuzz) + Nightly Rust (for fuzz testing)
 
 ### Commands
 
 ```bash
-just build        # cargo build
-just test         # cargo test --workspace
-just clippy       # cargo clippy --all-targets
-just check        # fmt + clippy (warnings as errors)
-just ci           # fmt + clippy + test + release + smoke
-just smoke        # release build + smoke tests
+just build         # cargo build
+just test          # cargo test --workspace
+just clippy        # cargo clippy --workspace --all-targets -D warnings
+just check         # fmt + clippy
+just quick         # fmt + clippy + test (fast feedback)
+
+# CLI
+just run           # cargo run -p pulsar-cli -- check test/fixtures/
+just run-rule      # Check a single rule fixture
+
+# Fuzzing (requires nightly)
+just fuzz          # Build all 4 fuzz targets
+just fuzz-smoke    # 500 runs per target (quick sanity)
+just fuzz-run      # Run a specific target indefinitely
+
+# Smoke tests
+just smoke         # Release build + CLI smoke tests
+just smoke-schema  # Schema-aware CLI smoke tests
+
+# CI pipeline
+just ci            # fmt + clippy + test + release + smoke
 ```
 
 ### Website
@@ -100,7 +121,14 @@ just www-fmt       # bun run fmt
 
 ## Contributing
 
-Contributions are welcome! Open an issue to discuss bugs or feature ideas. Make sure `cargo clippy --workspace` and `cargo test --workspace` pass before submitting a PR.
+Contributions are welcome! Open an issue to discuss bugs or feature ideas. Before submitting a PR, make sure the following pass:
+
+```bash
+just check         # fmt + clippy (warnings as errors)
+just test          # unit, integration, property-based, and regression tests
+just fuzz          # fuzz targets compile (nightly)
+just smoke         # CLI end-to-end tests
+```
 
 ## License
 
