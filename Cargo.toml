@@ -11,6 +11,7 @@ members = [
     "crates/pulsar-diag",
     "crates/pulsar-cli",
     "crates/pulsar-test-utils",
+    "crates/pulsar-integration-tests",
 ]
 exclude = ["fuzz"]
 

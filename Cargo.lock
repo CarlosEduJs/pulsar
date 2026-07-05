@@ -789,6 +789,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pulsar-integration-tests"
+version = "0.1.0"
+dependencies = [
+ "oxc",
+ "pulsar-core",
+ "pulsar-frontend-oxc",
+ "pulsar-frontend-prisma",
+ "pulsar-frontend-sql",
+ "pulsar-ir",
+ "pulsar-rules",
+ "pulsar-test-utils",
+]
+
+[[package]]
 name = "pulsar-ir"
 version = "0.1.0"
 dependencies = [
