@@ -1,8 +1,10 @@
+#![allow(clippy::multiple_crate_versions)]
+
 use proptest::prelude::*;
 use proptest::sample::select;
 use pulsar_frontend_prisma::parse_prisma_schema;
 
-/// Generates a PascalCase model name.
+/// Generates a `PascalCase` model name.
 fn model_name() -> impl Strategy<Value = String> {
   select(vec![
     "User", "Post", "Comment", "Tag", "Product", "Order", "Account", "Session", "Profile",

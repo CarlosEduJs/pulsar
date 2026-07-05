@@ -1,3 +1,9 @@
+#![allow(
+  clippy::missing_errors_doc,
+  clippy::missing_const_for_fn,
+  clippy::needless_raw_string_hashes
+)]
+
 use std::collections::HashMap;
 
 use pulsar_ir::{
@@ -181,7 +187,7 @@ fn try_parse_field(line: &str) -> Option<SchemaColumn> {
     {
       foreign_key = Some(ForeignKeyRef { ref_table: String::new(), ref_column: r });
       // Store referenced field in col_default as a marker; ref_table is resolved later
-      col_default = Some(format!("fk:{}", f));
+      col_default = Some(format!("fk:{f}"));
     }
   }
 

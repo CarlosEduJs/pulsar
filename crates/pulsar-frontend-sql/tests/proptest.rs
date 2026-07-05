@@ -1,3 +1,5 @@
+#![allow(clippy::multiple_crate_versions)]
+
 use proptest::prelude::*;
 use pulsar_core::SourceLocation;
 use pulsar_frontend_sql::{parse_sql, SqlParseError};

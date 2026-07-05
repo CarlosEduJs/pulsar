@@ -1,3 +1,5 @@
+#![allow(clippy::while_let_on_iterator)]
+
 /// Strips string literal contents (between double quotes) to avoid parsing
 /// dots inside string values as `table.column` separators.
 fn strip_string_literals(s: &str) -> String {

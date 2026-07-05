@@ -114,7 +114,7 @@ mod tests {
   fn source_location_equality() {
     let a = sample_loc();
     let b = sample_loc();
-    let c = SourceLocation { file: "other.ts".to_string(), ..a.clone() };
+    let c = SourceLocation { file: "other.ts".to_string(), ..a };
     assert_eq!(a, b);
     assert_ne!(a, c);
   }

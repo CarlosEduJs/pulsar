@@ -195,7 +195,7 @@ schema = "./custom.prisma"
 
   #[test]
   fn load_explicit_not_found() {
-    let result = PulsarConfig::load(Some(&Path::new("/tmp/nonexistent-pulsar-file.toml")));
+    let result = PulsarConfig::load(Some(Path::new("/tmp/nonexistent-pulsar-file.toml")));
     match result {
       Err(ConfigError::NotFound(p)) => assert!(p.contains("nonexistent-pulsar-file")),
       _ => panic!("expected ConfigError::NotFound"),

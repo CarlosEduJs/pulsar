@@ -215,8 +215,7 @@ mod tests {
     let graph = select_star_graph();
     let diags = engine.run(&graph, "", "test.ts");
     // Only no-select-star fires (no-always-true-where needs a WHERE clause)
-    let star_diags: Vec<_> = diags.iter().filter(|d| d.rule_id == "no-select-star").collect();
-    assert_eq!(star_diags.len(), 1);
+    assert_eq!(diags.iter().filter(|d| d.rule_id == "no-select-star").count(), 1);
   }
 
   #[test]

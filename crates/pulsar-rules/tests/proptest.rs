@@ -1,3 +1,5 @@
+#![allow(clippy::multiple_crate_versions)]
+
 use proptest::prelude::*;
 use pulsar_core::{Severity, SourceLocation};
 use pulsar_ir::{
@@ -92,7 +94,7 @@ fn all_rules_on_random_graph() {
 }
 
 fn sql_node(seed: Option<usize>) -> SQLNode {
-  let has_columns = seed.map_or(false, |s| s % 2 == 0);
+  let has_columns = seed.is_some_and(|s| s % 2 == 0);
   SQLNode {
     kind: SqlKind::Select,
     columns: if has_columns {
@@ -101,9 +103,9 @@ fn sql_node(seed: Option<usize>) -> SQLNode {
       vec![]
     },
     table: Some(TableRef { name: "users".to_string(), alias: None }),
-    limit: seed.map_or(false, |s| s % 3 == 0),
-    where_clause: seed.map_or(false, |s| s % 4 == 0),
-    in_callback: seed.map_or(false, |s| s % 5 == 0),
+    limit: seed.is_some_and(|s| s % 3 == 0),
+    where_clause: seed.is_some_and(|s| s % 4 == 0),
+    in_callback: seed.is_some_and(|s| s % 5 == 0),
     location: loc(),
   }
 }

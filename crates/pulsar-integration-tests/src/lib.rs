@@ -5,12 +5,17 @@
   clippy::missing_errors_doc,
   clippy::cast_possible_truncation,
   clippy::cast_sign_loss,
-  clippy::similar_names
+  clippy::similar_names,
+  clippy::multiple_crate_versions
 )]
 
 use pulsar_core::{Diagnostic, SourceLocation};
 use pulsar_ir::IrGraph;
-use pulsar_rules::rules::*;
+use pulsar_rules::rules::{
+  NoAlwaysTrueWhere, NoMissingAwait, NoMissingForeignKey, NoMissingLimit, NoNPlusOne,
+  NoQueryInCallback, NoQueryInLoop, NoRawSqlDangerous, NoSelectStar, NoUnboundedFind,
+  NoUnindexedFilter, NoUnknownColumn,
+};
 use pulsar_rules::RuleEngine;
 
 /// Creates a [`RuleEngine`] with all 12 lint rules registered.
