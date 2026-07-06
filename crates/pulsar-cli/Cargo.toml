@@ -1,6 +1,6 @@
 [package]
 name = "pulsar-cli"
-version = "0.5.2"
+version = "0.5.3"
 edition = "2021"
 description = "Pulsar CLI - static analyzer with a linter interface"
 license = "MIT OR Apache-2.0"
