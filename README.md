@@ -13,7 +13,7 @@
 
 <p align="center">
   <a href="https://github.com/CarlosEduJs/pulsar/actions/workflows/ci.yml"><img src="https://github.com/CarlosEduJs/pulsar/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/CarlosEduJs/pulsar/releases"><img src="https://img.shields.io/badge/version-0.5.1-blue" alt="Version"></a>
+  <a href="https://github.com/CarlosEduJs/pulsar/releases"><img src="https://img.shields.io/badge/version-0.5.2-blue" alt="Version"></a>
 </p>
 
 ## Quick Start
