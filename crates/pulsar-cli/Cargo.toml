@@ -4,6 +4,7 @@ version = "0.5.1"
 edition = "2021"
 description = "Pulsar CLI - static analyzer with a linter interface"
 license = "MIT OR Apache-2.0"
+homepage = "https://pulsar-iota-inky.vercel.app"
 repository = "https://github.com/carlosedujs/pulsar"
 readme = "../../README.md"
 keywords = ["pulsar", "cli", "static-analysis"]

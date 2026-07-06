@@ -55,7 +55,11 @@ targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-
 # CI backends to support
 ci = "github"
 # The installers to generate for each app
-installers = []
+installers = ["homebrew"]
+
+[workspace.metadata.dist.homebrew]
+# GitHub repo to push the Homebrew formula to (e.g. "user/homebrew-tap")
+tap = "carlosedujs/homebrew-pulsar"
 # Allow custom modifications to dist-managed CI files
 allow-dirty = ["ci"]
 

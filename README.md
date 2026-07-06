@@ -18,6 +18,18 @@
 
 ## Quick Start
 
+### macOS / Linux (via Homebrew)
+
+```bash
+brew install carlosedujs/pulsar/pulsar-cli
+```
+
+### Via binary (Linux, macOS, Windows)
+
+Download the latest binary from [GitHub Releases](https://github.com/carlosedujs/pulsar/releases).
+
+### Compile from source
+
 ```bash
 # Requires Rust 1.80+
 cargo build --release
@@ -33,7 +45,7 @@ cargo run -p pulsar-cli -- check . --format json
 cargo run -p pulsar-cli -- init
 ```
 
-See the [Getting Started guide](https://https://pulsar-iota-inky.vercel.app/pulsar/docs/guide/getting-started) for a full walkthrough.
+See the [Getting Started guide](https://pulsar-iota-inky.vercel.app/pulsar/docs/guide/getting-started) for a full walkthrough.
 
 ### Example
 

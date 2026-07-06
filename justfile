@@ -81,6 +81,14 @@ config: init
 dist-plan:
     dist plan --output-format=json
 
+# Publish Homebrew formula to the tap repo (requires GH_TOKEN with repo scope)
+dist-publish-tap tag:
+    dist host --tag={{ tag }} --steps=publish --output-format=json
+
+# Full dist publish (release + homebrew tap)
+dist-publish tag:
+    dist host --tag={{ tag }} --steps=upload --steps=release --steps=publish --output-format=json
+
 # Setup
 # =====
 
