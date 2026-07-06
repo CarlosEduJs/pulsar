@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["clean.ts", "schema-aware/clean.ts"]
+}
