@@ -34,6 +34,10 @@ impl PulsarConfig {
   ///
   /// Returns `Ok(Default::default())` if no file exists and no explicit path
   /// was given (caller falls back to all built-in rules).
+  ///
+  /// Relative paths in the config (e.g. `database.schema`) are resolved
+  /// against the directory containing the config file, not the current
+  /// working directory.
   pub fn load(explicit: Option<&Path>) -> Result<Self, ConfigError> {
     let path = if let Some(p) = explicit {
       if !p.exists() {
@@ -51,7 +55,18 @@ impl PulsarConfig {
     let contents = std::fs::read_to_string(&path)
       .map_err(|e| ConfigError::Io(path.to_string_lossy().to_string(), e))?;
 
-    toml::from_str(&contents).map_err(|e| ConfigError::Parse(path.to_string_lossy().to_string(), e))
+    let mut config: Self = toml::from_str(&contents)
+      .map_err(|e| ConfigError::Parse(path.to_string_lossy().to_string(), e))?;
+
+    // Resolve schema path relative to the config file's parent directory.
+    if let Some(schema) = &config.database.schema {
+      if let Some(config_dir) = path.parent() {
+        let resolved = config_dir.join(schema);
+        config.database.schema = Some(resolved.to_string_lossy().to_string());
+      }
+    }
+
+    Ok(config)
   }
 }
 
@@ -254,7 +269,9 @@ schema = "./prisma/schema.prisma"
     let config = PulsarConfig::load(Some(&config_path)).unwrap();
     assert_eq!(config.settings.ignore, vec!["node_modules"]);
     assert_eq!(config.settings.rules, vec!["no-select-star", "no-missing-limit"]);
-    assert_eq!(config.database.schema, Some("./prisma/schema.prisma".to_string()));
+    // Schema path is resolved relative to the config file's parent directory
+    let expected = dir.path().join("./prisma/schema.prisma").to_string_lossy().to_string();
+    assert_eq!(config.database.schema, Some(expected));
   }
 
   // ConfigError Display

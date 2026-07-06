@@ -16,4 +16,4 @@ rules = [
 ]
 
 [database]
-schema = "demos/schema/schema.prisma"
+schema = "./schema.prisma"

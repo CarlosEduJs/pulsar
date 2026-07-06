@@ -2,4 +2,4 @@
 rules = []
 
 [database]
-schema = "test/fixtures/schema/schema.prisma"
+schema = "./schema.prisma"
