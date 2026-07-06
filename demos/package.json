@@ -1,0 +1,16 @@
+{
+  "name": "pulsar-demos",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "check:clean": "tsc --noEmit --project tsconfig.clean.json"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.43.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.8.3"
+  }
+}

@@ -118,6 +118,17 @@ fuzz-smoke:
 fuzz-clean:
     rm -rf fuzz/corpus fuzz/artifacts fuzz/target fuzz/coverage
 
+# Demos
+# =====
+
+# Run demo: basic rules
+demo:
+    -cargo run --release -p pulsar-cli -- check demos/
+
+# Run demo: schema-aware rules
+demo-schema path="demos/schema-aware/":
+    -cargo run --release -p pulsar-cli -- check {{ path }} --config demos/schema/pulsar.toml
+
 # Smoke Tests
 # ===========
 
