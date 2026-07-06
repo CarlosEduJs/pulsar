@@ -280,10 +280,14 @@ jobs:
 
       # Publish Homebrew formula to tap repo (requires HOMEBREW_TAP_TOKEN secret)
       - name: Publish Homebrew formula
-        if: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "HOMEBREW_TAP_TOKEN not set, skipping Homebrew publish"
+            exit 0
+          fi
           dist host ${{ needs.plan.outputs.tag-flag }} --steps=publish --output-format=json
           echo "Homebrew formula published to carlosedujs/homebrew-pulsar"
 
