@@ -77,7 +77,7 @@ jobs:
       # but also really annoying to build CI around when it needs secrets to work right.)
       - id: plan
         run: |
-          dist ${{ (!github.event.pull_request && format('host --steps=create --tag={0}', github.ref_name)) || 'plan' }} --output-format=json > plan-dist-manifest.json
+          dist ${{ (!github.event.pull_request && format('host --steps=create --tag={0}', github.ref_name)) || 'plan' }} --allow-dirty --output-format=json > plan-dist-manifest.json
           echo "dist ran successfully"
           cat plan-dist-manifest.json
           echo "manifest=$(jq -c "." plan-dist-manifest.json)" >> "$GITHUB_OUTPUT"
@@ -278,27 +278,39 @@ jobs:
 
           gh release create "${{ needs.plan.outputs.tag }}" --target "$RELEASE_COMMIT" $PRERELEASE_FLAG --title "$ANNOUNCEMENT_TITLE" --notes-file "$RUNNER_TEMP/notes.txt" artifacts/*
 
+      # Publish Homebrew formula to tap repo (requires HOMEBREW_TAP_TOKEN secret)
+      - name: Publish Homebrew formula
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "HOMEBREW_TAP_TOKEN not set, skipping Homebrew publish"
+            exit 0
+          fi
+          dist host ${{ needs.plan.outputs.tag-flag }} --steps=publish --output-format=json
+          echo "Homebrew formula published to carlosedujs/homebrew-pulsar"
+
   # Generate changelog with git-cliff and prepend it to the release body.
-  # This lives inside release.yml (instead of a separate workflow) because
-  # release events triggered by GITHUB_TOKEN cannot start other workflows.
-  changelog:
+  announce:
     needs:
       - plan
       - host
     if: ${{ always() && needs.host.result == 'success' && needs.plan.outputs.publishing == 'true' }}
     runs-on: "ubuntu-22.04"
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: false
+          submodules: recursive
       - uses: orhun/git-cliff-action@f50e11560dce63f7c33227798f90b924471a88b5 # v4
         with:
           config: cliff.toml
           args: --latest --output CHANGELOG.md
       - name: Update release body
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ needs.plan.outputs.tag }}"
           gh release view "$TAG" --json body --jq '.body' > /tmp/current_body.txt

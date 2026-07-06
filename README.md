@@ -13,10 +13,22 @@
 
 <p align="center">
   <a href="https://github.com/CarlosEduJs/pulsar/actions/workflows/ci.yml"><img src="https://github.com/CarlosEduJs/pulsar/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/CarlosEduJs/pulsar/releases"><img src="https://img.shields.io/badge/version-0.5.1-blue" alt="Version"></a>
+  <a href="https://github.com/CarlosEduJs/pulsar/releases"><img src="https://img.shields.io/badge/version-0.5.2-blue" alt="Version"></a>
 </p>
 
 ## Quick Start
+
+### macOS / Linux (via Homebrew)
+
+```bash
+brew install carlosedujs/pulsar/pulsar-cli
+```
+
+### Via binary (Linux, macOS, Windows)
+
+Download the latest binary from [GitHub Releases](https://github.com/carlosedujs/pulsar/releases).
+
+### Compile from source
 
 ```bash
 # Requires Rust 1.80+
@@ -33,7 +45,7 @@ cargo run -p pulsar-cli -- check . --format json
 cargo run -p pulsar-cli -- init
 ```
 
-See the [Getting Started guide](https://https://pulsar-iota-inky.vercel.app/pulsar/docs/guide/getting-started) for a full walkthrough.
+See the [Getting Started guide](https://pulsar-iota-inky.vercel.app/pulsar/docs/guide/getting-started) for a full walkthrough.
 
 ### Example
 
