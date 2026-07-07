@@ -106,8 +106,7 @@ mod tests {
 
   #[test]
   fn handles_escaped_quotes_in_string_literals() {
-    let cols =
-      extract_where_columns("eq(users.name, \"a\\\"b\")");
+    let cols = extract_where_columns("eq(users.name, \"a\\\"b\")");
     assert_eq!(cols, vec![(Some("users".to_string()), "name".to_string())]);
   }
 }
