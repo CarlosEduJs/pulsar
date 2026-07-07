@@ -3,9 +3,13 @@
 fn strip_string_literals(s: &str) -> String {
   let mut result = String::with_capacity(s.len());
   let mut in_string = false;
-  for c in s.chars() {
+  let mut chars = s.chars();
+  while let Some(c) = chars.next() {
     if c == '"' {
       in_string = !in_string;
+    } else if c == '\\' && in_string {
+      // Skip escaped character (e.g. \")
+      chars.next();
     } else if !in_string {
       result.push(c);
     }
@@ -98,5 +102,12 @@ mod tests {
         (Some("posts".to_string()), "title".to_string()),
       ]
     );
+  }
+
+  #[test]
+  fn handles_escaped_quotes_in_string_literals() {
+    let cols =
+      extract_where_columns("eq(users.name, \"a\\\"b\")");
+    assert_eq!(cols, vec![(Some("users".to_string()), "name".to_string())]);
   }
 }

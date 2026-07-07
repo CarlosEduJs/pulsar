@@ -148,8 +148,8 @@ impl G {
 
   /// Consumes the builder and returns the constructed [`IrGraph`].
   #[must_use]
-  pub fn finish(self) -> IrGraph {
-    self.graph
+  pub fn finish(&mut self) -> IrGraph {
+    std::mem::take(&mut self.graph)
   }
 }
 
