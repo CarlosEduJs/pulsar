@@ -307,11 +307,10 @@ impl IrGraph {
 
   /// Loads and links a schema into the graph, returning the number of nodes added.
   /// All existing SQL/ORM nodes that reference known tables are linked automatically.
-  pub fn load_schema(&mut self, schema: HashMap<String, SchemaNode>) -> usize {
-    let tables: Vec<(String, SchemaNode)> = schema.into_iter().collect();
-    let count = tables.len();
+  pub fn load_schema(&mut self, schema: &HashMap<String, SchemaNode>) -> usize {
+    let count = schema.len();
 
-    for (_table_name, node) in &tables {
+    for node in schema.values() {
       self.add_schema(node.clone());
     }
 

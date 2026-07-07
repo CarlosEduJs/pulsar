@@ -132,7 +132,7 @@ fn run_check(args: CheckArgs) -> Result<()> {
 
     // Load schema into this file's graph if available
     if let Some(ref tables) = schema_tables {
-      graph.load_schema(tables.clone());
+      graph.load_schema(tables);
     }
 
     let diagnostics = engine.run(&graph, &source, &file_path_str);

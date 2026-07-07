@@ -39,7 +39,7 @@ pub fn analyze_ts(source: &str) -> Vec<Diagnostic> {
 pub fn load_schema(graph: &mut IrGraph, prisma_source: &str) {
   let schema =
     pulsar_frontend_prisma::parse_prisma_schema(prisma_source).expect("Prisma schema should parse");
-  graph.load_schema(schema);
+  graph.load_schema(&schema);
 }
 
 /// Extract TS, load schema, run rules, return diagnostics.

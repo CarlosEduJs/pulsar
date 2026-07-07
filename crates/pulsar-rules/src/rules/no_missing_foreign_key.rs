@@ -30,16 +30,18 @@ impl Rule for NoMissingForeignKey {
       let Some(schema) = ctx.graph.schema_for_orm(id) else { continue };
 
       for included in &orm.args.include {
-        // Check if the schema has at least one FK reference
-        let has_fk = schema.columns.iter().any(|c| c.foreign_key.is_some());
+        // Check if the schema has a column matching the included relation name with an FK
+        let has_fk = schema.columns.iter().any(|c| c.name == *included && c.foreign_key.is_some());
 
         if !has_fk {
+          let suggestion = if schema.columns.iter().any(|c| c.name == *included) {
+            format!("Relation `{included}` included in query but has no foreign key — consider adding one.")
+          } else {
+            format!("Relation `{included}` included in query but table `{}` has no column named `{included}`.", schema.table_name)
+          };
           diags.push(Diagnostic {
             severity: Severity::Warning,
-            message: format!(
-              "Relation `{included}` included in query but table `{}` has no foreign key — consider adding one.",
-              schema.table_name,
-            ),
+            message: suggestion,
             location: orm.location.clone(),
             rule_id: self.id().to_string(),
           });
@@ -102,6 +104,15 @@ mod tests {
         SchemaColumn {
           name: "author_id".to_string(),
           col_type: "Int".to_string(),
+          is_nullable: true,
+          is_indexed: false,
+          col_default: None,
+          is_unique: false,
+          foreign_key: None,
+        },
+        SchemaColumn {
+          name: "author".to_string(),
+          col_type: "User".to_string(),
           is_nullable: true,
           is_indexed: false,
           col_default: None,

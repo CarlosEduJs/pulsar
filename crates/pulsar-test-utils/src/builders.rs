@@ -141,7 +141,7 @@ impl G {
   }
 
   /// Loads a schema map into the graph (links existing SQL/ORM nodes).
-  pub fn load_schema(&mut self, schema: HashMap<String, SchemaNode>) -> &mut Self {
+  pub fn load_schema(&mut self, schema: &HashMap<String, SchemaNode>) -> &mut Self {
     self.graph.load_schema(schema);
     self
   }
@@ -149,8 +149,7 @@ impl G {
   /// Consumes the builder and returns the constructed [`IrGraph`].
   #[must_use]
   pub fn finish(&mut self) -> IrGraph {
-    // Take ownership by cloning (IrGraph is Clone)
-    self.graph.clone()
+    std::mem::take(&mut self.graph)
   }
 }
 
