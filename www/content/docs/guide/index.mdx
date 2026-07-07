@@ -9,9 +9,8 @@ Pulsar is a static analysis tool that catches bugs, performance issues, and sche
 ## Installation
 
 ```bash
-curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
-sudo mv pulsar /usr/local/bin/
-pulsar check src/
+brew install carlosedujs/tap/pulsar-cli
+pulsar-cli check src/
 ```
 
 ## Why Pulsar?
@@ -74,8 +73,7 @@ src/db/posts.ts:8:20  error  no-unknown-column  Column `non_existent` selected i
 ### Install
 
 ```bash
-curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
-sudo mv pulsar /usr/local/bin/
+brew install carlosedujs/tap/pulsar-cli
 ```
 
 </Step>
@@ -84,7 +82,7 @@ sudo mv pulsar /usr/local/bin/
 ### Generate a config
 
 ```bash
-pulsar init
+pulsar-cli init
 ```
 
 </Step>
@@ -93,7 +91,7 @@ pulsar init
 ### Check your code
 
 ```bash
-pulsar check src/
+pulsar-cli check src/
 ```
 
 </Step>
