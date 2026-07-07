@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { Link } from "waku";
 import { Button } from "@/components/ui/button";
+import { DynamicCodeBlock } from "fumadocs-ui/components/dynamic-codeblock";
 
 export function Hero() {
   return (
@@ -31,6 +32,12 @@ export function Hero() {
           >
             <Button size="lg">Download Now</Button>
           </a>
+
+          <DynamicCodeBlock
+            lang="bash"
+            code="brew install carlosedujs/tap/pulsar-cli"
+            codeblock={{ className: "border-none ring-0 shadow-none py-0" }}
+          />
           <Link to="/docs/guide">
             <Button size="lg" variant="outline">
               Documentation
@@ -45,7 +52,7 @@ export function Hero() {
         transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
         className="mt-12 flex items-center gap-2 text-xs text-muted-foreground"
       >
-        v0.5.1 &middot; MIT &middot; Written in Rust
+        v0.5.4 &middot; MIT &middot; Written in Rust
       </motion.div>
     </section>
   );

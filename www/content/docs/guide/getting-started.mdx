@@ -8,25 +8,31 @@ icon: Rocket
 
 Download the latest binary from [GitHub Releases](https://github.com/CarlosEduJs/pulsar/releases).
 
+**Homebrew (macOS & Linux):**
+
+```bash
+brew install carlosedujs/tap/pulsar-cli
+```
+
 **Linux x86_64:**
 
 ```bash
 curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
-sudo mv pulsar /usr/local/bin/
+sudo mv pulsar-cli /usr/local/bin/
 ```
 
 **macOS (Apple Silicon):**
 
 ```bash
 curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-aarch64-apple-darwin.tar.xz | tar xJ
-sudo mv pulsar /usr/local/bin/
+sudo mv pulsar-cli /usr/local/bin/
 ```
 
 **macOS (Intel):**
 
 ```bash
 curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-apple-darwin.tar.xz | tar xJ
-sudo mv pulsar /usr/local/bin/
+sudo mv pulsar-cli /usr/local/bin/
 ```
 
 **Windows:**
@@ -34,7 +40,8 @@ sudo mv pulsar /usr/local/bin/
 Download the `.zip` from [GitHub Releases](https://github.com/CarlosEduJs/pulsar/releases) and add the extracted `pulsar.exe` to your `PATH`.
 
 <Callout type="info">
-  After installing, make sure the binary is in your `PATH`. Run `pulsar --help` to verify.
+  After installing, make sure the binary is in your `PATH`. Run `pulsar-cli --help` to verify. If
+  you used Homebrew, this is handled automatically.
 </Callout>
 
 ## Create a sample file
