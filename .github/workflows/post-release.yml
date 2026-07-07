@@ -37,7 +37,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release view "$TAG" --json body --jq '.body' > /tmp/current_body.txt
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body --jq '.body' > /tmp/current_body.txt
           {
             cat CHANGELOG.md
             echo ""
@@ -45,7 +45,7 @@ jobs:
             echo ""
             cat /tmp/current_body.txt
           } > /tmp/combined.md
-          gh release edit "$TAG" --notes-file /tmp/combined.md
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file /tmp/combined.md
 
   homebrew:
     name: Publish Homebrew formula
@@ -57,7 +57,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release download "$TAG" --pattern "*.rb" --dir /tmp/formula
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "*.rb" --dir /tmp/formula
           ls -la /tmp/formula/
 
       - name: Publish to homebrew-pulsar tap
