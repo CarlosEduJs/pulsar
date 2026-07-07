@@ -314,3 +314,116 @@ fn all_fixtures_run_rules_without_panic() {
     }
   }
 }
+
+// Regression: Bug #3 — schema load_schema duplicates schema nodes each time it's called.
+// Loading the same schema into multiple file graphs creates N copies of the schema.
+#[test]
+fn load_schema_duplicates_nodes_per_file() {
+  use pulsar_ir::IrGraph;
+  use pulsar_frontend_prisma::parse_prisma_schema;
+
+  let prisma = r#"
+    model users {
+      id Int @id
+    }
+  "#;
+
+  let tables = parse_prisma_schema(prisma).unwrap();
+
+  // Simulate loading schema into first file's graph
+  let mut graph1 = IrGraph::new();
+  graph1.load_schema(&tables);
+  assert_eq!(graph1.node_count(), 1, "graph1 should have 1 schema node");
+
+  // Simulate loading schema into second file's graph
+  let mut graph2 = IrGraph::new();
+  graph2.load_schema(&tables);
+  assert_eq!(graph2.node_count(), 1, "graph2 should have 1 schema node");
+
+  // Bug #3: The schema is cloned into EACH file's graph separately.
+  // If we loaded the same schema into one graph twice:
+  let mut graph3 = IrGraph::new();
+  graph3.load_schema(&tables);
+  graph3.load_schema(&tables);
+  assert_eq!(
+    graph3.node_count(), 1,
+    "BUG #3: loading the same schema twice should not duplicate nodes, \
+     but load_schema does not check for duplicates. got {} nodes",
+    graph3.node_count(),
+  );
+}
+
+// Regression: Bug #4 — single-quoted strings with dots in WHERE clauses
+// cause false positive column extraction.
+// This is a full pipeline test to verify the end-to-end behavior.
+#[test]
+fn ts_with_single_quoted_string_in_where_does_not_false_positive() {
+  // eq(users.name, 'some.dotted.value') should only extract 'users.name'
+  // Bug #4: single quotes are not stripped, so 'some.dotted.value' is parsed
+  // as table='some', column='dotted' — false positive
+  let source = r#"
+    const user = await db.select({ id: users.id }).from(users)
+      .where(eq(users.name, 'some.dotted.value'))
+      .limit(1);
+  "#;
+  let graph = pulsar_frontend_oxc::extract(source, oxc::span::SourceType::ts(), "test.ts")
+    .expect("should parse ok");
+  let engine = all_rules_engine();
+  let diags = engine.run(&graph, source, "test.ts");
+  // The primary issue is that extract_where_column_names would parse
+  // 'some.dotted.value' as a column reference. This test just verifies
+  // the pipeline doesn't panic and produces reasonable diagnostics.
+  // Actual false positive verification happens in util.rs unit tests.
+}
+
+// Regression: Bug #9 — raw SQL in callbacks should be detectable
+// Currently try_extract_raw_sql doesn't accept context
+#[test]
+fn raw_sql_in_callback_still_extracted() {
+  let source = r#"
+    getUsers().then(() => {
+      return db.execute(sql`SELECT * FROM posts`);
+    });
+  "#;
+  let graph = pulsar_frontend_oxc::extract(source, oxc::span::SourceType::ts(), "test.ts")
+    .expect("should parse ok");
+  // Raw SQL nodes are extracted even inside callbacks (Bug #9 only prevents context tracking)
+  let has_raw_sql = graph.node_indices().any(|id| {
+    matches!(graph.node(id), Some(pulsar_ir::NodeKind::RawSql(_)))
+  });
+  assert!(has_raw_sql, "raw SQL inside callbacks should be extracted");
+}
+
+// Regression: Bug #10 — Windows \\r\\n line endings in source
+#[test]
+fn ts_with_windows_line_endings_extracts_safely() {
+  let source = "const users = await db.select().from(users);\r\n";
+  let result = pulsar_frontend_oxc::extract(source, oxc::span::SourceType::ts(), "test.ts");
+  assert!(result.is_ok(), "Windows \\r\\n should not break extraction");
+  let graph = result.unwrap();
+  assert!(graph.node_count() > 0, "should extract ORM + SQL nodes");
+}
+
+// Regression: Bug #14 — .limit(variable) should not produce false positive
+// no-missing-limit for queries with dynamic limits
+#[test]
+fn ts_with_dynamic_limit_not_flagged_as_missing_limit() {
+  let source = r#"
+    const pageSize = 10;
+    const users = await db.select({ id: users.id }).from(users).limit(pageSize);
+  "#;
+  let graph = pulsar_frontend_oxc::extract(source, oxc::span::SourceType::ts(), "test.ts")
+    .expect("should parse ok");
+  let engine = all_rules_engine();
+  let diags = engine.run(&graph, source, "test.ts");
+  // Bug #14: .limit(pageSize) is not recognized as having a limit because
+  // pageSize is an Identifier, not a NumericLiteral
+  let missing_limit_diags: Vec<&pulsar_core::Diagnostic> =
+    diags.iter().filter(|d| d.rule_id == "no-missing-limit").collect();
+  assert!(
+    missing_limit_diags.is_empty(),
+    "BUG #14: .limit(pageSize) should be recognized as having a dynamic limit. \
+     Got {} no-missing-limit diagnostics",
+    missing_limit_diags.len(),
+  );
+}

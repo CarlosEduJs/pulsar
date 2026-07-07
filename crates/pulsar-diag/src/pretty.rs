@@ -284,4 +284,41 @@ mod tests {
     assert!(plain.contains("error"), "severity in output:\n{plain}");
     // No source context since source is empty
   }
+
+  // Regression: Bug #10 — Windows-style line endings (\\r\\n) are handled correctly by Rust's lines()
+  #[test]
+  fn pretty_with_windows_line_endings() {
+    let source = "line one\r\nline two\r\nline three\r\n";
+    let diag = make_diag(2, 1, None, Severity::Error);
+    let formatter = PrettyFormatter;
+    let output = formatter.format(&[diag], source);
+    let plain = strip_ansi(&output);
+    // Rust's str::lines() properly strips both \\r and \\n for CRLF endings
+    assert!(
+      plain.contains("line two"),
+      "should display 'line two' without \\r suffix, got:\n{plain}"
+    );
+    assert!(
+      !plain.contains("line two\r"),
+      "Windows \\r\\n should be handled correctly by Rust's lines() — no \\r in output"
+    );
+  }
+
+  // Regression: Bug #10 — mixed line endings
+  #[test]
+  fn pretty_with_mixed_line_endings() {
+    let source = "unix line\nwindows line\r\n";
+    let diag2 = make_diag(2, 1, None, Severity::Error);
+    let formatter = PrettyFormatter;
+    let output = formatter.format(&[diag2], source);
+    let plain = strip_ansi(&output);
+    assert!(
+      plain.contains("windows line"),
+      "should display 'windows line' without \\r suffix"
+    );
+    assert!(
+      !plain.contains("windows line\r"),
+      "Windows \\r\\n should be handled correctly"
+    );
+  }
 }

@@ -248,4 +248,42 @@ mod tests {
       "rule names should be case-sensitive; NO-SELECT-STAR != no-select-star"
     );
   }
+
+  // Regression: Bug #6 — prefix '-' for disabling rules is NOT implemented
+  // Documentation says rules = ["-no-select-star"] disables a rule,
+  // but the code does not strip the '-' prefix — it treats it as the rule name.
+  #[test]
+  fn resolve_rules_with_disable_prefix_should_still_have_other_rules() {
+    let graph = select_star_graph();
+
+    // What the user expects: rules = ["-no-select-star"] → 11 rules active, no-select-star disabled
+    let engine_with_prefix = resolve_rules(&["-no-select-star".to_string()]);
+    let diags = engine_with_prefix.run(&graph, "", "test.ts");
+
+    let has_select_star = diags.iter().any(|d| d.rule_id == "no-select-star");
+    assert!(
+      !has_select_star,
+      "no-select-star should NOT fire when disabled with '-no-select-star'"
+    );
+
+    // Other rules should still fire on the same graph
+    let has_missing_limit = diags.iter().any(|d| d.rule_id == "no-missing-limit");
+    assert!(
+      has_missing_limit,
+      "BUG #6: '-no-select-star' should disable ONLY no-select-star, \
+       but no-missing-limit should still fire. Currently the '-' prefix is not \
+       stripped, so '-no-select-star' is treated as an unknown rule name and \
+       the engine has ZERO rules registered."
+    );
+  }
+
+  // Sanity check: explicit rule list works
+  #[test]
+  fn resolve_rules_explicit_list() {
+    let graph = select_star_graph();
+    let engine = resolve_rules(&["no-select-star".to_string()]);
+    let diags = engine.run(&graph, "", "test.ts");
+    assert_eq!(diags.len(), 1);
+    assert_eq!(diags[0].rule_id, "no-select-star");
+  }
 }

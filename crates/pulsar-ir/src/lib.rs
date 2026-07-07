@@ -587,4 +587,64 @@ mod tests {
     assert_eq!(SqlKind::Update, SqlKind::Update);
     assert_eq!(SqlKind::Delete, SqlKind::Delete);
   }
+
+  // Regression: Bug #11 — schema_for_orm uses .find() which only returns the first match.
+  // If an ORM node links to multiple schemas, only the first one is returned.
+  #[test]
+  fn schema_for_orm_returns_first_link_only() {
+    let mut graph = IrGraph::new();
+
+    let schema1 = SchemaNode {
+      table_name: "users".to_string(),
+      columns: vec![],
+      indexes: vec![],
+    };
+    let schema2 = SchemaNode {
+      table_name: "posts".to_string(),
+      columns: vec![],
+      indexes: vec![],
+    };
+
+    let sql = SQLNode {
+      kind: SqlKind::Select,
+      columns: vec![],
+      table: Some(TableRef { name: "users".to_string(), alias: None }),
+      limit: false,
+      where_clause: false,
+      in_callback: false,
+      location: location("test.ts", 1, 1),
+    };
+    let orm = OrmNode {
+      method: OrmMethod::Select,
+      args: OrmArgs { columns: vec![], where_clause: None, limit: None, include: Vec::new() },
+      loop_kind: LoopKind::None,
+      in_callback: false,
+      missing_await: false,
+      location: location("test.ts", 1, 1),
+    };
+
+    let sql_id = graph.add_sql(sql);
+    let orm_id = graph.add_orm(orm);
+    let s1_id = graph.add_schema(schema1);
+    let s2_id = graph.add_schema(schema2);
+
+    // Link ORM -> SQL -> both schemas
+    graph.add_edge(orm_id, sql_id, EdgeKind::Generates);
+    graph.add_edge(sql_id, s1_id, EdgeKind::Accesses);
+    graph.add_edge(sql_id, s2_id, EdgeKind::Accesses);
+
+    // schema_for_orm uses .find() which returns the FIRST schema only
+    let result = graph.schema_for_orm(orm_id);
+    assert!(
+      result.is_some(),
+      "should return at least one schema"
+    );
+    // Note: .find() is not deterministic — depends on petgraph internals.
+    // The important thing is it only returns one schema, not both.
+    assert_eq!(
+      graph.edges_from(sql_id, EdgeKind::Accesses).len(),
+      2,
+      "SQL node should have 2 Access edges, but schema_for_orm only returns 1"
+    );
+  }
 }

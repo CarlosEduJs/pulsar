@@ -131,6 +131,28 @@ mod tests {
     }
   }
 
+  // Regression: Bug #2 — build_orm_node always uses OrmMethod::Select
+  // This test documents that no matter what method is intended, the ORM node
+  // always gets OrmMethod::Select. Once the bug is fixed, this test should be updated.
+  #[test]
+  fn build_orm_node_always_select() {
+    let loc = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
+    let node = build_orm_node(
+      vec![],
+      None,
+      None,
+      LoopKind::None,
+      false,
+      false,
+      loc,
+    );
+    assert_eq!(
+      node.method,
+      OrmMethod::Select,
+      "BUG #2: build_orm_node always sets method to Select — should accept method parameter"
+    );
+  }
+
   #[test]
   fn process_chain_sets_loop_kind() {
     let mut graph = IrGraph::new();

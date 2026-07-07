@@ -779,4 +779,170 @@ for (const user of users) {\
       }
     }
   }
+
+  // Regression: Bug #5 — db.execute(sql`...`) with NO interpolation should be has_interpolation=false
+  // Currently TaggedTemplateExpression falls in _ => true, making it has_interpolation=true (WRONG)
+  #[test]
+  fn extract_db_execute_sql_tagged_template_no_interpolation() {
+    let source = "await db.execute(sql`SELECT * FROM users`);";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    let mut found = false;
+    for id in graph.node_indices() {
+      if let pulsar_ir::NodeKind::RawSql(raw) = graph.node(id).unwrap() {
+        found = true;
+        assert_eq!(
+          raw.kind,
+          pulsar_ir::RawSqlKind::DbRawMethod,
+          "should be DbRawMethod"
+        );
+        assert!(
+          !raw.has_interpolation,
+          "BUG #5: sql`...` tagged template without interpolation should have has_interpolation=false, got=true. \
+           This means db.execute(sql`SELECT * FROM users`) is flagged as ERROR instead of WARNING."
+        );
+      }
+    }
+    assert!(found, "should have extracted a RawSql node for db.execute");
+  }
+
+  // Regression: Bug #5 — db.execute(sql`...`) WITH interpolation should be has_interpolation=true
+  #[test]
+  fn extract_db_execute_sql_tagged_template_with_interpolation() {
+    let source = "await db.execute(sql`SELECT * FROM users WHERE id = ${userId}`);";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    let mut found = false;
+    for id in graph.node_indices() {
+      if let pulsar_ir::NodeKind::RawSql(raw) = graph.node(id).unwrap() {
+        found = true;
+        assert!(
+          raw.has_interpolation,
+          "should have interpolation when template has expressions"
+        );
+      }
+    }
+    assert!(found, "should have extracted a RawSql node");
+  }
+
+  // Regression: Bug #9 — raw SQL inside callbacks should have context propagated
+  // Currently try_extract_raw_sql has no ctx parameter, so raw SQL in callbacks
+  // is not detected by no-query-in-callback. The node IS extracted but without
+  // loop/callback context tracking.
+  #[test]
+  fn extract_raw_sql_in_callback_context() {
+    let source = r#"
+      getUsers().then(() => {
+        return db.execute(sql`SELECT * FROM posts`);
+      });
+    "#;
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    // db.execute(sql`...`) is detected as DbRawMethod (not standalone TaggedTemplate)
+    let raw_nodes: Vec<_> = graph.node_indices().filter_map(|id| {
+      match graph.node(id)? {
+        pulsar_ir::NodeKind::RawSql(raw) => Some(raw.clone()),
+        _ => None,
+      }
+    }).collect();
+    assert_eq!(raw_nodes.len(), 1, "should extract exactly one raw SQL node");
+    // The node is DbRawMethod because db.execute() takes precedence
+    // Bug #9: there is no way to know if this raw SQL was inside a callback
+  }
+
+  // Raw SQL via standalone sql`...` tagged template (not inside db.execute)
+  #[test]
+  fn extract_standalone_sql_tagged_template() {
+    let source = r#"
+      const query = sql`SELECT * FROM users`;
+    "#;
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    let raw_nodes: Vec<_> = graph.node_indices().filter_map(|id| {
+      match graph.node(id)? {
+        pulsar_ir::NodeKind::RawSql(raw) => Some(raw.kind),
+        _ => None,
+      }
+    }).collect();
+    assert_eq!(raw_nodes, vec![pulsar_ir::RawSqlKind::TaggedTemplate]);
+  }
+
+  // Regression: Bug #12 — non-db objects should also be detected for raw SQL methods
+  // Currently only `db.execute(...)` is detected, not `client.execute(...)`
+  #[test]
+  fn extract_raw_sql_from_non_db_object() {
+    let source = "await client.execute('SELECT * FROM users');";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    // Bug #12: currently only detects `db.` — so this produces 0 raw SQL nodes
+    let has_raw_sql = graph.node_indices().any(|id| {
+      matches!(graph.node(id), Some(pulsar_ir::NodeKind::RawSql(_)))
+    });
+    assert!(
+      has_raw_sql,
+      "BUG #12: client.execute('SELECT * FROM users') should be detected as raw SQL, \
+       currently only db.execute() works"
+    );
+  }
+
+  // Regression: Bug #13/15 — multiple parse errors should be collected, not just first
+  #[test]
+  fn extract_returns_first_parse_error_only() {
+    let source = "const x = ;\nconst y = ;";
+    let result = extract(source, ts_source(source), TEST_FILE);
+    assert!(
+      result.is_err(),
+      "invalid syntax should produce an error"
+    );
+    // Bug #13/15: we can't easily verify how many errors were collected,
+    // but the current implementation only reports the first one.
+    // This test documents the limitation.
+  }
+
+  // Regression: Bug #14 — .limit(variable) should be treated as having a limit
+  // Currently extract_limit only matches NumericLiteral, so .limit(pageSize) returns None
+  #[test]
+  fn extract_limit_with_variable_expression() {
+    let source = "await db.select({ id: users.id }).from(users).limit(pageSize);";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    for id in graph.node_indices() {
+      if let pulsar_ir::NodeKind::Orm(orm) = graph.node(id).unwrap() {
+        assert!(
+          orm.args.limit.is_some(),
+          "BUG #14: .limit(pageSize) should be recognized as having a limit, \
+           currently only NumericLiteral limits are extracted"
+        );
+      }
+    }
+  }
+
+  // Regression: Bug #14 — .limit(NumericLiteral) still works
+  #[test]
+  fn extract_limit_with_numeric_literal() {
+    let source = "await db.select({ id: users.id }).from(users).limit(10);";
+    let graph = extract(source, ts_source(source), TEST_FILE).unwrap();
+    for id in graph.node_indices() {
+      if let pulsar_ir::NodeKind::Orm(orm) = graph.node(id).unwrap() {
+        assert_eq!(orm.args.limit, Some(10));
+      }
+    }
+  }
+
+  // Regression: Bug #8 — byte_to_line_col is O(n) per call
+  // This test documents its behavior for verification
+  #[test]
+  fn byte_to_line_col_handles_multibyte() {
+    // The function uses char_indices which handles multi-byte UTF-8 correctly
+    // Source bytes: a(0) \n(1) b(2) \n(3) c(4) a(5) f(6) é(7-8) \n(9)
+    let source = "a\nb\ncafé\n";
+    // offset 4 = 'c' (start of "café" on line 3)
+    let (line, col) = super::byte_to_line_col(source, 4);
+    assert_eq!(line, 3, "c should be on line 3");
+    assert_eq!(col, 1, "c should be at column 1");
+    // offset 6 = 'f' (3rd char of "café" on line 3)
+    let (line2, col2) = super::byte_to_line_col(source, 6);
+    assert_eq!(line2, 3, "f should be on line 3");
+    assert_eq!(col2, 3, "f should be at column 3 (c=1, a=2, f=3)");
+    // offset 7 = start of 'é' (2-byte UTF-8 char at column 4)
+    let (line3, col3) = super::byte_to_line_col(source, 7);
+    assert_eq!(line3, 3, "é should be on line 3");
+    assert_eq!(col3, 4, "é should be at column 4 (c=1, a=2, f=3, é=4)");
+    // Bug #8: this function re-iterates from the start every time it's called,
+    // making it O(n) per span in a file with n total bytes
+  }
 }
