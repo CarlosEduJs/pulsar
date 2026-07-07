@@ -32,7 +32,7 @@ impl Rule for NoQueryInLoop {
         }
         // When no-n-plus-one is active, skip iteration loops (it handles them).
         if orm.loop_kind == LoopKind::Iteration
-          && ctx.active_rules.contains(&"no-n-plus-one".to_string())
+          && ctx.active_rules.iter().any(|r| r == "no-n-plus-one")
         {
           continue;
         }

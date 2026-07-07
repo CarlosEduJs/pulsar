@@ -93,17 +93,11 @@ fn get_line(source: &str, line: usize) -> Option<&str> {
 }
 
 fn count_by_severity(diagnostics: &[Diagnostic]) -> (usize, usize, usize) {
-  let mut errors = 0;
-  let mut warnings = 0;
-  let mut infos = 0;
-  for d in diagnostics {
-    match d.severity {
-      Severity::Error => errors += 1,
-      Severity::Warning => warnings += 1,
-      Severity::Info => infos += 1,
-    }
-  }
-  (errors, warnings, infos)
+  diagnostics.iter().fold((0, 0, 0), |(e, w, i), d| match d.severity {
+    Severity::Error => (e + 1, w, i),
+    Severity::Warning => (e, w + 1, i),
+    Severity::Info => (e, w, i + 1),
+  })
 }
 
 #[cfg(test)]

@@ -25,7 +25,7 @@ fuzz_target!(|data: &[u8]| {
         let schema =
           pulsar_frontend_prisma::parse_prisma_schema(&format!("model {name} {{ id Int @id }}"));
         if let Ok(s) = schema {
-          graph.load_schema(s);
+          graph.load_schema(&s);
           graph.link_sql_to_schema(id, &name);
         }
       }

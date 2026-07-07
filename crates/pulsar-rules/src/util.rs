@@ -1,18 +1,12 @@
-#![allow(clippy::while_let_on_iterator)]
-
 /// Strips string literal contents (between double quotes) to avoid parsing
 /// dots inside string values as `table.column` separators.
 fn strip_string_literals(s: &str) -> String {
   let mut result = String::with_capacity(s.len());
-  let mut chars = s.chars();
-  while let Some(c) = chars.next() {
+  let mut in_string = false;
+  for c in s.chars() {
     if c == '"' {
-      while let Some(c) = chars.next() {
-        if c == '"' {
-          break;
-        }
-      }
-    } else {
+      in_string = !in_string;
+    } else if !in_string {
       result.push(c);
     }
   }
