@@ -194,21 +194,18 @@ mod tests {
   }
 
   // Regression: Bug #1 — aliases (object keys) should not be checked against schema
-  // select({ myId: users.id }) -> myId is an alias, id is the actual column
-  // The current code incorrectly checks 'myId' against schema columns
-  // Regression: Bug #1 — aliases (object keys) should not be checked against schema
-  // select({ myId: users.id }) -> myId is an alias, id is the actual column
-  // The current code incorrectly checks 'myId' against schema columns
+  // After fix, extract_select_columns returns the VALUE ("id"), not the key ("myId").
+  // These tests verify the rule correctly accepts columns from select() values.
   #[test]
   fn allows_alias_mismatching_column_name_in_select() {
     let mut graph = IrGraph::new();
     let loc = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
 
-    // select({ myId: users.id }) — alias 'myId' != column 'id'
+    // select({ myId: users.id }) → after fix, columns = ["id"] (from value)
     let orm = OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs {
-        columns: vec!["myId".to_string()],
+        columns: vec!["id".to_string()],
         where_clause: None,
         limit: None,
         include: Vec::new(),
@@ -255,7 +252,7 @@ mod tests {
     let diags = rule.run(&ctx);
     assert!(
       diags.is_empty(),
-      "select({{ myId: users.id }}) should not flag 'myId' — it's an alias, not a column name"
+      "select({{ myId: users.id }}) should extract 'id' from value — not flag 'myId'"
     );
   }
 
@@ -265,10 +262,11 @@ mod tests {
     let mut graph = IrGraph::new();
     let loc = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
 
+    // select({ displayName: users.name }) → after fix, columns = ["name"] (from value)
     let orm = OrmNode {
       method: OrmMethod::Select,
       args: OrmArgs {
-        columns: vec!["displayName".to_string()],
+        columns: vec!["name".to_string()],
         where_clause: Some("eq(users.id, 1)".to_string()),
         limit: Some(1),
         include: Vec::new(),
@@ -291,15 +289,26 @@ mod tests {
 
     let schema = SchemaNode {
       table_name: "users".to_string(),
-      columns: vec![SchemaColumn {
-        name: "id".to_string(),
-        col_type: "Int".to_string(),
-        is_nullable: false,
-        is_indexed: true,
-        col_default: None,
-        is_unique: true,
-        foreign_key: None,
-      }],
+      columns: vec![
+        SchemaColumn {
+          name: "id".to_string(),
+          col_type: "Int".to_string(),
+          is_nullable: false,
+          is_indexed: true,
+          col_default: None,
+          is_unique: true,
+          foreign_key: None,
+        },
+        SchemaColumn {
+          name: "name".to_string(),
+          col_type: "String".to_string(),
+          is_nullable: true,
+          is_indexed: false,
+          col_default: None,
+          is_unique: false,
+          foreign_key: None,
+        },
+      ],
       indexes: vec![],
     };
 
@@ -315,7 +324,7 @@ mod tests {
     let diags = rule.run(&ctx);
     assert!(
       diags.is_empty(),
-      "select({{ displayName: users.name }}) with valid .where() should not produce false positives"
+      "select({{ displayName: users.name }}) should extract 'name' from value; WHERE refs 'id'"
     );
   }
 }

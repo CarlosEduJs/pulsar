@@ -1,12 +1,19 @@
-/// Strips string literal contents (between double quotes) to avoid parsing
+/// Strips string literal contents (between double or single quotes) to avoid parsing
 /// dots inside string values as `table.column` separators.
 fn strip_string_literals(s: &str) -> String {
   let mut result = String::with_capacity(s.len());
   let mut in_string = false;
+  let mut quote_char = '"';
   let mut chars = s.chars();
   while let Some(c) = chars.next() {
-    if c == '"' {
-      in_string = !in_string;
+    if c == '"' || c == '\'' {
+      if !in_string {
+        in_string = true;
+        quote_char = c;
+      } else if c == quote_char {
+        in_string = false;
+      }
+      // else: different quote inside a string — keep it (it's part of the content)
     } else if c == '\\' && in_string {
       // Skip escaped character (e.g. \")
       chars.next();

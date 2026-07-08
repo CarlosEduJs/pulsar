@@ -308,10 +308,13 @@ impl IrGraph {
   /// Loads and links a schema into the graph, returning the number of nodes added.
   /// All existing SQL/ORM nodes that reference known tables are linked automatically.
   pub fn load_schema(&mut self, schema: &HashMap<String, SchemaNode>) -> usize {
-    let count = schema.len();
+    let mut added = 0;
 
     for node in schema.values() {
-      self.add_schema(node.clone());
+      if self.find_schema(&node.table_name).is_none() {
+        self.add_schema(node.clone());
+        added += 1;
+      }
     }
 
     // Re-link existing SQL nodes matching loaded tables
@@ -327,7 +330,7 @@ impl IrGraph {
       let _ = self.link_sql_to_schema(*id, table);
     }
 
-    count
+    added
   }
 
   // Graph traversal helpers
@@ -594,16 +597,8 @@ mod tests {
   fn schema_for_orm_returns_first_link_only() {
     let mut graph = IrGraph::new();
 
-    let schema1 = SchemaNode {
-      table_name: "users".to_string(),
-      columns: vec![],
-      indexes: vec![],
-    };
-    let schema2 = SchemaNode {
-      table_name: "posts".to_string(),
-      columns: vec![],
-      indexes: vec![],
-    };
+    let schema1 = SchemaNode { table_name: "users".to_string(), columns: vec![], indexes: vec![] };
+    let schema2 = SchemaNode { table_name: "posts".to_string(), columns: vec![], indexes: vec![] };
 
     let sql = SQLNode {
       kind: SqlKind::Select,
@@ -635,10 +630,7 @@ mod tests {
 
     // schema_for_orm uses .find() which returns the FIRST schema only
     let result = graph.schema_for_orm(orm_id);
-    assert!(
-      result.is_some(),
-      "should return at least one schema"
-    );
+    assert!(result.is_some(), "should return at least one schema");
     // Note: .find() is not deterministic — depends on petgraph internals.
     // The important thing is it only returns one schema, not both.
     assert_eq!(

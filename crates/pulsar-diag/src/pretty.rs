@@ -312,13 +312,7 @@ mod tests {
     let formatter = PrettyFormatter;
     let output = formatter.format(&[diag2], source);
     let plain = strip_ansi(&output);
-    assert!(
-      plain.contains("windows line"),
-      "should display 'windows line' without \\r suffix"
-    );
-    assert!(
-      !plain.contains("windows line\r"),
-      "Windows \\r\\n should be handled correctly"
-    );
+    assert!(plain.contains("windows line"), "should display 'windows line' without \\r suffix");
+    assert!(!plain.contains("windows line\r"), "Windows \\r\\n should be handled correctly");
   }
 }

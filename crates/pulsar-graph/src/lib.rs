@@ -137,15 +137,7 @@ mod tests {
   #[test]
   fn build_orm_node_always_select() {
     let loc = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
-    let node = build_orm_node(
-      vec![],
-      None,
-      None,
-      LoopKind::None,
-      false,
-      false,
-      loc,
-    );
+    let node = build_orm_node(vec![], None, None, LoopKind::None, false, false, loc);
     assert_eq!(
       node.method,
       OrmMethod::Select,

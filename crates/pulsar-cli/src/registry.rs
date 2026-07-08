@@ -79,6 +79,8 @@ pub fn builtin_rules() -> BTreeMap<&'static str, RuleConstructor> {
 /// Builds a [`RuleEngine`] with the given list of rule names.
 ///
 /// Unknown names are printed to stderr and skipped.
+/// Names prefixed with `-` disable a rule (only meaningful when combined with
+/// other names or when starting from the full set).
 pub fn resolve_rules(names: &[String]) -> RuleEngine {
   let builtins = builtin_rules();
   let mut engine = RuleEngine::new();
@@ -91,10 +93,33 @@ pub fn resolve_rules(names: &[String]) -> RuleEngine {
     return engine;
   }
 
-  for name in names {
-    match builtins.get(name.as_str()) {
-      Some(ctor) => engine.register(ctor()),
-      None => eprintln!("warning: unknown rule \"{name}\", skipping"),
+  let has_disable = names.iter().any(|n| n.starts_with('-'));
+
+  if has_disable {
+    // Start from the full set, then apply enable/disable modifications
+    for (rule_name, ctor) in &builtins {
+      if !names.iter().any(|n| n.strip_prefix('-') == Some(*rule_name)) {
+        engine.register(ctor());
+      }
+    }
+    for name in names {
+      if let Some(stripped) = name.strip_prefix('-') {
+        if !builtins.contains_key(stripped) {
+          eprintln!("warning: unknown rule \"-{stripped}\", skipping");
+        }
+      } else if let Some(ctor) = builtins.get(name.as_str()) {
+        engine.register(ctor());
+      } else {
+        eprintln!("warning: unknown rule \"{name}\", skipping");
+      }
+    }
+  } else {
+    // Explicit list mode — only the named rules
+    for name in names {
+      match builtins.get(name.as_str()) {
+        Some(ctor) => engine.register(ctor()),
+        None => eprintln!("warning: unknown rule \"{name}\", skipping"),
+      }
     }
   }
 

@@ -319,8 +319,8 @@ fn all_fixtures_run_rules_without_panic() {
 // Loading the same schema into multiple file graphs creates N copies of the schema.
 #[test]
 fn load_schema_duplicates_nodes_per_file() {
-  use pulsar_ir::IrGraph;
   use pulsar_frontend_prisma::parse_prisma_schema;
+  use pulsar_ir::IrGraph;
 
   let prisma = r#"
     model users {
@@ -346,7 +346,8 @@ fn load_schema_duplicates_nodes_per_file() {
   graph3.load_schema(&tables);
   graph3.load_schema(&tables);
   assert_eq!(
-    graph3.node_count(), 1,
+    graph3.node_count(),
+    1,
     "BUG #3: loading the same schema twice should not duplicate nodes, \
      but load_schema does not check for duplicates. got {} nodes",
     graph3.node_count(),
@@ -369,7 +370,7 @@ fn ts_with_single_quoted_string_in_where_does_not_false_positive() {
   let graph = pulsar_frontend_oxc::extract(source, oxc::span::SourceType::ts(), "test.ts")
     .expect("should parse ok");
   let engine = all_rules_engine();
-  let diags = engine.run(&graph, source, "test.ts");
+  let _diags = engine.run(&graph, source, "test.ts");
   // The primary issue is that extract_where_column_names would parse
   // 'some.dotted.value' as a column reference. This test just verifies
   // the pipeline doesn't panic and produces reasonable diagnostics.
@@ -388,9 +389,8 @@ fn raw_sql_in_callback_still_extracted() {
   let graph = pulsar_frontend_oxc::extract(source, oxc::span::SourceType::ts(), "test.ts")
     .expect("should parse ok");
   // Raw SQL nodes are extracted even inside callbacks (Bug #9 only prevents context tracking)
-  let has_raw_sql = graph.node_indices().any(|id| {
-    matches!(graph.node(id), Some(pulsar_ir::NodeKind::RawSql(_)))
-  });
+  let has_raw_sql =
+    graph.node_indices().any(|id| matches!(graph.node(id), Some(pulsar_ir::NodeKind::RawSql(_))));
   assert!(has_raw_sql, "raw SQL inside callbacks should be extracted");
 }
 
