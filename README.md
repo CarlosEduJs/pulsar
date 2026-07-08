@@ -95,6 +95,15 @@ See the [Getting Started guide](https://pulsar-iota-inky.vercel.app/pulsar/docs/
 - [bun](https://bun.sh) (for the website)
 - [cargo-fuzz](https://github.com/rust-fuzz/cargo-fuzz) + Nightly Rust (for fuzz testing)
 
+### Setup
+
+```bash
+# Install git hooks (pre-commit / pre-push)
+bash scripts/install-hooks.sh
+```
+
+The **pre-commit** hook runs `cargo fmt --check` + `cargo clippy`; the **pre-push** hook also runs `cargo test`.
+
 ### Commands
 
 ```bash

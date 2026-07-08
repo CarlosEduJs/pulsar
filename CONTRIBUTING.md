@@ -15,6 +15,9 @@ git clone https://github.com/CarlosEduJs/pulsar.git
 cd pulsar
 cargo build --release
 
+# Install git hooks (pre-commit / pre-push)
+bash scripts/install-hooks.sh
+
 # Run tests
 cargo test --workspace
 

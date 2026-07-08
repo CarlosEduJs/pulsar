@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+
+echo "=== pre-push: checking format ==="
+cargo fmt --all --check
+
+echo "=== pre-push: clippy ==="
+cargo clippy --workspace --all-targets -- -D warnings
+
+echo "=== pre-push: tests ==="
+cargo test --workspace
+
+echo "=== pre-push: OK ==="
