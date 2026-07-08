@@ -21,7 +21,7 @@ export function Footer() {
           >
             GitHub
           </Link>
-          <span className="text-muted-foreground/40">v0.5.1</span>
+          <span className="text-muted-foreground/40">v0.6.1</span>
         </nav>
       </div>
     </footer>
