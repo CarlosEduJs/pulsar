@@ -192,4 +192,139 @@ mod tests {
     let diags = rule.run(&ctx);
     assert!(diags.is_empty());
   }
+
+  // Regression: Bug aliases (object keys) should not be checked against schema
+  // After fix, extract_select_columns returns the VALUE ("id"), not the key ("myId").
+  // These tests verify the rule correctly accepts columns from select() values.
+  #[test]
+  fn allows_alias_mismatching_column_name_in_select() {
+    let mut graph = IrGraph::new();
+    let loc = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
+
+    // select({ myId: users.id }) → after fix, columns = ["id"] (from value)
+    let orm = OrmNode {
+      method: OrmMethod::Select,
+      args: OrmArgs {
+        columns: vec!["id".to_string()],
+        where_clause: None,
+        limit: None,
+        include: Vec::new(),
+      },
+      loop_kind: LoopKind::None,
+      in_callback: false,
+      missing_await: false,
+      location: loc.clone(),
+    };
+
+    let sql = SQLNode {
+      kind: SqlKind::Select,
+      columns: vec![ColumnRef { name: "myId".to_string(), table: None }],
+      table: Some(TableRef { name: "users".to_string(), alias: None }),
+      limit: false,
+      where_clause: false,
+      in_callback: false,
+      location: loc,
+    };
+
+    let schema = SchemaNode {
+      table_name: "users".to_string(),
+      columns: vec![SchemaColumn {
+        name: "id".to_string(),
+        col_type: "Int".to_string(),
+        is_nullable: false,
+        is_indexed: true,
+        col_default: None,
+        is_unique: true,
+        foreign_key: None,
+      }],
+      indexes: vec![],
+    };
+
+    let orm_id = graph.add_orm(orm);
+    let sql_id = graph.add_sql(sql);
+    let schema_id = graph.add_schema(schema);
+    graph.add_edge(orm_id, sql_id, EdgeKind::Generates);
+    graph.add_edge(sql_id, schema_id, EdgeKind::Accesses);
+
+    let rule = NoUnknownColumn;
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let diags = rule.run(&ctx);
+    assert!(
+      diags.is_empty(),
+      "select({{ myId: users.id }}) should extract 'id' from value — not flag 'myId'"
+    );
+  }
+
+  // Regression: Bug alias differs from column, WHERE references valid column
+  #[test]
+  fn allows_alias_in_select_with_valid_where_column() {
+    let mut graph = IrGraph::new();
+    let loc = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
+
+    // select({ displayName: users.name }) → after fix, columns = ["name"] (from value)
+    let orm = OrmNode {
+      method: OrmMethod::Select,
+      args: OrmArgs {
+        columns: vec!["name".to_string()],
+        where_clause: Some("eq(users.id, 1)".to_string()),
+        limit: Some(1),
+        include: Vec::new(),
+      },
+      loop_kind: LoopKind::None,
+      in_callback: false,
+      missing_await: false,
+      location: loc.clone(),
+    };
+
+    let sql = SQLNode {
+      kind: SqlKind::Select,
+      columns: vec![ColumnRef { name: "displayName".to_string(), table: None }],
+      table: Some(TableRef { name: "users".to_string(), alias: None }),
+      limit: true,
+      where_clause: true,
+      in_callback: false,
+      location: loc,
+    };
+
+    let schema = SchemaNode {
+      table_name: "users".to_string(),
+      columns: vec![
+        SchemaColumn {
+          name: "id".to_string(),
+          col_type: "Int".to_string(),
+          is_nullable: false,
+          is_indexed: true,
+          col_default: None,
+          is_unique: true,
+          foreign_key: None,
+        },
+        SchemaColumn {
+          name: "name".to_string(),
+          col_type: "String".to_string(),
+          is_nullable: true,
+          is_indexed: false,
+          col_default: None,
+          is_unique: false,
+          foreign_key: None,
+        },
+      ],
+      indexes: vec![],
+    };
+
+    let orm_id = graph.add_orm(orm);
+    let sql_id = graph.add_sql(sql);
+    let schema_id = graph.add_schema(schema);
+    graph.add_edge(orm_id, sql_id, EdgeKind::Generates);
+    graph.add_edge(sql_id, schema_id, EdgeKind::Accesses);
+
+    let rule = NoUnknownColumn;
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let diags = rule.run(&ctx);
+    assert!(
+      diags.is_empty(),
+      "select({{ displayName: users.name }}) should extract 'name' from value; WHERE refs 'id'"
+    );
+  }
 }

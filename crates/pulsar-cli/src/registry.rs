@@ -79,6 +79,8 @@ pub fn builtin_rules() -> BTreeMap<&'static str, RuleConstructor> {
 /// Builds a [`RuleEngine`] with the given list of rule names.
 ///
 /// Unknown names are printed to stderr and skipped.
+/// Names prefixed with `-` disable a rule (only meaningful when combined with
+/// other names or when starting from the full set).
 pub fn resolve_rules(names: &[String]) -> RuleEngine {
   let builtins = builtin_rules();
   let mut engine = RuleEngine::new();
@@ -91,10 +93,33 @@ pub fn resolve_rules(names: &[String]) -> RuleEngine {
     return engine;
   }
 
-  for name in names {
-    match builtins.get(name.as_str()) {
-      Some(ctor) => engine.register(ctor()),
-      None => eprintln!("warning: unknown rule \"{name}\", skipping"),
+  let has_disable = names.iter().any(|n| n.starts_with('-'));
+
+  if has_disable {
+    // Start from the full set, then apply enable/disable modifications
+    for (rule_name, ctor) in &builtins {
+      if !names.iter().any(|n| n.strip_prefix('-') == Some(*rule_name)) {
+        engine.register(ctor());
+      }
+    }
+    for name in names {
+      if let Some(stripped) = name.strip_prefix('-') {
+        if !builtins.contains_key(stripped) {
+          eprintln!("warning: unknown rule \"-{stripped}\", skipping");
+        }
+      } else if let Some(ctor) = builtins.get(name.as_str()) {
+        engine.register(ctor());
+      } else {
+        eprintln!("warning: unknown rule \"{name}\", skipping");
+      }
+    }
+  } else {
+    // Explicit list mode — only the named rules
+    for name in names {
+      match builtins.get(name.as_str()) {
+        Some(ctor) => engine.register(ctor()),
+        None => eprintln!("warning: unknown rule \"{name}\", skipping"),
+      }
     }
   }
 
@@ -247,5 +272,43 @@ mod tests {
       diags.is_empty(),
       "rule names should be case-sensitive; NO-SELECT-STAR != no-select-star"
     );
+  }
+
+  // Regression: Bug prefix '-' for disabling rules is NOT implemented
+  // Documentation says rules = ["-no-select-star"] disables a rule,
+  // but the code does not strip the '-' prefix — it treats it as the rule name.
+  #[test]
+  fn resolve_rules_with_disable_prefix_should_still_have_other_rules() {
+    let graph = select_star_graph();
+
+    // What the user expects: rules = ["-no-select-star"] → 11 rules active, no-select-star disabled
+    let engine_with_prefix = resolve_rules(&["-no-select-star".to_string()]);
+    let diags = engine_with_prefix.run(&graph, "", "test.ts");
+
+    let has_select_star = diags.iter().any(|d| d.rule_id == "no-select-star");
+    assert!(
+      !has_select_star,
+      "no-select-star should NOT fire when disabled with '-no-select-star'"
+    );
+
+    // Other rules should still fire on the same graph
+    let has_missing_limit = diags.iter().any(|d| d.rule_id == "no-missing-limit");
+    assert!(
+      has_missing_limit,
+      "BUG #6: '-no-select-star' should disable ONLY no-select-star, \
+       but no-missing-limit should still fire. Currently the '-' prefix is not \
+       stripped, so '-no-select-star' is treated as an unknown rule name and \
+       the engine has ZERO rules registered."
+    );
+  }
+
+  // Sanity check: explicit rule list works
+  #[test]
+  fn resolve_rules_explicit_list() {
+    let graph = select_star_graph();
+    let engine = resolve_rules(&["no-select-star".to_string()]);
+    let diags = engine.run(&graph, "", "test.ts");
+    assert_eq!(diags.len(), 1);
+    assert_eq!(diags[0].rule_id, "no-select-star");
   }
 }

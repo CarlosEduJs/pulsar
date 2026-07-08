@@ -1,12 +1,19 @@
-/// Strips string literal contents (between double quotes) to avoid parsing
+/// Strips string literal contents (between double or single quotes) to avoid parsing
 /// dots inside string values as `table.column` separators.
 fn strip_string_literals(s: &str) -> String {
   let mut result = String::with_capacity(s.len());
   let mut in_string = false;
+  let mut quote_char = '"';
   let mut chars = s.chars();
   while let Some(c) = chars.next() {
-    if c == '"' {
-      in_string = !in_string;
+    if c == '"' || c == '\'' {
+      if !in_string {
+        in_string = true;
+        quote_char = c;
+      } else if c == quote_char {
+        in_string = false;
+      }
+      // else: different quote inside a string — keep it (it's part of the content)
     } else if c == '\\' && in_string {
       // Skip escaped character (e.g. \")
       chars.next();
@@ -108,5 +115,45 @@ mod tests {
   fn handles_escaped_quotes_in_string_literals() {
     let cols = extract_where_columns("eq(users.name, \"a\\\"b\")");
     assert_eq!(cols, vec![(Some("users".to_string()), "name".to_string())]);
+  }
+
+  // Regression: Bug single-quoted strings with dots should not be parsed as column refs
+  #[test]
+  fn ignores_dots_inside_single_quoted_strings() {
+    let cols = extract_where_columns("eq(users.name, 'test.test')");
+    assert_eq!(
+      cols,
+      vec![(Some("users".to_string()), "name".to_string())],
+      "single-quoted 'test.test' should not be parsed as a column reference"
+    );
+  }
+
+  // Regression: Bug columns from other tables should be distinguishable
+  #[test]
+  fn extracts_cross_table_columns_separately() {
+    let cols = extract_where_columns("eq(posts.authorId, users.id)");
+    assert_eq!(
+      cols,
+      vec![
+        (Some("posts".to_string()), "authorId".to_string()),
+        (Some("users".to_string()), "id".to_string()),
+      ],
+      "columns from posts and users should both be extracted with their table qualifiers"
+    );
+  }
+
+  // Regression: Bug extrai colunas de outras tabelas (whitespace variation)
+  #[test]
+  fn extracts_columns_from_joined_tables() {
+    let cols = extract_where_columns("and(eq(users.id, posts.author_id), eq(posts.id, 1))");
+    assert_eq!(
+      cols,
+      vec![
+        (Some("users".to_string()), "id".to_string()),
+        (Some("posts".to_string()), "author_id".to_string()),
+        (Some("posts".to_string()), "id".to_string()),
+      ],
+      "columns from different tables should all be extracted"
+    );
   }
 }
