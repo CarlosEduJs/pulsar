@@ -33,31 +33,17 @@ impl Rule for NoUnindexedFilter {
       let Some(schema) = ctx.graph.schema_for_orm(id) else { continue };
 
       for col_name in &filtered_cols {
-        let col = schema.columns.iter().find(|c| c.name == *col_name);
-        match col {
-          Some(c) if c.is_indexed => {}
-          Some(c) => {
-            diags.push(Diagnostic {
-              severity: Severity::Warning,
-              message: format!(
-                "Filtering on `{}` which is not indexed — add an index for better performance.",
-                c.name,
-              ),
-              location: orm.location.clone(),
-              rule_id: self.id().to_string(),
-            });
-          }
-          None => {
-            diags.push(Diagnostic {
-              severity: Severity::Warning,
-              message: format!(
-                "Filtering on `{col_name}` which does not exist in schema table `{}`.",
-                schema.table_name,
-              ),
-              location: orm.location.clone(),
-              rule_id: self.id().to_string(),
-            });
-          }
+        let Some(c) = schema.columns.iter().find(|c| c.name == *col_name) else { continue };
+        if !c.is_indexed {
+          diags.push(Diagnostic {
+            severity: Severity::Warning,
+            message: format!(
+              "Filtering on `{}` which is not indexed — add an index for better performance.",
+              c.name,
+            ),
+            location: orm.location.clone(),
+            rule_id: self.id().to_string(),
+          });
         }
       }
     }
@@ -216,5 +202,61 @@ mod tests {
       RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
     let diags = rule.run(&ctx);
     assert!(diags.is_empty());
+  }
+
+  #[test]
+  fn ignores_nonexistent_column() {
+    let mut graph = IrGraph::new();
+    let loc = SourceLocation { file: "test.ts".to_string(), line: 1, column: 1, span: None };
+    let orm = OrmNode {
+      method: OrmMethod::Select,
+      args: OrmArgs {
+        columns: vec!["id".to_string()],
+        where_clause: Some("eq(users.nonexistent, 1)".to_string()),
+        limit: None,
+        include: Vec::new(),
+      },
+      loop_kind: LoopKind::None,
+      in_callback: false,
+      missing_await: false,
+      location: loc.clone(),
+    };
+    let sql = SQLNode {
+      kind: SqlKind::Select,
+      columns: vec![ColumnRef { name: "id".to_string(), table: None }],
+      table: Some(TableRef { name: "users".to_string(), alias: None }),
+      limit: false,
+      where_clause: true,
+      in_callback: false,
+      location: loc,
+    };
+    let schema = SchemaNode {
+      table_name: "users".to_string(),
+      columns: vec![SchemaColumn {
+        name: "id".to_string(),
+        col_type: "Int".to_string(),
+        is_nullable: false,
+        is_indexed: true,
+        col_default: None,
+        is_unique: true,
+        foreign_key: None,
+      }],
+      indexes: vec![],
+    };
+    let orm_id = graph.add_orm(orm);
+    let sql_id = graph.add_sql(sql);
+    let schema_id = graph.add_schema(schema);
+    graph.add_edge(orm_id, sql_id, EdgeKind::Generates);
+    graph.add_edge(sql_id, schema_id, EdgeKind::Accesses);
+
+    let rule = NoUnindexedFilter;
+    let ctx =
+      RuleContext { graph: &graph, source_text: "", file_path: "test.ts", active_rules: &[] };
+    let diags = rule.run(&ctx);
+    assert!(
+      diags.is_empty(),
+      "no-unindexed-filter should not report on columns not in schema; \
+       no-unknown-column handles that",
+    );
   }
 }
