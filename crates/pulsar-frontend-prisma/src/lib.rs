@@ -49,17 +49,25 @@ pub fn parse_prisma_schema(source: &str) -> Result<HashMap<String, SchemaNode>, 
 
     // Block-level attributes: @@index, @@unique
     if let Some(index) = try_parse_block_index(trimmed) {
+      let cols = index.columns.clone();
       current_indexes.push(index);
+      // Also mark individual columns as indexed
+      for col_name in &cols {
+        if let Some(col) = current_columns.iter_mut().find(|c| c.name == *col_name) {
+          col.is_indexed = true;
+        }
+      }
       continue;
     }
 
     if let Some(index) = try_parse_block_unique(trimmed) {
       let cols = index.columns.clone();
       current_indexes.push(index);
-      // Also mark individual columns as unique
+      // Also mark individual columns as unique and indexed
       for col_name in &cols {
         if let Some(col) = current_columns.iter_mut().find(|c| c.name == *col_name) {
           col.is_unique = true;
+          col.is_indexed = true;
         }
       }
       continue;
@@ -331,6 +339,10 @@ model User {
     assert_eq!(user.indexes.len(), 1);
     assert_eq!(user.indexes[0].columns, vec!["email"]);
     assert!(!user.indexes[0].is_unique);
+
+    // Column referenced by @@index should be marked as indexed
+    let email = user.columns.iter().find(|c| c.name == "email").unwrap();
+    assert!(email.is_indexed);
   }
 
   #[test]
@@ -348,6 +360,11 @@ model User {
     assert_eq!(user.indexes.len(), 1);
     assert_eq!(user.indexes[0].columns, vec!["email", "name"]);
     assert!(user.indexes[0].is_unique);
+
+    // Columns referenced by @@unique should be marked as indexed and unique
+    let email = user.columns.iter().find(|c| c.name == "email").unwrap();
+    assert!(email.is_indexed);
+    assert!(email.is_unique);
   }
 
   #[test]
