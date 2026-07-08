@@ -31,6 +31,18 @@ fn no_unindexed_filter_ignores_indexed_column() {
 }
 
 #[test]
+fn no_unindexed_filter_ignores_indexed_via_block() {
+  let source =
+    fixtures::read_rule_fixture("no-unindexed-filter", "filter-on-indexed-via-block.ts");
+  let diags = analyze_ts_with_schema(&source, &schema_source());
+  let rule_ids: Vec<&str> = diags.iter().map(|d| d.rule_id.as_str()).collect();
+  assert!(
+    !rule_ids.contains(&"no-unindexed-filter"),
+    "should not fire no-unindexed-filter for filter-on-indexed-via-block, got: {rule_ids:?}",
+  );
+}
+
+#[test]
 fn no_unknown_column_detects_wrong_column() {
   let source = fixtures::read_rule_fixture("no-unknown-column", "select-wrong.ts");
   let diags = analyze_ts_with_schema(&source, &schema_source());
