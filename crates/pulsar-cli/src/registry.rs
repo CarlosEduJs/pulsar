@@ -274,7 +274,7 @@ mod tests {
     );
   }
 
-  // Regression: Bug #6 — prefix '-' for disabling rules is NOT implemented
+  // Regression: Bug prefix '-' for disabling rules is NOT implemented
   // Documentation says rules = ["-no-select-star"] disables a rule,
   // but the code does not strip the '-' prefix — it treats it as the rule name.
   #[test]

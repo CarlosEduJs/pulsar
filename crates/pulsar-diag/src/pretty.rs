@@ -285,7 +285,7 @@ mod tests {
     // No source context since source is empty
   }
 
-  // Regression: Bug #10 — Windows-style line endings (\\r\\n) are handled correctly by Rust's lines()
+  // Regression: Bug Windows-style line endings (\\r\\n) are handled correctly by Rust's lines()
   #[test]
   fn pretty_with_windows_line_endings() {
     let source = "line one\r\nline two\r\nline three\r\n";
@@ -304,7 +304,7 @@ mod tests {
     );
   }
 
-  // Regression: Bug #10 — mixed line endings
+  // Regression: Bug mixed line endings
   #[test]
   fn pretty_with_mixed_line_endings() {
     let source = "unix line\nwindows line\r\n";

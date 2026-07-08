@@ -591,7 +591,7 @@ mod tests {
     assert_eq!(SqlKind::Delete, SqlKind::Delete);
   }
 
-  // Regression: Bug #11 — schema_for_orm uses .find() which only returns the first match.
+  // Regression: Bug schema_for_orm uses .find() which only returns the first match.
   // If an ORM node links to multiple schemas, only the first one is returned.
   #[test]
   fn schema_for_orm_returns_first_link_only() {

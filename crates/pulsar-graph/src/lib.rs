@@ -131,7 +131,7 @@ mod tests {
     }
   }
 
-  // Regression: Bug #2 — build_orm_node always uses OrmMethod::Select
+  // Regression: Bug build_orm_node always uses OrmMethod::Select
   // This test documents that no matter what method is intended, the ORM node
   // always gets OrmMethod::Select. Once the bug is fixed, this test should be updated.
   #[test]
@@ -141,7 +141,7 @@ mod tests {
     assert_eq!(
       node.method,
       OrmMethod::Select,
-      "BUG #2: build_orm_node always sets method to Select — should accept method parameter"
+      "BUG: build_orm_node always sets method to Select — should accept method parameter"
     );
   }
 

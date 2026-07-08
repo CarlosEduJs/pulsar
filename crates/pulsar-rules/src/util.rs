@@ -117,7 +117,7 @@ mod tests {
     assert_eq!(cols, vec![(Some("users".to_string()), "name".to_string())]);
   }
 
-  // Regression: Bug #4 — single-quoted strings with dots should not be parsed as column refs
+  // Regression: Bug single-quoted strings with dots should not be parsed as column refs
   #[test]
   fn ignores_dots_inside_single_quoted_strings() {
     let cols = extract_where_columns("eq(users.name, 'test.test')");
@@ -128,7 +128,7 @@ mod tests {
     );
   }
 
-  // Regression: Bug #7 — columns from other tables should be distinguishable
+  // Regression: Bug columns from other tables should be distinguishable
   #[test]
   fn extracts_cross_table_columns_separately() {
     let cols = extract_where_columns("eq(posts.authorId, users.id)");
@@ -142,7 +142,7 @@ mod tests {
     );
   }
 
-  // Regression: Bug #7 — extrai colunas de outras tabelas (whitespace variation)
+  // Regression: Bug extrai colunas de outras tabelas (whitespace variation)
   #[test]
   fn extracts_columns_from_joined_tables() {
     let cols = extract_where_columns("and(eq(users.id, posts.author_id), eq(posts.id, 1))");

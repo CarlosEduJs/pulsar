@@ -193,7 +193,7 @@ mod tests {
     assert!(diags.is_empty());
   }
 
-  // Regression: Bug #1 — aliases (object keys) should not be checked against schema
+  // Regression: Bug aliases (object keys) should not be checked against schema
   // After fix, extract_select_columns returns the VALUE ("id"), not the key ("myId").
   // These tests verify the rule correctly accepts columns from select() values.
   #[test]
@@ -256,7 +256,7 @@ mod tests {
     );
   }
 
-  // Regression: Bug #1 — alias differs from column, WHERE references valid column
+  // Regression: Bug alias differs from column, WHERE references valid column
   #[test]
   fn allows_alias_in_select_with_valid_where_column() {
     let mut graph = IrGraph::new();

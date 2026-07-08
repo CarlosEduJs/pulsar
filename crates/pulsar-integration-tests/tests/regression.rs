@@ -315,7 +315,7 @@ fn all_fixtures_run_rules_without_panic() {
   }
 }
 
-// Regression: Bug #3 — schema load_schema duplicates schema nodes each time it's called.
+// Regression: Bug schema load_schema duplicates schema nodes each time it's called.
 // Loading the same schema into multiple file graphs creates N copies of the schema.
 #[test]
 fn load_schema_duplicates_nodes_per_file() {
@@ -340,7 +340,7 @@ fn load_schema_duplicates_nodes_per_file() {
   graph2.load_schema(&tables);
   assert_eq!(graph2.node_count(), 1, "graph2 should have 1 schema node");
 
-  // Bug #3: The schema is cloned into EACH file's graph separately.
+  // Bug The schema is cloned into EACH file's graph separately.
   // If we loaded the same schema into one graph twice:
   let mut graph3 = IrGraph::new();
   graph3.load_schema(&tables);
@@ -354,13 +354,13 @@ fn load_schema_duplicates_nodes_per_file() {
   );
 }
 
-// Regression: Bug #4 — single-quoted strings with dots in WHERE clauses
+// Regression: Bug single-quoted strings with dots in WHERE clauses
 // cause false positive column extraction.
 // This is a full pipeline test to verify the end-to-end behavior.
 #[test]
 fn ts_with_single_quoted_string_in_where_does_not_false_positive() {
   // eq(users.name, 'some.dotted.value') should only extract 'users.name'
-  // Bug #4: single quotes are not stripped, so 'some.dotted.value' is parsed
+  // Bug: single quotes are not stripped, so 'some.dotted.value' is parsed
   // as table='some', column='dotted' — false positive
   let source = r#"
     const user = await db.select({ id: users.id }).from(users)
@@ -377,7 +377,7 @@ fn ts_with_single_quoted_string_in_where_does_not_false_positive() {
   // Actual false positive verification happens in util.rs unit tests.
 }
 
-// Regression: Bug #9 — raw SQL in callbacks should be detectable
+// Regression: Bug raw SQL in callbacks should be detectable
 // Currently try_extract_raw_sql doesn't accept context
 #[test]
 fn raw_sql_in_callback_still_extracted() {
@@ -404,7 +404,7 @@ fn ts_with_windows_line_endings_extracts_safely() {
   assert!(graph.node_count() > 0, "should extract ORM + SQL nodes");
 }
 
-// Regression: Bug #14 — .limit(variable) should not produce false positive
+// Regression: Bug.limit(variable) should not produce false positive
 // no-missing-limit for queries with dynamic limits
 #[test]
 fn ts_with_dynamic_limit_not_flagged_as_missing_limit() {
@@ -416,7 +416,7 @@ fn ts_with_dynamic_limit_not_flagged_as_missing_limit() {
     .expect("should parse ok");
   let engine = all_rules_engine();
   let diags = engine.run(&graph, source, "test.ts");
-  // Bug #14: .limit(pageSize) is not recognized as having a limit because
+  // Bug: .limit(pageSize) is not recognized as having a limit because
   // pageSize is an Identifier, not a NumericLiteral
   let missing_limit_diags: Vec<&pulsar_core::Diagnostic> =
     diags.iter().filter(|d| d.rule_id == "no-missing-limit").collect();
