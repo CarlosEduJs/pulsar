@@ -21,10 +21,10 @@ jobs:
       - name: Install Pulsar
         run: |
           curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
-          sudo mv pulsar /usr/local/bin/
+          sudo mv pulsar-cli /usr/local/bin/
 
       - name: Check with Pulsar
-        run: pulsar check src/
+        run: pulsar-cli check src/
 ```
 
 This is the simplest setup. On every push and PR, Pulsar downloads and runs against `src/`.
@@ -44,17 +44,17 @@ jobs:
         id: cache-pulsar
         uses: actions/cache@v4
         with:
-          path: /usr/local/bin/pulsar
-          key: pulsar-${{ runner.os }}
+          path: /usr/local/bin/pulsar-cli
+          key: pulsar-cli-${{ runner.os }}
 
       - name: Install Pulsar (if not cached)
         if: steps.cache-pulsar.outputs.cache-hit != 'true'
         run: |
           curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
-          sudo mv pulsar /usr/local/bin/
+          sudo mv pulsar-cli /usr/local/bin/
 
       - name: Check with Pulsar
-        run: pulsar check src/
+        run: pulsar-cli check src/
 ```
 
 The cache key is based on the runner OS. Invalidate the cache manually when you want to force a Pulsar upgrade.
@@ -67,7 +67,7 @@ Use `--format json` to pipe diagnostics into jq or custom scripts:
 - name: Check with Pulsar (JSON)
   continue-on-error: true
   run: |
-    pulsar check src/ --format json > diagnostics.json
+    pulsar-cli check src/ --format json > diagnostics.json
 
 - name: Fail if any errors
   run: |
@@ -80,8 +80,8 @@ Use `--format json` to pipe diagnostics into jq or custom scripts:
 
 <Callout type="info">
   The `continue-on-error: true` flag lets the job continue so the jq step can run. Without it,
-  `pulsar check` would exit 1 and the remaining steps would be skipped. The jq step still fails the
-  job when errors are present.
+  `pulsar-cli check` would exit 1 and the remaining steps would be skipped. The jq step still fails
+  the job when errors are present.
 </Callout>
 
 ## Blocking PRs on new violations
@@ -91,7 +91,7 @@ Combine with `reviewdog` or `actions/github-script` to annotate PRs:
 ```yaml
 - name: Check with Pulsar (JSON)
   continue-on-error: true
-  run: pulsar check src/ --format json > pulsar-report.json
+  run: pulsar-cli check src/ --format json > pulsar-report.json
 
 - name: Annotate PR
   uses: actions/github-script@v7
@@ -143,10 +143,10 @@ jobs:
               ;;
           esac
           curl -L "$url" | tar xJ
-          sudo mv pulsar /usr/local/bin/
+          sudo mv pulsar-cli /usr/local/bin/
 
       - name: Check with Pulsar
-        run: pulsar check src/
+        run: pulsar-cli check src/
 ```
 
 ## GitLab CI
@@ -158,8 +158,8 @@ pulsar-check:
   script:
     - apt-get update && apt-get install -y curl xz-utils
     - curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
-    - mv pulsar /usr/local/bin/
-    - pulsar check src/
+    - mv pulsar-cli /usr/local/bin/
+    - pulsar-cli check src/
   only:
     - merge_requests
 ```
@@ -173,7 +173,3 @@ pulsar-check:
 | Use `--format json` in CI             | Easier to parse, annotate, and forward to monitoring                 |
 | Keep `pulsar.toml` in version control | Ensures consistent rules across machines                             |
 | Run Pulsar before tests               | Fail fast — no point running tests if the code has schema mismatches |
-
-<Cards>
-  <Card title="Next: Fixing Common Violations" href="/docs/tutorials/fixing-violations" />
-</Cards>

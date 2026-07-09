@@ -100,7 +100,7 @@ const postsWithoutFK = await db.query.posts.findMany({
 ### Run the analysis
 
 ```bash
-pulsar check src/
+pulsar-cli check src/
 ```
 
 Expected output:
@@ -167,13 +167,13 @@ model Post {
 ### Verify
 
 ```bash
-pulsar check src/
+pulsar-cli check src/
 ```
 
 If using the `--format json` flag, you can pipe the output to jq for further analysis:
 
 ```bash
-pulsar check src/ --format json | jq 'sort_by(.rule_id) | group_by(.rule_id) | map({rule: .[0].rule_id, count: length})'
+pulsar-cli check src/ --format json | jq 'sort_by(.rule_id) | group_by(.rule_id) | map({rule: .[0].rule_id, count: length})'
 ```
 
 </Step>
@@ -186,7 +186,3 @@ pulsar check src/ --format json | jq 'sort_by(.rule_id) | group_by(.rule_id) | m
 - `no-unknown-column` catches typos before they reach production
 - `no-unindexed-filter` helps you identify performance bottlenecks during code review
 - `no-missing-foreign-key` ensures your schema relationships are explicit
-
-<Cards>
-  <Card title="Next: CI/CD Integration" href="/docs/tutorials/ci-cd" />
-</Cards>

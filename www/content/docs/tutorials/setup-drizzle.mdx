@@ -82,7 +82,7 @@ export const db = drizzle(sqlite);
 Generate a default config:
 
 ```bash
-pulsar init
+pulsar-cli init
 ```
 
 Open `pulsar.toml` and notice all 12 rules are enabled. For now we will leave it as-is.
@@ -90,7 +90,7 @@ Open `pulsar.toml` and notice all 12 rules are enabled. For now we will leave it
 Run the check:
 
 ```bash
-pulsar check src/
+pulsar-cli check src/
 ```
 
 You should see output similar to:
@@ -205,7 +205,7 @@ const user = await db.select({ id: users.id }).from(users).where(eq(users.id, 1)
 Run Pulsar again:
 
 ```bash
-pulsar check src/
+pulsar-cli check src/
 ```
 
 No output means zero violations.
@@ -215,11 +215,7 @@ No output means zero violations.
 
 ## Key takeaways
 
-- Start with `pulsar init` to get a baseline config
+- Start with `pulsar-cli init` to get a baseline config
 - Fix violations one at a time — Pulsar's output pinpoints the exact location
 - The most common fixes are adding `await`, adding `.limit()`, and moving queries out of loops
-- Use `pulsar explain <rule-id>` to learn more about any rule
-
-<Cards>
-  <Card title="Next: Schema-Aware Analysis" href="/docs/tutorials/schema-aware" />
-</Cards>
+- Use `pulsar-cli explain <rule-id>` to learn more about any rule
