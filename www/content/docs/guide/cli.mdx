@@ -33,13 +33,13 @@ If a `[database]` section is configured, the schema is loaded once and linked to
 
 ```bash
 # Check a specific file
-pulsar check src/db/users.ts
+pulsar-cli check src/db/users.ts
 
 # Check an entire directory with JSON output
-pulsar check src/ --format json
+pulsar-cli check src/ --format json
 
 # Use a custom config file
-pulsar check src/ --config ./config/pulsar.toml
+pulsar-cli check src/ --config ./config/pulsar.toml
 ```
 
 **Exit codes:**
@@ -54,7 +54,7 @@ pulsar check src/ --config ./config/pulsar.toml
 Generate a default `pulsar.toml` config file with all rules enabled.
 
 ```bash
-pulsar init
+pulsar-cli init
 ```
 
 The generated file includes commented-out sections for ignoring files and connecting a Prisma schema.
@@ -64,7 +64,7 @@ The generated file includes commented-out sections for ignoring files and connec
 Print documentation for a specific rule to the terminal.
 
 ```bash
-pulsar explain no-select-star
+pulsar-cli explain no-select-star
 ```
 
 Useful when you want a quick reminder of what a rule does without opening the docs site.

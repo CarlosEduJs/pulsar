@@ -62,7 +62,7 @@ const posts = await db.select({ id: posts.id }).from(posts);
 ## Initialize a config
 
 ```bash
-pulsar init
+pulsar-cli init
 ```
 
 This creates a `pulsar.toml` file with all rules enabled and commented-out options you can tweak later.
@@ -70,7 +70,7 @@ This creates a `pulsar.toml` file with all rules enabled and commented-out optio
 ## Run your first check
 
 ```bash
-pulsar check test.ts
+pulsar-cli check test.ts
 ```
 
 Output:
@@ -92,7 +92,7 @@ Each diagnostic shows the **file**, **line:column**, **rule ID**, and a **messag
 ## Learn about a rule
 
 ```bash
-pulsar explain no-select-star
+pulsar-cli explain no-select-star
 ```
 
 Prints the rule's documentation directly in your terminal.

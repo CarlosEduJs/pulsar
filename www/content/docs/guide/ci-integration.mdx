@@ -12,10 +12,10 @@ Add a step to your workflow to install and run Pulsar:
 - name: Install Pulsar
   run: |
     curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
-    sudo mv pulsar /usr/local/bin/
+    sudo mv pulsar-cli /usr/local/bin/
 
 - name: Check with Pulsar
-  run: pulsar check src/
+  run: pulsar-cli check src/
 ```
 
 ### Caching the binary
@@ -27,14 +27,14 @@ To avoid re-downloading on every run, cache the binary:
   id: cache
   uses: actions/cache@v4
   with:
-    path: /usr/local/bin/pulsar
+    path: /usr/local/bin/pulsar-cli
     key: pulsar-${{ runner.os }}
 
 - name: Install Pulsar (if not cached)
   if: steps.cache.outputs.cache-hit != 'true'
   run: |
     curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
-    sudo mv pulsar /usr/local/bin/
+    sudo mv pulsar-cli /usr/local/bin/
 ```
 
 ### Matrix builds
@@ -57,7 +57,7 @@ steps:
           ;;
       esac
       curl -L "$url" | tar xJ
-      sudo mv pulsar /usr/local/bin/
+      sudo mv pulsar-cli /usr/local/bin/
 ```
 
 ## GitLab CI
@@ -66,8 +66,8 @@ steps:
 pulsar-check:
   script:
     - curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
-    - sudo mv pulsar /usr/local/bin/
-    - pulsar check src/
+    - sudo mv pulsar-cli /usr/local/bin/
+    - pulsar-cli check src/
   only:
     - merge_requests
 ```
@@ -79,11 +79,11 @@ pulsar-check:
     name: Install Pulsar
     command: |
       curl -L https://github.com/CarlosEduJs/pulsar/releases/latest/download/pulsar-cli-x86_64-unknown-linux-gnu.tar.xz | tar xJ
-      sudo mv pulsar /usr/local/bin/
+      sudo mv pulsar-cli /usr/local/bin/
 
 - run:
     name: Check with Pulsar
-    command: pulsar check src/
+    command: pulsar-cli check src/
 ```
 
 ## Exit codes
@@ -98,7 +98,7 @@ pulsar-check:
 For machine parsing, use the `--format json` flag:
 
 ```bash
-pulsar check src/ --format json
+pulsar-cli check src/ --format json
 ```
 
 The JSON format is an array of diagnostic objects:
