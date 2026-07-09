@@ -24,7 +24,7 @@ jobs:
           sudo mv pulsar-cli /usr/local/bin/
 
       - name: Check with Pulsar
-        run: pulsar check src/
+        run: pulsar-cli check src/
 ```
 
 This is the simplest setup. On every push and PR, Pulsar downloads and runs against `src/`.
